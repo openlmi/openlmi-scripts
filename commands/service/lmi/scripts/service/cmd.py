@@ -23,6 +23,7 @@ System service management.
 
 Usage:
     lmi service list [--all | --disabled | --oneshot]
+    lmi service show <service>
     lmi service start <service>
     lmi service stop <service>
     lmi service restart <service>
@@ -30,6 +31,7 @@ Usage:
 Commands:
     list        Prints a list of services. Only enabled services are
                 printed at default.
+    show        Show detailed information about service.
     start       Starts a service.
     stop        Stops the service.
     restart     Restarts the service.
@@ -58,9 +60,19 @@ class Restart(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.service:restart'
     EXPECT = 0
 
+class Show(command.LmiShowInstance):
+    CALLABLE = 'lmi.scripts.service:get_instance'
+    PROPERTIES = (
+            'Name',
+            'Caption',
+            ('Enabled', lambda i: i.EnabledDefault == 2),
+            ('Active', lambda i: i.Started),
+            ('Status', lambda i: i.Status))
+
 Service = command.register_subcommands(
         'Service', __doc__,
         { 'list'    : Lister
+        , 'show'    : Show
         , 'start'   : Start
         , 'stop'    : Stop
         , 'restart' : Restart

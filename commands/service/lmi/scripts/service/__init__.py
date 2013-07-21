@@ -59,3 +59,10 @@ def stop(c, service):
 def restart(c, service):
     return _invoke_on_service(c, 'RestartService', service, 'restarted')
 
+def get_instance(c, service):
+    inst = c.root.cimv2.LMI_Service.first_instance(
+            key="Name", value=service)
+    if inst is None:
+        raise LmiFailed('No such service "%s"' % service)
+    return inst
+    

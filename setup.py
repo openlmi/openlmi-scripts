@@ -40,6 +40,7 @@ setup(
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=[
         'lmi.scripts.common',
+        'lmi.scripts.common.command',
         'lmi.scripts._metacommand'],
     include_package_data=True,
     #data_files=[('/etc/openlmi/scripts', ['config/lmi.conf'])],
