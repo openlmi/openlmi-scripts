@@ -39,6 +39,7 @@ setup(
 
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=[
+        'lmi.scripts',
         'lmi.scripts.common',
         'lmi.scripts.common.command',
         'lmi.scripts._metacommand'],
