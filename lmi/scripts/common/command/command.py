@@ -323,7 +323,7 @@ class LmiCheckResult(LmiEndPointCommand, Lister):
         results = ([], [])
         for connection in session:
             passed, error = self.take_action(
-                    connection, *function_args, **function_kwargs)
+                    connection, function_args, function_kwargs)
             results[0 if passed else 1].append((connection.hostname, error))
             if not passed and error:
                 LOG().warn('invocation failed on host "%s": %s',
