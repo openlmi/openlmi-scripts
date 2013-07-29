@@ -309,9 +309,9 @@ class LmiCheckResult(LmiEndPointCommand, Lister):
     def check_result(self, options, result):
         raise NotImplementedError("check_result must be overriden in subclass")
 
-    def take_action(self, connection, function_args):
+    def take_action(self, connection, function_args, function_kwargs):
         try:
-            res = self.execute(connection, function_args)
+            res = self.execute(connection, *function_args, **function_kwargs)
             return (self.check_result(function_args, res), None)
         except Exception as exc:
             return (False, exc)
