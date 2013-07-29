@@ -314,6 +314,10 @@ class LmiCheckResult(LmiEndPointCommand, Lister):
             res = self.execute(connection, *function_args, **function_kwargs)
             return (self.check_result(function_args, res), None)
         except Exception as exc:
+            if self.app.options.debug:
+                LOG().exception("failed to execute wrapped function")
+            else:
+                LOG().warn("failed to execute wrapped function: %s", exc)
             return (False, exc)
 
     def process_session(self, session, cmd_args, function_args,
