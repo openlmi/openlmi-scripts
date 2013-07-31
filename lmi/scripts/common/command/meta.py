@@ -20,10 +20,10 @@
 import abc
 import re
 
-import lmi.lmi_client_base
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common.command.base import LmiBaseCommand
+from lmi.shell import LMIReturnValue
 
 RE_CALLABLE = re.compile(
         r'^(?P<module>[a-z_]+(?:\.[a-z_]+)*):(?P<func>[a-z_]+)$',
@@ -198,14 +198,14 @@ class CheckResultMetaClass(EndPointCommandMetaClass):
             expect = dcl['EXPECT']
             if callable(expect):
                 def _new_expect(self, options, result):
-                    if isinstance(result, lmi.lmi_client_base._RValue):
+                    if isinstance(result, LMIReturnValue._RValue):
                         result = result.rval
                     passed = expect(options, result)
                     self.result = result
                     return passed
             else:
                 def _new_expect(self, _options, result):
-                    if isinstance(result, lmi.lmi_client_base._RValue):
+                    if isinstance(result, LMIReturnValue._RValue):
                         result = result.rval
                     passed = expect == result
                     self.result = result

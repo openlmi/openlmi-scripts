@@ -29,15 +29,14 @@ from cliff.app import App
 from cliff.commandmanager import CommandManager
 from cliff.help import HelpCommand
 from cliff.interactive import InteractiveApp
-import lmi.lmi_client_base
 from lmi.scripts import common
 from lmi.scripts.common import errors
 from lmi.scripts.common.command import LmiCommandMultiplexer, LmiBaseCommand
 from lmi.scripts.common.configuration import Configuration
 from lmi.scripts.common.session import Session
+from lmi.shell import LMIUtil
 
 PYTHON_EGG_NAME = "lmi-scripts"
-#RE_COMMAND = re.compiler(r'^[a-z_]+(?:-[a-z_]+)*$')
 
 LOG = common.get_logger(__name__)
 
@@ -90,7 +89,7 @@ def parse_hosts_file(hosts_file):
 class MetaCommand(App):
 
     def __init__(self):
-        lmi.lmi_client_base.LmiBaseClient._set_use_exceptions(True)
+        LMIUtil.lmi_set_use_exceptions(True)
         App.__init__(self,
             "OpenLMI command line interface for CIM providers."
             " It's functionality is composed of registered subcommands,"

@@ -29,7 +29,6 @@ from cliff.lister import Lister
 from cliff.show import ShowOne
 from docopt import docopt
 
-import lmi.lmi_client_base
 from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors

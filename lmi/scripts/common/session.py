@@ -23,10 +23,10 @@ import os
 import pywbem
 import readline
 
-from lmi.lmi_client_base import LmiBaseClient
-from lmi.lmi_client_shell import LmiConnection
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
+from lmi.shell import LMIUtil
+from lmi.shell.LMIConnection import LMIConnection
 
 LOG = get_logger(__name__)
 
@@ -59,8 +59,7 @@ class Session(object):
                     yield connection
                     successful_connections += 1
             except Exception as exc:
-                LOG().error('failed to make a connection to "%s": %s',
-                        h, exc)
+                LOG().error('failed to make a connection to "%s": %s', h, exc)
         if successful_connections == 0:
             raise errors.LmiNoConnections('no successful connection made')
 
@@ -96,11 +95,10 @@ class Session(object):
                 readline.remove_history_item(
                         readline.get_current_history_length() - 1)
         # Try to get some non-existing class as a login check
-        connection = LmiConnection(hostname, username,
-                password, interactive)
-        use_exceptions = LmiBaseClient._get_use_exceptions()
+        connection = LMIConnection(hostname, username, password, interactive)
+        use_exceptions = LMIUtil.lmi_get_use_exceptions()
         try:
-            LmiBaseClient._set_use_exceptions(True)
+            LMIUtil.lmi_set_use_exceptions(True)
             connection.root.cimv2.NonExistingClass
         except pywbem.cim_operations.CIMError, e:
             if e.args[0] == pywbem.cim_constants.CIM_ERR_NOT_FOUND:
@@ -110,13 +108,11 @@ class Session(object):
                 raise
             return None
         except pywbem.cim_http.AuthError, e:
-            LOG().error('failed to authenticate against host "%s"',
-                    hostname)
+            LOG().error('failed to authenticate against host "%s"', hostname)
             return None
         finally:
-            LmiBaseClient._set_use_exceptions(use_exceptions)
-        LOG().debug('connection to host "%s" successfully created',
-                hostname)
+            LMIUtil.lmi_set_use_exceptions(use_exceptions)
+        LOG().debug('connection to host "%s" successfully created', hostname)
         return connection
 
     @property

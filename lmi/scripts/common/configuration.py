@@ -28,7 +28,7 @@ SoftwareConfiguration
 """
 
 import os
-from lmi.common.BaseConfiguration import BaseConfiguration
+from lmi.base.BaseConfiguration import BaseConfiguration
 
 class Configuration(BaseConfiguration):
     """
