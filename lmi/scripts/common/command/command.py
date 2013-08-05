@@ -264,7 +264,6 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         options = docopt(self.get_usage(), full_args, help=False)
 
         # remove all command names from options
-        import pdb; pdb.set_trace()
         cmd = self.parent
         while cmd is not None and not cmd.has_own_usage():
             cmd = cmd.parent
@@ -396,7 +395,6 @@ class LmiLister(LmiSessionCommand):
         :param kwargs: (``dict``) Keyword arguments for associated function.
         :rtype: (``tuple``) Column names and item list as a pair.
         """
-        import pdb; pdb.set_trace()
         res = self.execute(connection, *args, **kwargs)
         columns = self.get_columns()
         if columns is None:
