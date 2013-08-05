@@ -75,8 +75,8 @@ It has a documentation string passeable to the `docopt` command line parser
 
     """
     Usage:
-       lmi CMD_NAME cmd1 [options]
-       lmi CMD_NAME cmd2 [options]
+       %(cmd)s cmd1 [options]
+       %(cmd)s cmd2 [options]
 
     """
     from lmi.scripts.common import LmiLister, register_subcommands
@@ -98,6 +98,12 @@ It has a documentation string passeable to the `docopt` command line parser
 Is very important here. The command line is parsed by
 `docopt` according to it. It must conform to POSIX standard for program help.
 Please refer to http://docopt.org/ for more information and examples.
+
+One notable detail here is the `%(cmd)s` string for command name. This
+is replaced with `lmi CMD_NAME` when running from command line or just
+`CMD_NAME` while in interactive mode. It's important to prefix your usage
+strings exactly this way. This also means that every `%` character must
+be doubled in usage string to avoid collisions in formatting.
 
 ### Command classes
 Are defined in `lmi.scripts.common.commands` module. They affect the way how

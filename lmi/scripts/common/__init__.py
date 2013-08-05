@@ -25,69 +25,6 @@ Package with client-side python modules and command line utilities.
 import logging
 from lmi.scripts.common.configuration import Configuration
 
-DEFAULT_LOGGING_CONFIG = {
-    "version" : 1,
-    'disable_existing_loggers' : True,
-    "formatters": {
-        # this is a message format for logging function/method calls
-        # it's manually set up in YumWorker's init method
-        "default": {
-            "default" : "%(levelname)s:%(module)s:"
-                        "%(funcName)s:%(lineno)d - %(message)s"
-            },
-        },
-    "handlers": {
-        "stderr" : {
-            "class" : "logging.StreamHandler",
-            "level" : "ERROR",
-            "formatter": "default",
-            },
-        },
-    "root": {
-        "level": "ERROR",
-        "handlers" : ["cmpi"],
-        },
-    }
-
-def setup_logging(config):
-    """
-    Set up the logging with options given by Configuration instance.
-    This should be called at process's startup before any message is sent to
-    log.
-
-    :param config: (``BaseConfiguration``) Configuration with Log section
-        containing settings for logging.
-    """
-    cp = config.config
-    logging_setup = False
-    try:
-        path = config.file_path('Log', 'FileConfig')
-        if not os.path.exists(path):
-            logging.getLogger(__name__).error('given FileConfig "%s" does'
-                    ' not exist', path)
-        else:
-            logging.config.fileConfig(path)
-            logging_setup = True
-    except Exception:
-        if cp.has_option('Log', 'FileConfig'):
-            logging.getLogger(__name__).exception(
-                    'failed to setup logging from FileConfig')
-    if logging_setup is False:
-        defaults = DEFAULT_LOGGING_CONFIG.copy()
-        defaults["handlers"]["cmpi"]["cmpi_logger"] = env.get_logger()
-        if config.stderr:
-            defaults["root"]["handlers"] = ["stderr"]
-        level = config.logging_level
-        if not level in LOGGING_LEVELS:
-            logging.getLogger(__name__).error(
-                    'level name "%s" not supported', level)
-        else:
-            level = LOGGING_LEVELS[level]
-            for handler in defaults["handlers"].values():
-                handler["level"] = level
-            defaults["root"]["level"] = level
-        logging.config.dictConfig(defaults)
-
 def get_logger(module_name):
     """
     Convenience function for getting callable returning logger for particular

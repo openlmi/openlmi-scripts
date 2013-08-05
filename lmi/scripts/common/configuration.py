@@ -54,6 +54,7 @@ class Configuration(BaseConfiguration):
         self._user_config_file_path = os.path.expanduser(user_config_file_path)
         BaseConfiguration.__init__(self, **kwargs)
         self._verbosity = self.OUTPUT_WARNING
+        self._trace = False
 
     @classmethod
     def provider_prefix(cls):
@@ -63,14 +64,25 @@ class Configuration(BaseConfiguration):
     def default_options(cls):
         """ :rtype: (``dict``) Dictionary of default values. """
         defaults = BaseConfiguration.default_options().copy()
-        defaults["Verbose"] = False
+        defaults["Verbosity"] = "0"
+        defaults["CommandNamespace"] = 'lmi.scripts.cmd'
+        defaults["Trace"] = "False"
+        defaults['FileFormat'] = \
+                "%(asctime)s:%(levelname)-8s:%(name)s:%(lineno)d - %(message)s"
+        defaults['ConsoleFormat'] = "%(levelname)s: %(message)s"
         return defaults
+
+    @classmethod
+    def mandatory_sections(cls):
+        sects = set(BaseConfiguration.mandatory_sections())
+        sects.add('Main')
+        return list(sects)
 
     @property
     def verbosity(self):
         """ Return integer indicating verbosity level of output to console. """
         if self._verbosity is None:
-            return self.get_safe('Main', 'Verbose', bool, self.OUTPUT_WARNING)
+            return self.get_safe('Main', 'Verbosity', int, self.OUTPUT_WARNING)
         return self._verbosity
 
     @verbosity.setter
@@ -83,6 +95,26 @@ class Configuration(BaseConfiguration):
         elif level > self.OUTPUT_DEBUG:
             level = self.OUTPUT_DEBUG
         self._verbosity = level
+
+    @property
+    def silent(self):
+        """ Whether to suppress all output messages except for errors. """
+        return self.verbosity <= self.OUTPUT_SILENT
+    @property
+    def verbose(self):
+        """ Whether to output more details. """
+        return self.verbosity >= self.OUTPUT_INFO
+
+    @property
+    def trace(self):
+        """ Whether the tracebacks shall be printed upon errors. """
+        if self._trace:
+            return self._trace
+        return self.get_safe('Main', 'Trace', bool, False)
+    @trace.setter
+    def trace(self, trace):
+        """ Allow to override configuration option Trace. """
+        self._trace = bool(trace)
 
     def load(self):
         """ Read additional user configuration file if it exists. """

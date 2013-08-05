@@ -22,11 +22,11 @@
 System service management.
 
 Usage:
-    lmi service list [--all | --disabled | --oneshot]
-    lmi service show <service>
-    lmi service start <service>
-    lmi service stop <service>
-    lmi service restart <service>
+    %(cmd)s list [--all | --disabled | --oneshot]
+    %(cmd)s show <service>
+    %(cmd)s start <service>
+    %(cmd)s stop <service>
+    %(cmd)s restart <service>
 
 Commands:
     list        Prints a list of services. Only enabled services are

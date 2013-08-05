@@ -17,20 +17,16 @@
 # Authors: Michal Minar <miminar@redhat.com>
 # -*- coding: utf-8 -*-
 """
-This subpackage defines base classes and utility functions for declaring
-commands. These serve as a wrappers for functions in libraries specific to
-particular provider.
-
-Tree of these commands build an command line interface for this library.
+Meta-command utility module.
 """
 
-from lmi.scripts.common.command.base import LmiBaseCommand
-from lmi.scripts.common.command.command import LmiEndPointCommand
-from lmi.scripts.common.command.command import LmiSessionCommand
-from lmi.scripts.common.command.command import LmiCommandMultiplexer
-from lmi.scripts.common.command.command import LmiLister
-from lmi.scripts.common.command.command import LmiShowInstance
-from lmi.scripts.common.command.command import LmiCheckResult
+import pkg_resources
 
-from lmi.scripts.common.command.helper import make_list_command
-from lmi.scripts.common.command.helper import register_subcommands
+PYTHON_EGG_NAME = "lmi-scripts"
+
+def get_version(egg_name=PYTHON_EGG_NAME):
+    """
+    Gets version string of any python egg. Defaults to the egg of current
+    application.
+    """
+    return pkg_resources.get_distribution(egg_name).version

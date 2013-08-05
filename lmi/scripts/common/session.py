@@ -16,21 +16,31 @@
 #
 # Authors: Michal Minar <miminar@redhat.com>
 # -*- coding: utf-8 -*-
+"""
+Module for session object representing all connection to remote hosts.
+"""
 
 from collections import defaultdict
-import getpass
-import os
-import pywbem
-import readline
 
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
-from lmi.shell import LMIUtil
-from lmi.shell.LMIConnection import LMIConnection
+from lmi.shell.LMIConnection import connect
 
 LOG = get_logger(__name__)
 
 class Session(object):
+    """
+    Session object keeps connection objects to remote hosts. Their are
+    associated with particular hostnames. It also caches credentials for them.
+    Connections are made as they are needed. When credentials are missing
+    for connection to be made, the user is asked to supply them from
+    standard input.
+
+    :param app: Instance of main application.
+    :param hosts: (``list``) List of hostname strings.
+    :param credentials: (``dict``) Mapping assigning pair (user, passward) to
+        each hostname.
+    """
 
     def __init__(self, app, hosts, credentials=None):
         self._app = app
@@ -42,86 +52,75 @@ class Session(object):
             self._credentials.update(credentials)
 
     def __getitem__(self, hostname):
+        """
+        :rtype: (``LMIConnection``) Connection object to remote host.
+            ``None`` if connection can not be made.
+        """
         if self._connections[hostname] is None:
             self._connections[hostname] = self._connect(
                     hostname, interactive=True)
         return self._connections[hostname]
 
     def __len__(self):
+        """ Get the number of hostnames in session. """
         return len(self._connections)
 
     def __iter__(self):
+        """ Yields connection objects. """
         successful_connections = 0
-        for h in self._connections:
+        for hostname in self._connections:
             try:
-                connection = self[h]
+                connection = self[hostname]
                 if connection is not None:
                     yield connection
                     successful_connections += 1
             except Exception as exc:
-                LOG().error('failed to make a connection to "%s": %s', h, exc)
+                LOG().error('failed to make a connection to "%s": %s',
+                        hostname, exc)
         if successful_connections == 0:
             raise errors.LmiNoConnections('no successful connection made')
 
     def _connect(self, hostname, interactive=False):
+        """
+        Makes the connection to host.
+
+        :param hostname: (``str``) Name of host.
+        :param interactive: (``bool``) Whether we can interact with user
+            and expect a reply from him.
+        :rtype: (``LMIConnection``) Connection to remote host or ``None``.
+        """
         username, password = self.get_credentials(hostname)
-        prompt_prefix = '[%s] '%hostname if len(self) > 1 else ''
-        if not username:
-            while True:
-                try:
-                    username = raw_input(prompt_prefix + "username: ")
-                    if username:
-                        break
-                except EOFError, e:
-                    self._app.stdout.write("\n")
-                    continue
-                except KeyboardInterrupt, e:
-                    self._app.stdout.write("\n")
-                    return None
-            if self._app.interactive_mode:
-                readline.remove_history_item(
-                        readline.get_current_history_length() - 1)
-        if not password:
-            try:
-                password = getpass.getpass(prompt_prefix + 'password: ')
-            except EOFError, e:
-                password = ""
-                LOG().warn('End of File when reading password for "%s"',
-                        hostname)
-            except KeyboardInterrupt, e:
-                LOG().warn('failed to get password for host "%s"', hostname)
-                return None
-            if self._app.interactive_mode:
-                readline.remove_history_item(
-                        readline.get_current_history_length() - 1)
-        # Try to get some non-existing class as a login check
-        connection = LMIConnection(hostname, username, password, interactive)
-        use_exceptions = LMIUtil.lmi_get_use_exceptions()
-        try:
-            LMIUtil.lmi_set_use_exceptions(True)
-            connection.root.cimv2.NonExistingClass
-        except pywbem.cim_operations.CIMError, e:
-            if e.args[0] == pywbem.cim_constants.CIM_ERR_NOT_FOUND:
-                return connection
+        connection = connect(hostname, username, password,
+                interactive=interactive)
+        if connection is not None:
+            LOG().debug('connection to host "%s" successfully created',
+                    hostname)
+            if not username or not password:
+                # connect function of lmi shell may obtain credentials from
+                # user vie stdin
+                self._credentials[hostname] = \
+                        connection._client._cliconn.creds
+        else:
             LOG().error('failed to connect to host "%s"', hostname)
-            if use_exceptions:
-                raise
-            return None
-        except pywbem.cim_http.AuthError, e:
-            LOG().error('failed to authenticate against host "%s"', hostname)
-            return None
-        finally:
-            LMIUtil.lmi_set_use_exceptions(use_exceptions)
-        LOG().debug('connection to host "%s" successfully created', hostname)
         return connection
 
     @property
     def hostnames(self):
+        """ :rtype: (``list``) List of hostnames in session. """
         return self._connections.keys()
 
     def get_credentials(self, hostname):
+        """
+        :rtype: (``tuple``) Pair of (username, password) for given
+            hostname. If no credentials were given for this host,
+            ('', '') is returned.
+        """
         return self._credentials[hostname]
 
     def get_unconnected(self):
+        """
+        :rtype: (``list``) List of hostnames, which do not have associated
+            connection yet.
+        """
         return [h for h, c in self._connections.items() if c is None]
 
