@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 PROJECT = 'lmi-scripts'
-VERSION = '0.1'
+VERSION = '0.1.0'
 
 # Bootstrap installation of Distribute
 from setuptools import setup, find_packages
@@ -35,7 +35,7 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['distribute', 'cliff'],
+    install_requires=['distribute'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=[
