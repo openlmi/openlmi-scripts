@@ -35,13 +35,13 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['distribute'],
-
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=[
+        'lmi',
         'lmi.scripts',
         'lmi.scripts.common',
         'lmi.scripts.common.command',
+        'lmi.formatter',
         'lmi.scripts._metacommand'],
     include_package_data=True,
     #data_files=[('/etc/openlmi/scripts', ['config/lmi.conf'])],
