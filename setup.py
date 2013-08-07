@@ -41,7 +41,7 @@ setup(
         'lmi.scripts',
         'lmi.scripts.common',
         'lmi.scripts.common.command',
-        'lmi.formatter',
+        'lmi.scripts.common.formatter',
         'lmi.scripts._metacommand'],
     include_package_data=True,
     #data_files=[('/etc/openlmi/scripts', ['config/lmi.conf'])],
