@@ -35,7 +35,7 @@ setup(
     install_requires=['lmi-scripts'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
-    packages=['lmi.scripts.software'],
+    packages=['lmi.scripts', 'lmi.scripts.software'],
     include_package_data=True,
 
     entry_points={
