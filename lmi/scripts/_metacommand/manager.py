@@ -49,7 +49,7 @@ class _CustomCommandWrapper(object):
     :param name: (``str``) Name of command.
     :param cmd_class: (``LmiBaseCommand``) Factory for custom commands.
     """
-    
+
     def __init__(self, name, cmd_class):
         if not isinstance(name, basestring):
             raise TypeError("name must be a string")
@@ -72,7 +72,7 @@ class CommandManager(object):
     Manager of direct subcommands of lmi metacommand. It manages commands
     registered with entry_points under particular namespace installed by
     python eggs. Custom commands may also be added.
-    
+
     :param namespace: (``str``) Namespace, where commands are registered.
         For example ``lmi.scripts.cmd``.
     """
@@ -158,7 +158,7 @@ class CommandManager(object):
     def reload_commands(self, keep_custom=True):
         """
         Flushes all commands and reloads entry points.
-        
+
         :param keep_custom: (``bool``) Custom commands -- not loaded from
             entry points -- are preserved.
         """

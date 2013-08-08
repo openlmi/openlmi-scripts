@@ -99,7 +99,7 @@ class LmiBaseCommand(object):
         """
         Abstract class method returning dictionary of child commands with
         structure:
-            
+
             { "command-name" : cmd_factory, ... }
 
         Dictionary contains just a direct children (commands, which
@@ -164,7 +164,7 @@ class LmiBaseCommand(object):
         """
         Arguments array for docopt parser. Similar to ``cmd_name_args`` except
         for the leading binary name, which is omitted here.
-        
+
         :rtype: (``list``)
         """
         if self.app.interactive_mode:
@@ -192,7 +192,7 @@ class LmiBaseCommand(object):
                 cmd = cmd.parent
             if cmd.__doc__ is None:
                 docstr = "Usage: %s\n" % self.cmd_full_name
-            else: 
+            else:
                 docstr = ( ( cmd.__doc__.rstrip()
                            % {'cmd' : cmd.cmd_full_name }
                            ) + "\n")
@@ -228,7 +228,7 @@ class LmiBaseCommand(object):
 
         :param args: (``list``) Arguments passed to the command line that were
             not yet parsed. It's the contents of sys.argv (if in
-            non-interactive mode) from the current command on. 
+            non-interactive mode) from the current command on.
         :rtype: (``int``) Exit code of application.
         """
         raise NotImplementedError("run method must be overriden in subclass")

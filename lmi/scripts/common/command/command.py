@@ -72,7 +72,7 @@ def options_dict2kwargs(options):
     """
     # (new_name, value) for each pair in options dictionary
     kwargs = {}
-    # (name 
+    # (new_name, name)
     orig_names = {}
     for name, value in options.items():
         for (reg, func) in (
@@ -102,7 +102,7 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
     arguments and passes the remainder to one of its subcommands.
 
     Example usage:
-        
+
         class MyCommand(LmiCommandMultiplexer):
             '''
             My command description.
@@ -368,7 +368,7 @@ class LmiLister(LmiSessionCommand):
     column values.
 
     List of additional recognized properties:
-        
+
         * ``COLUMNS`` - Column names. It's a tuple with name for each column.
                         Each row shell then contain the same number of items
                         as this tuple. If omitted, associated function is
@@ -380,7 +380,7 @@ class LmiLister(LmiSessionCommand):
 
     @classmethod
     def get_columns(cls):
-        """ 
+        """
         Return a column names for resulting table. ``COLUMNS`` property
         will be converted to this class method. If ``None``, the associated
         function shall return column names as the first tuple of returned
@@ -432,7 +432,7 @@ class LmiShowInstance(LmiSessionCommand):
     result.
 
     List of additional recognized properties:
-        
+
         * ``DYNAMIC_PROPERTIES`` - A boolean saying, whether the associated
             function alone shall specify the list of properties of rendered
             instance. If True, the result of function must be a pair: ``(props,
@@ -515,7 +515,7 @@ class LmiCheckResult(LmiSessionCommand):
     output if the invocation is successful and expected result matches.
 
     List of additional recognized properties:
-        
+
         * ``EXPECT`` - A value, that is expected to be returned by invoked
             associated function. This can also be a callable taking two
             arguments:

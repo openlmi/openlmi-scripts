@@ -106,4 +106,4 @@ def get_instance(ns, service):
     if inst is None:
         raise LmiFailed('No such service "%s"' % service)
     return inst
-    
+

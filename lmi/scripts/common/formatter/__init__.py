@@ -40,7 +40,7 @@ import itertools
 class Formatter(object):
     """
     Base formatter class.
-    
+
     It produces string representation of given argument and prints it.
 
     :param stream: (``file``) Output stream.
@@ -100,8 +100,8 @@ class ListFormatter(Formatter):
     Base formatter taking care of list of items. It renders input data in a
     form of table with mandatory column names at the beginning followed by
     items, one occupyin single line (row).
-    
-    This class should be subclassed to provide nice output. 
+
+    This class should be subclassed to provide nice output.
     """
 
     def print_row(self, row):

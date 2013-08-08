@@ -407,7 +407,7 @@ class MultiplexerMetaClass(abc.ABCMeta):
 
         :param bases: (``tuple``) List of base classes of particular class.
             This is equavalent of ``__class__`` attribute.
-        :rtype: (``bool``) Is the 
+        :rtype: (``bool``) Is the
         """
         for bcls in bases:
             if issubclass(type(bcls), MultiplexerMetaClass):

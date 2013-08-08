@@ -60,7 +60,7 @@ Commands:
     enable      Enable one or more repositories.
 
 Options:
-    --force        Force installation 
+    --force        Force installation
     --repo <repo>  Select a repository, where the given package will be
                    searched.
     --uri <uri>    Operate upon an rpm package available on remote system

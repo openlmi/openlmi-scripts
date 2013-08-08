@@ -56,7 +56,7 @@ from lmi.scripts.common import command
 class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.service:list'
     COLUMNS = ('Name', "Started", 'Status')
-    
+
     def transform_options(self, options):
         for opt in ('all', 'disabled', 'oneshot'):
             # let's remove underscores to make the interface pretty
