@@ -1,3 +1,4 @@
+* relicensed to BSD
 * added namespace property to end-point commands
 * associated functions invoked with namespace rather then just connection
 object
