@@ -33,6 +33,7 @@ from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common.command import base
 from lmi.scripts.common.command import util
+from lmi.shell import LMIUtil
 from lmi.shell.LMIReturnValue import LMIReturnValue
 
 RE_CALLABLE = re.compile(
@@ -81,6 +82,74 @@ def _handle_usage(name, dcl):
         if not 'has_own_usage' in dcl:
             dcl['has_own_usage'] = classmethod(lambda _cls: True)
 
+def _make_execute_method(bases, dcl, func, namespace=None):
+    """
+    Creates ``execute()`` method of a new end point command.
+
+    :param bases: (``tuple``) Base classes of new command.
+    :param dcl: (``dict``) Class dictionary being modified by this method.
+    :param func: A callable wrapped by this new command. It's usually
+        referred as *associated function*. If ``None``, no function will be
+        created -- ``dcl`` won't be modified.
+    :param namespace: (``str``) CIM Namespace to nest the connection object
+        into.
+    """
+    if func is not None and util.is_abstract_method(
+            bases, 'execute', missing_is_abstract=True):
+        del dcl['CALLABLE']
+        if namespace is not None:
+            def _execute(_self, connection, *args, **kwargs):
+                """ Invokes associated function with given arguments. """
+                ns = LMIUtil.lmi_wrap_cim_namespace(connection, namespace)
+                return func(ns, *args, **kwargs)
+        else:
+            def _execute(_self, connection, *args, **kwargs):
+                """ Invokes associated function with given arguments. """
+                return func(connection, *args, **kwargs)
+        _execute.dest = func
+        dcl['execute'] = _execute
+
+def _handle_callable(name, bases, dcl, namespace=None):
+    """
+    Process the ``CALLABLE`` property of end-point command. Create the
+    ``execute()`` method based on it.
+
+    :param name: (``str``) Name of command class to create.
+    :param bases: (``tuple``) Base classes of new command.
+    :param dcl: (``dict``) Class dictionary being modified by this method.
+    :param namespace: (``str``) CIM Namespace to nest the connection object
+        into.
+    """
+    try:
+        func = dcl.get('CALLABLE')
+        if isinstance(func, basestring):
+            match = RE_CALLABLE.match(func)
+            if not match:
+                raise errors.LmiCommandInvalidCallable(
+                        dcl['__module__'], name,
+                        'Callable "%s" has invalid format (\':\' expected)'
+                        % func)
+            mod_name = match.group('module')
+            try:
+                func = getattr(__import__(mod_name, globals(), locals(),
+                        [match.group('func')], 0),
+                        match.group('func'))
+            except (ImportError, AttributeError):
+                raise errors.LmiCommandImportFailed(
+                        dcl['__module__'], name, func)
+    except KeyError:
+        mod = dcl['__module__']
+        if not name.lower() in mod:
+            raise errors.LmiCommandMissingCallable(
+                    'Missing CALLABLE attribute for class "%s.%s".' % (
+                        mod.__name__, name))
+        func = mod[name.lower()]
+    if func is not None and not callable(func):
+        raise errors.LmiCommandInvalidCallable(
+            '"%s" is not a callable object or function.' % (
+                func.__module__ + '.' + func.__name__))
+    _make_execute_method(bases, dcl, func, namespace)
+
 class EndPointCommandMetaClass(abc.ABCMeta):
     """
     End point command does not have any subcommands. It's a leaf of
@@ -92,70 +161,33 @@ class EndPointCommandMetaClass(abc.ABCMeta):
         * ``OWN_USAGE`` - Usage string. Optional property.
     """
 
-    @classmethod
-    def _make_execute_method(mcs, bases, dcl, func):
-        """
-        Creates ``execute()`` method of a new end point command.
-
-        :param mcs: (``type``) This meta class.
-        :param bases: (``tuple``) Base classes of new command.
-        :param dcl: (``dict``) Class dictionary being modified by this method.
-        :param func: A callable wrapped by this new command. It's usually
-            referred as *associated function*. If ``None``, no function will be
-            created -- ``dcl`` won't be modified.
-        """
-        if func is not None and util.is_abstract_method(
-                bases, 'execute', missing_is_abstract=True):
-            del dcl['CALLABLE']
-            def _execute(_self, *args, **kwargs):
-                """ Invokes associated function with given arguments. """
-                return func(*args, **kwargs)
-            _execute.dest = func
-            dcl['execute'] = _execute
-
     def __new__(mcs, name, bases, dcl):
         _handle_usage(name, dcl)
-        try:
-            func = dcl.get('CALLABLE')
-            if isinstance(func, basestring):
-                match = RE_CALLABLE.match(func)
-                if not match:
-                    raise errors.LmiCommandInvalidCallable(
-                            dcl['__module__'], name,
-                            'Callable "%s" has invalid format (\':\' expected)'
-                            % func)
-                mod_name = match.group('module')
-                try:
-                    func = getattr(__import__(mod_name, globals(), locals(),
-                            [match.group('func')], 0),
-                            match.group('func'))
-                except (ImportError, AttributeError):
-                    raise errors.LmiCommandImportFailed(
-                            dcl['__module__'], name, func)
-        except KeyError:
-            mod = dcl['__module__']
-            if not name.lower() in mod:
-                raise errors.LmiCommandMissingCallable(
-                        'Missing CALLABLE attribute for class "%s.%s".' % (
-                            mod.__name__, name))
-            func = mod[name.lower()]
-        if func is not None and not callable(func):
-            raise errors.LmiCommandInvalidCallable(
-                '"%s" is not a callable object or function.' % (
-                    func.__module__ + '.' + func.__name__))
-
-        mcs._make_execute_method(bases, dcl, func)
+        _handle_callable(name, bases, dcl)
 
         return super(EndPointCommandMetaClass, mcs).__new__(
                 mcs, name, bases, dcl)
 
-
 class SessionCommandMetaClass(EndPointCommandMetaClass):
     """
     Meta class for commands operating upon a session object.
-    """
-    pass
+    All associated functions take as first argument an namespace abstraction
+    of type ``lmi.shell.
 
+    Handles following class properties:
+
+        * ``NAMESPACE`` - CIM namespace abstraction that will be passed
+            to associated function. Defaults to ``"root/cimv2"``. If ``False``,
+            raw ``LMIConnection`` object will be passed to associated function.
+    """
+    def __new__(mcs, name, bases, dcl):
+        _handle_usage(name, dcl)
+        namespace = dcl.pop('NAMESPACE', "root/cimv2")
+        if not namespace:
+            namespace = None
+        _handle_callable(name, bases, dcl, namespace)
+
+        return EndPointCommandMetaClass.__new__(mcs, name, bases, dcl)
 
 class ListerMetaClass(SessionCommandMetaClass):
     """

@@ -1,6 +1,6 @@
 # Software Management Providers
 #
-# Copyright (C) 2012-2013 Red Hat, Inc.  All rights reserved.
+# Copyright (ns) 2012-2013 Red Hat, Inc.  All rights reserved.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@ from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
 
-def _invoke_on_service(c, method, service, description):
+def _invoke_on_service(ns, method, service, description):
     """
     Invoke parameter-less method on given service.
 
@@ -36,17 +36,16 @@ def _invoke_on_service(c, method, service, description):
     :param description: (``str``) Description of what has been done with service.
         This is used just for logging.
     """
-    inst = c.root.cimv2.LMI_Service.first_instance(
-            key="Name", value=service)
+    inst = ns.LMI_Service.first_instance(key="Name", value=service)
     if inst is None:
         raise LmiFailed('No such service "%s"' % service)
     res = getattr(inst, method)()
     if res == 0:
         LOG().debug('%s service "%s" on hostname "%s"',
-                description, service, c.hostname)
+                description, service, ns.hostname)
     return res
 
-def list(c, all, disabled, oneshot):
+def list(ns, all, disabled, oneshot):
     """
     List services. Only enabled ones are listed at default.
 
@@ -54,8 +53,7 @@ def list(c, all, disabled, oneshot):
     :param disabled: (``bool``) List only disabled services.
     :param oneshot: (``bool``) List only oneshot services.
     """
-    for s in sorted(c.root.cimv2.LMI_Service.instances(),
-            key=lambda i: i.Name):
+    for s in sorted(ns.LMI_Service.instances(), key=lambda i: i.Name):
         if disabled and s.EnabledDefault != 3:
             continue
         if oneshot and s.EnabledDefault != 5:
@@ -65,38 +63,37 @@ def list(c, all, disabled, oneshot):
             continue
         yield (s.Name, s.Started, s.Status)
 
-def start(c, service):
+def start(ns, service):
     """
     Start service.
 
     :param service: (``str``) Service name.
     """
-    return _invoke_on_service(c, 'StartService', service, 'started')
+    return _invoke_on_service(ns, 'StartService', service, 'started')
 
-def stop(c, service):
+def stop(ns, service):
     """
     Stop service.
 
     :param service: (``str``) Service name.
     """
-    return _invoke_on_service(c, 'StopService', service, 'stopped')
+    return _invoke_on_service(ns, 'StopService', service, 'stopped')
 
-def restart(c, service):
+def restart(ns, service):
     """
     Restart service.
 
     :param service: (``str``) Service name.
     """
-    return _invoke_on_service(c, 'RestartService', service, 'restarted')
+    return _invoke_on_service(ns, 'RestartService', service, 'restarted')
 
-def get_instance(c, service):
+def get_instance(ns, service):
     """
     Return LmiInstance object matching the given service.
 
     :param service: (``str``) Service name.
     """
-    inst = c.root.cimv2.LMI_Service.first_instance(
-            key="Name", value=service)
+    inst = ns.LMI_Service.first_instance(key="Name", value=service)
     if inst is None:
         raise LmiFailed('No such service "%s"' % service)
     return inst

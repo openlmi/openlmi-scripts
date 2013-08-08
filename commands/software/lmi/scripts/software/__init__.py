@@ -1,6 +1,6 @@
 # Software Management Providers
 #
-# Copyright (C) 2012-2013 Red Hat, Inc.  All rights reserved.
+# Copyright (ns) 2012-2013 Red Hat, Inc.  All rights reserved.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,10 +30,10 @@ from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
 
-def list_pkgs(c, **kwargs):
+def list_pkgs(ns, **kwargs):
     if not kwargs['__available'] and not kwargs['__all']:
         yield ("NEVRA", "Summary")
-        cs = c.root.cimv2.Linux_ComputerSystem.first_instance()
+        cs = ns.Linux_ComputerSystem.first_instance()
         for identity in cs.associators(
                 Role="System",
                 ResultRole="InstalledSoftware",
@@ -42,13 +42,13 @@ def list_pkgs(c, **kwargs):
 
     if kwargs['__available'] or kwargs['__all']:
         if kwargs['repo']:
-            inst = c.root.cimv2.LMI_SoftwareIdentityResource.first_instance(
+            inst = ns.LMI_SoftwareIdentityResource.first_instance(
                     key='Name', value=kwargs['repo'])
             if inst is None:
                 raise LmiFailed('no such repository "%s"' % kwargs['repo'])
             repos = [inst]
         else:
-            repos = c.root.cimv2.LMI_SoftwareIdentityResource.instances()
+            repos = ns.LMI_SoftwareIdentityResource.instances()
         yield ("NEVRA", "Repository", "Summary")
         pkg_names = []
         data = defaultdict(list)    # (pkg_name, [(nevra, repo, summary)])
@@ -74,12 +74,12 @@ def list_pkgs(c, **kwargs):
             for info in data[pkg_name]:
                 yield info
 
-def list_repos(c, __disabled, __all):
+def list_repos(ns, __disabled, __all):
     if __all:
         yield ('Repo id', 'Name', 'Enabled')
     else:
         yield ('Repo id', 'Name')
-    for repo in c.root.cimv2.LMI_SoftwareIdentityResource.instances():
+    for repo in ns.LMI_SoftwareIdentityResource.instances():
         if not __disabled and not __all and repo.EnabledState != 2:
             continue
         if __disabled and repo.EnabledState != 3:
