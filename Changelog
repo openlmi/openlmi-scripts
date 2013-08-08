@@ -1,0 +1,6 @@
+* added namespace property to end-point commands
+* associated functions invoked with namespace rather then just connection
+object
+
+0.1.0
+* initial version with dependency only on docopt
