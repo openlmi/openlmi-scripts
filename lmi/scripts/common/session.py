@@ -102,7 +102,8 @@ class Session(object):
         """
         username, password = self.get_credentials(hostname)
         connection = connect(hostname, username, password,
-                interactive=interactive)
+                interactive=interactive,
+                verify_certificate=self._app.config.verify_certificate)
         if connection is not None:
             LOG().debug('connection to host "%s" successfully created',
                     hostname)

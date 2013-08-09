@@ -192,9 +192,12 @@ class MetaCommand(object):
             self.config.verbosity = Configuration.OUTPUT_SILENT
         elif options['-v'] and options['-v'] > 0:
             self.config.verbosity = options['-v']
+        if options['--noverify']:
+            self.config.verify_certificate = False
         self._configure_logging()
         del options['--quiet']
         del options['-v']
+        del options['--noverify']
         self._options = options
 
     def run(self, argv):
