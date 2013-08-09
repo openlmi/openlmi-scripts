@@ -42,6 +42,7 @@ install -m 0644 config/lmi.conf $RPM_BUILD_ROOT/etc/openlmi/scripts
 %files
 %doc README.md COPYING Changelog
 %{_bindir}/lmi
+%{_sysconfig}/openlmi/scripts/lmi.conf
 %dir %{python_sitelib}/lmi/scripts
 %{python_sitelib}/lmi/scripts/*
 %{python_sitelib}/lmi_scripts-*
