@@ -1,7 +1,7 @@
 %global         commands service
 
 Name:		openlmi-scripts
-Version:	0.1.0
+Version:	0.1.1
 Release:	1%{?dist}
 Summary:	Client-side python modules and command line utilities
 
@@ -36,9 +36,11 @@ for cmd in %{commands}; do
     %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
     popd
 done
+mkdir -p $RPM_BUILD_ROOT/etc/openlmi/scripts
+install -m 0644 config/lmi.conf $RPM_BUILD_ROOT/etc/openlmi/scripts
 
 %files
-%doc README.md COPYING
+%doc README.md COPYING Changelog
 %{_bindir}/lmi
 %dir %{python_sitelib}/lmi/scripts
 %{python_sitelib}/lmi/scripts/*
@@ -46,6 +48,9 @@ done
 %{python_sitelib}/lmi_scripts_service-*
 
 %changelog
+* Fri Aug 09 2013 Michal Minar <miminar@redhat.com> 0.1.1-1
+- Rebased to 0.1.1
+
 * Thu Aug 08 2013 Michal Minar <miminar@redhat.com> 0.1.0-1
 - Initial version.
 
