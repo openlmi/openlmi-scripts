@@ -63,11 +63,14 @@ def list(ns, all, disabled, oneshot):
     :param oneshot: (``bool``) List only oneshot services.
     """
     for s in sorted(ns.LMI_Service.instances(), key=lambda i: i.Name):
-        if disabled and s.EnabledDefault != 3:
+        if disabled and s.EnabledDefault != \
+                ns.LMI_Service.EnabledDefaultValues.Disabled:
             continue
-        if oneshot and s.EnabledDefault != 5:
+        if oneshot and s.EnabledDefault != \
+                ns.LMI_Service.EnabledDefaultValues.NotApplicable:
             continue
-        if not any((disabled, all, oneshot)) and s.EnabledDefault != 2:
+        if not any((disabled, all, oneshot)) and s.EnabledDefault != \
+                ns.LMI_Service.EnabledDefaultValues.Enabled:
             # list only enabled
             continue
         yield (s.Name, s.Started, s.Status)

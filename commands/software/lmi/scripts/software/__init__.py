@@ -62,7 +62,8 @@ def list_pkgs(ns, **kwargs):
         pkg_names = []
         data = defaultdict(list)    # (pkg_name, [(nevra, repo, summary)])
         for repo in repos:
-            if repo.EnabledState != 2:    # != Enabled
+            if repo.EnabledState != \
+                    ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled:
                 continue                  # skip disabled repositories
             for iname in repo.associator_names(
                     Role="AvailableSAP", ResultRole="ManagedElement",
@@ -89,11 +90,14 @@ def list_repos(ns, __disabled, __all):
     else:
         yield ('Repo id', 'Name')
     for repo in ns.LMI_SoftwareIdentityResource.instances():
-        if not __disabled and not __all and repo.EnabledState != 2:
+        if not __disabled and not __all and repo.EnabledState != \
+                ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled:
             continue
-        if __disabled and repo.EnabledState != 3:
+        if __disabled and repo.EnabledState != \
+                ns.LMI_SoftwareIdentityResource.EnabledStateValues.Disabled:
             continue
         if __all:
-            yield (repo.Name, repo.Caption, repo.EnabledState == 2)
+            yield (repo.Name, repo.Caption, repo.EnabledState == \
+                    ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled)
         else:
             yield (repo.Name, repo.Caption)
