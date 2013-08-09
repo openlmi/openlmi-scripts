@@ -49,8 +49,8 @@ from lmi.shell import LMIUtil
 
 LOG = common.get_logger(__name__)
 
-# ignore any message before the logging is configured
-logging.getLogger('').addHandler(logging.NullHandler())
+# write errors to stderr until logging is configured
+logging.getLogger('').addHandler(logging.StreamHandler())
 
 def parse_hosts_file(hosts_file):
     """
@@ -123,43 +123,7 @@ class MetaCommand(object):
         Implicitly only warnings and errors are logged to the standard
         error stream without any tracebacks.
         """
-        root_logger = logging.getLogger('')
-        # make a reference to null handlers (one should be installed)
-        null_handlers = [  h for h in root_logger.handlers
-                        if isinstance(h, logging.NullHandler)]
-        try:
-            logging_level = getattr(logging, self.config.logging_level.upper())
-        except KeyError:
-            logging_level = logging.ERROR
-
-        # Set up logging to a file
-        log_file = self.config.get_safe('Log', 'OutputFile')
-        if log_file is not None:
-            file_handler = logging.FileHandler(filename=log_file)
-            formatter = logging.Formatter(
-                    self.config.get_safe('Log', 'FileFormat', raw=True))
-            file_handler.setFormatter(formatter)
-            root_logger.addHandler(file_handler)
-
-        # Always send higher-level messages to the console via stderr
-        console = logging.StreamHandler(self.stderr)
-        console_level_default = logging.ERROR if log_file else logging_level
-        console_level = {
-                Configuration.OUTPUT_SILENT  : logging.ERROR,
-                Configuration.OUTPUT_WARNING : logging.WARNING,
-                Configuration.OUTPUT_INFO    : logging.INFO,
-                Configuration.OUTPUT_DEBUG   : logging.DEBUG,
-            }.get(self.config.verbosity, console_level_default)
-        console.setLevel(console_level)
-        formatter = logging.Formatter(
-                self.config.get_safe('Log', 'ConsoleFormat', raw=True))
-        console.setFormatter(formatter)
-        root_logger.addHandler(console)
-        root_logger.setLevel(min(logging_level, console_level))
-
-        # remove all null_handlers
-        for handler in null_handlers:
-            root_logger.removeHandler(handler)
+        util.setup_logging(self.config, self.stderr)
         if self.config.silent:
             self.stdout = NullFile()
 

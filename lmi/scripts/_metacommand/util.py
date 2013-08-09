@@ -31,9 +31,87 @@
 Meta-command utility module.
 """
 
+import logging
+import logging.config
 import pkg_resources
+import sys
+
+from lmi.scripts.common import Configuration
+from lmi.scripts.common import get_logger
 
 PYTHON_EGG_NAME = "lmi-scripts"
+
+DEFAULT_LOGGING_CONFIG = {
+    'version' : 1,
+    'disable_existing_loggers': True,
+    'formatters' : {
+        'console' : {
+            'format': Configuration.default_options()['ConsoleFormat'],
+            'datefmt' : '%Y-%m-%d %H:%M:%S'
+        },
+        'file' : {
+            'format' : Configuration.default_options()['FileFormat'],
+            'datefmt' : '%Y-%m-%d %H:%M:%S'
+        }
+    },
+    'handlers' : {
+        'console': {
+            'class' : "logging.StreamHandler",
+            'level' : logging.ERROR,
+            'formatter': 'console',
+        },
+        'file' : {
+            'class' : "logging.FileHandler",
+            'level' : Configuration.default_options()['Level'].upper(),
+            'formatter': 'file',
+        }
+    },
+    'root' : {
+        'level' : logging.DEBUG,
+        'handlers' : ['console']
+    }
+}
+
+LOG = get_logger(__name__)
+
+def setup_logging(app_config, stderr=sys.stderr):
+    """
+    Setup logging to console and optionally to the file.
+
+    :param app_config: (``lmi.scripts.common.Configuration``)
+        Configuration object.
+    :param stderr: (``file``) Output stream, where console handler should
+        dispatch logging messages.
+    """
+    cfg = DEFAULT_LOGGING_CONFIG
+
+    # Set up logging to a file
+    log_file = app_config.get_safe('Log', 'OutputFile')
+    if log_file is not None:
+        cfg['handlers']['file']['filename'] = log_file
+        cfg['formatters']['file']['format'] = app_config.get_safe(
+                'Log', 'FileFormat', raw=True)
+        try:
+            cfg['handlers']['file']['level'] = \
+                    getattr(logging, app_config.logging_level.upper())
+        except KeyError:
+            LOG().error('unsupported logging level: "%s"',
+                    app_config.logging_level)
+        cfg['root']['handlers'].append('file')
+
+    # Set up logging to console
+    if stderr is not sys.stderr:
+        cfg['handlers']['console']['stream'] = stderr
+    cfg['handlers']['console']['level'] = {
+            Configuration.OUTPUT_SILENT  : logging.ERROR,
+            Configuration.OUTPUT_WARNING : logging.WARNING,
+            Configuration.OUTPUT_INFO    : logging.INFO,
+            Configuration.OUTPUT_DEBUG   : logging.DEBUG,
+        }.get(app_config.verbosity)
+    cfg['formatters']['console']['format'] = app_config.get_safe(
+            'Log', 'ConsoleFormat', raw=True)
+
+    logging.config.dictConfig(cfg)
 
 def get_version(egg_name=PYTHON_EGG_NAME):
     """
