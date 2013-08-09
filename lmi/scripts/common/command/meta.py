@@ -149,12 +149,7 @@ def _handle_callable(name, bases, dcl, namespace=None):
                 raise errors.LmiCommandImportFailed(
                         dcl['__module__'], name, func)
     except KeyError:
-        mod = dcl['__module__']
-        if not name.lower() in mod:
-            raise errors.LmiCommandMissingCallable(
-                    'Missing CALLABLE attribute for class "%s.%s".' % (
-                        mod.__name__, name))
-        func = mod[name.lower()]
+        raise errors.LmiCommandMissingCallable(dcl['__module__'], name)
     if func is not None and not callable(func):
         raise errors.LmiCommandInvalidCallable(
             '"%s" is not a callable object or function.' % (
@@ -416,22 +411,25 @@ class MultiplexerMetaClass(abc.ABCMeta):
 
     def __new__(mcs, name, bases, dcl):
         if not mcs.is_root_multiplexer(bases):
+            module_name = dcl.get('__module__', name)
             # check COMMANDS property and make it a classmethod
             if not 'COMMANDS' in dcl:
-                raise errors.LmiCommandError('missing COMMANDS property')
+                raise errors.LmiCommandError(module_name, name,
+                        'missing COMMANDS property')
             cmds = dcl.pop('COMMANDS')
             if not isinstance(cmds, dict):
-                raise errors.LmiCommandInvalidProperty(dcl['__module__'], name,
+                raise errors.LmiCommandInvalidProperty(module_name, name,
                         'COMMANDS must be a dictionary')
             if not all(isinstance(c, basestring) for c in cmds.keys()):
-                raise errors.LmiCommandInvalidProperty(dcl['__module__'], name,
+                raise errors.LmiCommandInvalidProperty(module_name, name,
                         'keys of COMMANDS dictionary must contain command'
                         ' names as strings')
             for cmd_name, cmd in cmds.items():
                 if not base.RE_COMMAND_NAME.match(cmd_name):
-                    raise errors.LmiCommandInvalidName(cmd, cmd_name)
+                    raise errors.LmiCommandInvalidName(
+                            module_name, name, cmd_name)
                 if not issubclass(cmd, base.LmiBaseCommand):
-                    raise errors.LmiCommandError(dcl['__module__'], cmd_name,
+                    raise errors.LmiCommandError(module_name, name,
                             'COMMANDS dictionary must be composed of'
                             ' LmiCommandBase subclasses, failed class: "%s"'
                             % cmd.__name__)
