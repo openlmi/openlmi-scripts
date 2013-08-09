@@ -109,14 +109,14 @@ def _make_execute_method(bases, dcl, func, namespace=None):
             bases, 'execute', missing_is_abstract=True):
         del dcl['CALLABLE']
         if namespace is not None:
-            def _execute(_self, connection, *args, **kwargs):
+            def _execute(__self__, __connection__, *args, **kwargs):
                 """ Invokes associated function with given arguments. """
-                ns = LMIUtil.lmi_wrap_cim_namespace(connection, namespace)
+                ns = LMIUtil.lmi_wrap_cim_namespace(__connection__, namespace)
                 return func(ns, *args, **kwargs)
         else:
-            def _execute(_self, connection, *args, **kwargs):
+            def _execute(__self__, __connection__, *args, **kwargs):
                 """ Invokes associated function with given arguments. """
-                return func(connection, *args, **kwargs)
+                return func(__connection__, *args, **kwargs)
         _execute.dest = func
         dcl['execute'] = _execute
 
