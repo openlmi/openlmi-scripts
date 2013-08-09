@@ -83,21 +83,27 @@ def setup_logging(app_config, stderr=sys.stderr):
     :param stderr: (``file``) Output stream, where console handler should
         dispatch logging messages.
     """
-    cfg = DEFAULT_LOGGING_CONFIG
+    cfg = DEFAULT_LOGGING_CONFIG.copy()
 
     # Set up logging to a file
-    log_file = app_config.get_safe('Log', 'OutputFile')
-    if log_file is not None:
-        cfg['handlers']['file']['filename'] = log_file
-        cfg['formatters']['file']['format'] = app_config.get_safe(
-                'Log', 'FileFormat', raw=True)
-        try:
-            cfg['handlers']['file']['level'] = \
-                    getattr(logging, app_config.logging_level.upper())
-        except KeyError:
-            LOG().error('unsupported logging level: "%s"',
-                    app_config.logging_level)
-        cfg['root']['handlers'].append('file')
+    log_file = None
+    if app_config.config.has_option('Log', 'OutputFile'):
+        # avoid warning for missing/unconfigured option
+        log_file = app_config.get_safe('Log', 'OutputFile')
+        if log_file is not None:
+            cfg['handlers']['file']['filename'] = log_file
+            cfg['formatters']['file']['format'] = app_config.get_safe(
+                    'Log', 'FileFormat', raw=True)
+            try:
+                cfg['handlers']['file']['level'] = \
+                        getattr(logging, app_config.logging_level.upper())
+            except KeyError:
+                LOG().error('unsupported logging level: "%s"',
+                        app_config.logging_level)
+            cfg['root']['handlers'].append('file')
+    if log_file is None:
+        del cfg['formatters']['file']
+        del cfg['handlers']['file']
 
     # Set up logging to console
     if stderr is not sys.stderr:
