@@ -45,7 +45,7 @@ this:
         version="<VERSION>",
         install_requires=['lmi-scripts'],
         namespace_packages=['lmi', 'lmi.scripts'],
-        packages=['lmi.scripts.<provider_prefix>'],
+        packages=['lmi', 'lmi.scripts', 'lmi.scripts.<provider_prefix>'],
         entry_points={
             'lmi.scripts.cmd': [
                 '<CMD_NAME> = lmi.scripts.<provider_prefix>.cmd:<CMD>',
