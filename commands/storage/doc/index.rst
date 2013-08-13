@@ -8,12 +8,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   common
-   partition
-   lvm
-   raid
-   fs
-   show
+   cmdline
+   python
 
 
 Indices and tables
