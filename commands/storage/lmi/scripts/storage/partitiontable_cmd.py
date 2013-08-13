@@ -36,9 +36,6 @@ Commands:
 
     show        Show detailed information about partition table on given
                 devices. If no devices are provided, all of them are displayed.
-
-Remarks:
-    Use 'lmi fs delete' to remove a partition table from a device.
 """
 
 from lmi.scripts.common import command

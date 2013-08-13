@@ -18,12 +18,12 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-from lmi.scripts.common.errors import LmiFailed
 
 """
 LVM management functions.
 """
 
+from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
@@ -33,17 +33,18 @@ import pywbem
 def str2vg(c, vg):
     """
     Convert string with name of volume group to LMIInstance of the
-    LMI_VGStoragePool
+    LMI_VGStoragePool.
 
-    :param c: (``LmiConnection``)
-    :param device: (Either ``LMIInstance`` of ``LMI_VGStoragePool`` or
-    or ``string`` with name of volume group) If ``LMIInstance`` is
-    given, nothing is done and the instance is just returned. If string is
-    given, appropriate ``LMIInstance`` is looked up and returned.
-
-    :retval: ``LMIInstance`` of appropriate LMI_VGStoragePool.
+    If LMIInstance is provided, nothing is done and the instance is just
+    returned. If string is provided, appropriate LMIInstance is looked up and
+    returned.
 
     This functions throws an error when the device cannot be found.
+
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: VG to retrieve.
+    :rtype: LMIInstance/LMI_VGStoragePool
+
     """
     if isinstance(vg, LMIInstance):
         return vg
@@ -69,10 +70,9 @@ def get_lvs(c, vgs=None):
     If no volume groups are provided, all logical volumes on the system
     are returned.
 
-    :param c:
-    :param devices: (Either list of ``LMIInstance``s of ``LMI_VGStoragePool``
-    or list of ``string``s with name of the pools.) Volume groups to list.
-    :retval: list of ``LMIInstance``s of LMI_LVStorageExtent.
+    :type vgs: list of LMIInstance/LMI_VGStoragePool or list of strings
+    :param vgs: Volume Groups to examine.
+    :rtype: list of LMIInstance/LMI_LVStorageExtent.
     """
     if vgs:
         for vg in vgs:
@@ -86,14 +86,15 @@ def get_lvs(c, vgs=None):
 
 def create_lv(c, vg, name, size):
     """
-    Create a Logical Volume on given Volume Group.
+    Create new Logical Volume on given Volume Group.
 
-    :param c:
-    :param vg: (Either list of ``LMIInstance``s of ``LMI_VGStoragePool``
-    or ``string``s with name of the VG.) Volume Group to allocate from.
-    :param name: (``string``) Name of the logical volume.
-    :param size: (``int``) Size of the storage volume in bytes.
-    :retval: (``LMIInstance``) of the created LMI_LVStorageExtent.
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: Volume Group to allocate the volume from.
+    :type name: string
+    :param name: Name of the logical volume.
+    :type size: int
+    :param size: Size of the logical volume in bytes.
+    :rtype: LMIInstance/LMI_LVStorageExtent
     """
     vg = str2vg(c, vg)
     service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
@@ -109,11 +110,10 @@ def create_lv(c, vg, name, size):
 
 def delete_lv(c, lv):
     """
-    Destroy given Logical Volume
+    Destroy given Logical Volume.
 
-    :param c:
-    :param lv: (Either ``LMIInstance`` of ``LMI_LVStorageExtent``
-    or ``string``s with name of the LV.) LogicalVolume to remove.
+    :type lv: LMIInstance/LMI_LVStorageExtent or string
+    :param lv: Logical Volume to destroy.
     """
     lv = common.str2device(c, lv)
     service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
@@ -126,23 +126,22 @@ def get_vgs(c):
     """
     Retrieve list of all volume groups on the system.
 
-    :param c:
-    :retval: list of ``LMIInstance``s of LMI_VGStoragePool.
+    :rtype: list of LMIInstance/LMI_VGStoragePool
     """
     for vg in c.root.cimv2.LMI_VGStoragePool.instances():
         yield vg
 
 def create_vg(c, devices, name, extent_size=None):
     """
-    Create a Logical Volume on given Volume Group.
+    Create new Volume Group from given devices.
 
-    :param c:
-    :param device: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
-    or ``string``s with name of the devices.) Devices to add to the Volume
-    Group.
-    :param name: (``string``) Name of the volume group.
-    :param extent_size: (``int``) Extent size in bytes.
-    :retval: (``LMIInstance``) of the created LMI_VGStoragePool.
+    :type devices: list of LMIInstance/CIM_StorageExtent or list of strings
+    :param device: Devices to add to the Volume Group.
+    :type name: string
+    :param name: Name of the Volume gGoup.
+    :type extent_size: int
+    :param extent_size: Extent size in bytes.
+    :rtype: LMIInstance/LMI_VGStoragePool
     """
     devs = [common.str2device(c, device) for device in devices]
     args = { 'InExtents': devs,
@@ -182,9 +181,8 @@ def delete_vg(c, vg):
     """
     Destroy given Volume Group.
 
-    :param c:
-    :param vg: (Either ``LMIInstance`` of ``LMI_VGStoragePool``
-    or ``string``s with name of the VG.) Volume Group to remove.
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: Volume Group to delete.
     """
     vg = str2vg(c, vg)
     service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
@@ -195,11 +193,11 @@ def delete_vg(c, vg):
 
 def get_vg_lvs(c, vg):
     """
-    Return list of logical volumes on given volume group.
+    Return list of Logical Volumes on given Volume Group.
 
-    :param vg: (Either ``LMIInstance`` of ``LMI_VGStoragePool``
-    or ``string``s with name of the VG.) Volume Group to examine.
-    :retval: (list of ``LMIInstance`` of LMI_LVStorageExtents)
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: Volume Group to examine.
+    :rtype: list of LMIInstance/LMI_LVStorageExtent
     """
     vg = str2vg(c, vg)
     return vg.associators(AssocClass="LMI_LVAllocatedFromStoragePool")
@@ -208,10 +206,9 @@ def get_lv_vg(c, lv):
     """
     Return Volume Group of given Logical Volume.
 
-    :param vg: (Either ``LMIInstance`` of ``LMI_LVStorageExtent``
-    or ``string``s with name of the LV.) Logical Volume to examine.
-    :retval: (``LMIInstance`` of LMI_VGStoragePool) or None,
-    if there is no such VG.
+    :type lv: LMIInstance/LMI_LVStorageExtent or string
+    :param lv: Logical Volume to examine.
+    :rtype: LMIInstance/LMI_VGStoragePool
     """
     lv = common.str2device(c, lv)
     return lv.first_associator(AssocClass="LMI_LVAllocatedFromStoragePool")
@@ -220,9 +217,9 @@ def get_vg_pvs(c, vg):
     """
     Return Physical Volumes of given Volume Group.
 
-    :param vg: (Either ``LMIInstance`` of ``LMI_VGStoragePool``
-    or ``string``s with name of the VG.) Volume Group to examine.
-    :retval: (list of ``LMIInstance`` of CIM_StorageExtent) Physical Volumes.
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: Volume Group to examine.
+    :rtype: list of LMIInstance/CIM_StorageExtent
     """
     vg = str2vg(c, vg)
     return vg.associators(AssocClass="LMI_VGAssociatedComponentExtent")

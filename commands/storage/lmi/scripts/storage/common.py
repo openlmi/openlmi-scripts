@@ -32,26 +32,25 @@ LOG = get_logger(__name__)
 
 def escape_cql(s):
     """
-    Escape potentially unsafe string.
+    Escape potentially unsafe string for CQL.
 
-    :param s: (``string``) String to escape.
-    :retval: Escaped string.
+    :type s: string
+    :param s: String to escape.
+    :rtype: string
     """
     return re.sub(r'(["\\])', r'\\\1', s)
 
 def str2device(c, device):
     """
     Convert string with name of device to LMIInstance of the device.
-
-    :param c: (``LmiConnection``)
-    :param device: (Either ``LMIInstance`` of ``CIM_StorageExtent`` or
-    ``string`` with name of device) If ``LMIInstance`` is given, nothing is
-    done and the instance is just returned. If string is given, appropriate
-    ``LMIInstance`` is looked up and returned.
-
-    :retval: ``LMIInstance`` of appropriate CIM_StorageExtent.
-
+    If LMIInstance is provided, nothing is done and the instance is just
+    returned. If string is given, appropriate LMIInstance is looked up and
+    returned.
     This functions throws an error when the device cannot be found.
+
+    :type device: LMIInstance/CIM_StorageExtent or string with name of device
+    :param device: Device to convert.
+    :rtype: LMIInstance/CIM_StorageExtent
     """
     if isinstance(device, LMIInstance):
         return device
@@ -77,21 +76,25 @@ multipliers = {
 }
 
 
-def str2size(size, additional_multiplier=None, additional_suffix=None):
+def str2size(size, additional_unit_size=None, additional_unit_suffix=None):
     """
     Convert string from human-friendly size to bytes.
+    The string is expected to be integer number, optionally with on of these
+    suffixes:
 
-    :param size: (``string``) Size. Optionally with these suffixes:
       * k, K - kilobytes, 1024 bytes,
       * m, M - megabytes, 1024 * 1024 bytes,
       * g, G - gigabytes, 1024 * 1024 * 1024 bytes,
       * t, T - terabytes, 1024 * 1024 * 1024 * 1024 bytes,
-    :param additional_multiplier: (``int``) Additional multiplier for
-    additional_suffix, e.g. 4 * 1024*1024 for extent size.
-    :param additional_suffix: (``string``) Additional allowed suffix, e.g.
-    'E' for extents.
 
-    :retval: ``int`` with the size.
+    :type size: string
+    :param size: The size to convert.
+    :type additional_unit_size: int
+    :param additional_unit_size: Additional unit size for
+        additional_unit_suffix, e.g. 4 * 1024*1024 for extent size.
+    :type additional_unit_suffix: string
+    :param additional_unit_suffix: Additional suffix, e.g. 'E' for extents.
+    :rtype: int
     """
     if size.isdigit():
         return int(size)
@@ -103,13 +106,13 @@ def str2size(size, additional_multiplier=None, additional_suffix=None):
 
     m = multipliers.get(suffix.upper(), None)
     if not m:
-        if additional_suffix and suffix.upper() == additional_suffix.upper():
-            m = additional_multiplier
+        if additional_unit_suffix and suffix.upper() == additional_unit_suffix.upper():
+            m = additional_unit_size
         else:
             # Sort the units by their size
             units = multipliers.items()
-            if additional_suffix:
-                units.append((additional_suffix, additional_multiplier))
+            if additional_unit_suffix:
+                units.append((additional_unit_suffix, additional_unit_size))
             units = sorted(units, key=lambda x: x[1])
             raise LmiFailed("'%s' has invalid unit. Known units: %s."
                     % (size, ",".join([unit[0] for unit in units])))
@@ -117,11 +120,11 @@ def str2size(size, additional_multiplier=None, additional_suffix=None):
 
 def size2str(size):
     """
-    Convert size (in bytes) to human-friendly string.
+    Convert size (in bytes) to human-friendly string converted to KB, MB, ...
 
-    :param size: (``int``) Size of something in bytes.
-    :retval: ``string`` with human friendly size in nearest units (KiB, MiB,
-    ...)
+    :type size: int
+    :param size: Size of something in bytes.
+    :rtype: string
     """
     # find the highest multiplier, where the size/multiplier > 1
     mul = 1
@@ -155,14 +158,16 @@ def size2str(size):
 
 def get_devices(c, devices=None):
     """
-    Returns list of devices.
-    If no devices are given, all devices are returned.
+    Returns list of block devices.
+    If no devices are given, all block devices on the system are returned.
 
-    :param devices: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
-    or list of ``string``s with name of the devices.) Devices to list.
+    This functions just converts list of strings to list of appropriate
+    LMIInstances.
 
-    :retval: (list of ``LMIInstance``s of ``CIM_StorageExtent`` List of
-    the devices.
+    :type devices: list of LMIInstance/CIM_StorageExtent or list of strings
+    :param devices: Devices to list.
+
+    :rtype: list of LMIInstance/CIM_StorageExtent.
     """
     if devices:
         for dev in devices:

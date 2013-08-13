@@ -18,12 +18,11 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-from lmi.scripts.common.errors import LmiFailed
-
 """
 Partition management functions.
 """
 
+from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
@@ -39,9 +38,10 @@ PARTITION_TABLE_TYPE_MSDOS = 2
 def get_disk_partitions(c, disk):
     """
     Return list of partitions on the device (not necessarily disk).
-    :param device: (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string`` with name of the device.) Device which should be partitioned.
-    :retval: List of ``LMIInstance``s of ``CIM_GenericDiskPartition``.
+
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device: Device which should be partitioned.
+    :rtype: List of LMIInstance/CIM_GenericDiskPartition.
     """
     disk = common.str2device(c, disk)
     parts = disk.associators(
@@ -60,12 +60,11 @@ def get_disk_partitions(c, disk):
 
 def get_partition_disk(c, partition):
     """
-    Return device on which is the given partition located.
+    Return a device on which is located the given partition.
 
-    :param partition: (Either ``LMIInstance`` of ``CIM_GenericDiskPartition``
-    or ``string`` with name of the device.)
-
-    :retval: ``LMIInstance`` of ``CIM_GenericDiskPartition``.
+    :type partition: LMIInstance/CIM_GenericDiskPartition or string
+    :param partition: Partition to examine.
+    :rtype: LMIInstance/CIM_StorageExtent.
     """
     partition = common.str2device(c, partition)
     device = partition.first_associator(
@@ -79,15 +78,11 @@ def get_partition_disk(c, partition):
 def get_partitions(c, devices=None):
     """
     Retrieve list of partitions on given devices.
-
-    :param c:
-    :param devices: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
-    or list of ``string``s with name of the devices.) Devices to list partitions
-    on.
-
     If no devices are given, all partitions on all devices are returned.
 
-    :retval: list of ``LMIInstance``s of CIM_GenericPartition.
+    :type devices: List of LMIInstance/CIM_StorageExtent or list of string
+    :param devices: Devices to list partitions on.
+    :rtype: List of LMIInstance/CIM_GenericPartition.
     """
     if devices:
         for device in devices:
@@ -103,20 +98,21 @@ def get_partitions(c, devices=None):
 
 def create_partition(c, device, size=None, partition_type=None):
     """
-    Create a partition on given device.
-    
-    :param c:
-    :param device: (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string`` with name of the device.) Device which should be partitioned.
-    :param size: (``int``) Size of the device, in blocks. See device's BlockSize
-    to get it. If no size is provided, the largest possible partition
-    will be created.
-    :param partition_type: (``int``) Requested partition type.
-    See PARTITION_TYPE_xxx variables. If no type is given, extended partition
-    will be automatically created as 4th partition on MS-DOS style partition
-    table with a logical partition with requested size on it.
-    
-    :retval: (``LMIInstance``) of the partition.
+    Create new partition on given device.
+
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device: Device which should be partitioned.
+    :type size: int
+    :param size: Size of the device, in blocks. See device's BlockSize
+        to get it. If no size is provided, the largest possible partition
+        is created.
+    :type partition_type: int
+    :param partition_type: Requested partition type.
+        See PARTITION_TYPE_xxx variables. If no type is given, extended partition
+        will be automatically created as 4th partition on MS-DOS style partition
+        table with a logical partition with requested size on it.
+
+    :rtype: LMIInstance/CIM_GenericDiskPartition.
     """
     device = common.str2device(c, device)
     setting = None
@@ -155,9 +151,8 @@ def delete_partition(c, partition):
     """
     Remove given partition
 
-    :param c:
-    :param partition: (Either ``LMIInstance`` of ``CIM_GenericDiskPartition``
-    or ``string`` with name of the device.) 
+    :type partition: LMIInstance/CIM_GenericDiskPartition
+    :param partition: Partition to delete.
     """
     partition = common.str2device(c, partition)
     service = c.root.cimv2.LMI_DiskPartitionConfigurationService.first_instance()
@@ -171,10 +166,11 @@ def create_partition_table(c, device, table_type):
     Create new partition table on a device. The device must be empty, i.e.
     must not have any partitions on it.
 
-    :param device: (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string`` with name of the device.) Device which should be partitioned.
-    :param table_type: (``int``) Requested partition table type.
-    See PARTITION_TABLE_TYPE_xxx variables.
+    :type device: LMIInstance/CIM_StorageExtent
+    :param device: Device where the partition table should be created.
+    :type table_type: int
+    :param table_type: Requested partition table type. See
+        PARTITION_TABLE_TYPE_xxx variables.
     """
     device = common.str2device(c, device)
     query = "SELECT * FROM LMI_DiskPartitionConfigurationCapabilities WHERE " \
@@ -195,16 +191,14 @@ def create_partition_table(c, device, table_type):
 
 def get_partition_tables(c, devices=None):
     """
-    Returns list of partition tables.
+    Returns list of partition tables on given devices.
     If no devices are given, all partitions on all devices are returned.
 
-    :param devices: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
-    or list of ``string``s with name of the devices.) Devices to list partition
-    tables on.
+    :type devices: list of LMIInstance/CIM_StorageExtent or list of strings
+    :param devices: Devices to list partition tables on.
 
-    :retval: (list of tuples ``(LMIInstance, LMIInstance)``) List of all
-    partition tables as
-    (CIM_StorageDevice, LMI_DiskPartitionConfigurationCapabilities) tuples.
+    :rtype: List of tuples (LMIInstance/CIM_StorageExtent,
+        LMIInstance/LMI_DiskPartitionConfigurationCapabilities).
     """
     if not devices:
         tables = c.root.cimv2.LMI_InstalledPartitionTable.instances()
@@ -219,14 +213,12 @@ def get_partition_tables(c, devices=None):
 def get_disk_partition_table(c, device):
     """
     Returns LMI_DiskPartitionTableCapabilities representing partition table
-    on the disk.
+    on given disk.
 
-    :param device:  (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string`` with name of the device.) Device which should be examined.
-    There must be partition table present on this device.
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device: Device which should be examined.
 
-    :retval: (``LMIInstance`` of ``LMI_DiskPartitionConfigurationCapabilities``)
-    Partition table on the device or None, if the device is not partitioned.
+    :rtype: LMIInstance/LMI_DiskPartitionConfigurationCapabilities.
     """
     device = common.str2device(c, device)
     table = device.first_associator(
@@ -235,14 +227,13 @@ def get_disk_partition_table(c, device):
 
 def get_largest_partition_size(c, device):
     """
-    Returns size of the largest free region, which can accommodate a partition.
-
-    :param device:  (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string`` with name of the device.) Device which should be examined.
+    Returns size of the largest free region (in blocks), which can accommodate
+    a partition on given device.
     There must be partition table present on this device.
 
-    :retval: (``int``) Size of the largest available region for new partition,
-    in bytes.
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device:  Device which should be examined.
+    :rtype: int
     """
     device = common.str2device(c, device)
     # find the partition table (=LMI_DiskPartitionConfigurationCapabilities)

@@ -18,12 +18,11 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
+"""
+Functions to display information about block devices.
+"""
+
 from lmi.scripts.common.errors import LmiFailed
-
-"""
-Functions to display block devices.
-"""
-
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common, partition, raid, lvm, fs
@@ -32,8 +31,8 @@ def device_show(c, device):
     """
     Print extended information about the device.
 
-    :param part: (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string``s with name of the device.) Device to show.
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param part: Device to show.
     """
     device = common.str2device(c, device)
     if device.classname == "LMI_MDRAIDStorageExtent":
@@ -53,8 +52,8 @@ def partition_show(c, part):
     """
     Print extended information about the partition.
 
-    :param part: (Either ``LMIInstance`` of ``CIM_GenericPartition``
-    or ``string``s with name of the partition.) Partition to show.
+    :type part: LMIInstance/CIM_GenericDiskPartition or string
+    :param part: Partition to show.
     """
     part = common.str2device(c, part)
     print "Partition", part.DeviceID
@@ -87,9 +86,8 @@ def partition_table_show(c, disk):
     """
     Print extended information about the partition table on given disk.
 
-    :param part: (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string``s with name of the device.) Device with partition table
-    to show.
+    :type disk: LMIInstance/CIM_StorageExtent or string
+    :param disk: Device with partition table to show.
     """
     disk = common.str2device(c, disk)
     print "Partition Table", disk.DeviceID
@@ -113,8 +111,8 @@ def raid_show(c, r):
     """
     Print extended information about the RAID.
 
-    :param r: (Either ``LMIInstance`` of ``LMI_MDRAIDStorageExtent``
-    or ``string``s with name of the r.) RAID to show.
+    :type r: LMIInstance/LMI_MDRAIDStorageExtent or string
+    :param r: RAID to show.
     """
     r = common.str2device(c, r)
     print "MD RAID Array", r.DeviceID
@@ -128,10 +126,10 @@ def raid_show(c, r):
 
 def vg_show(c, vg):
     """
-    Print extended information about the volume group.
+    Print extended information about the Volume Group.
 
-    :param vg: (Either ``LMIInstance`` of ``LMI_VGStoragePool``
-    or ``string``s with name of the VG.) Volume Group to show.
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: Volume Group to show.
     """
     vg = lvm.str2vg(c, vg)
     print "InstanceID:", vg.InstanceID
@@ -152,10 +150,10 @@ def vg_show(c, vg):
 
 def lv_show(c, lv):
     """
-    Print extended information about the logical volume.
+    Print extended information about the Logical Volume.
 
-    :param lv: (Either ``LMIInstance`` of ``LMI_LVStorageExtent``
-    or ``string``s with name of the LV.) Logical Volume to show.
+    :type lv: LMIInstance/LMI_LVStorageExtent or string
+    :param lv: Logical Volume to show.
     """
     lv = common.str2device(c, lv)
     print "Logical Volume", lv.DeviceID
@@ -171,8 +169,8 @@ def device_show_device(c, device):
     """
     Print basic information about storage device, common to all device types.
 
-    :param device: (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string``s with name of the device.) Device to show.
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device: Device to show.
     """
     device = common.str2device(c, device)
 
@@ -186,8 +184,8 @@ def device_show_data(c, device):
     """
     Display description of data on the device.
 
-    :param device: (Either ``LMIInstance`` of ``CIM_StorageExtent``
-    or ``string``s with name of the device.) Device to show.
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device: Device to show.
     """
     device = common.str2device(c, device)
     fmt = fs.get_format_on_device(c, device)
@@ -207,8 +205,8 @@ def format_show(c, fmt):
     """
     Display description of data on the device.
 
-    :param fmt: (Either ``LMIInstance`` of ``LMI_DataFormat``
-    or ``string``s with name of the format.) Format to show.
+    :type fmt: LMIInstance/LMI_DataFormat or string
+    :param fmt: Format to show.
     """
     fmt = fs.str2format(c, fmt)
     print "Data Format:", fmt.FormatTypeDescription
@@ -217,10 +215,10 @@ def format_show(c, fmt):
 
 def fs_show(c, fmt):
     """
-    Display description of data on the device.
+    Display description of filesystem on the device.
 
-    :param fmt: (Either ``LMIInstance`` of ``CIM_LocalFileSystem``
-    or ``string``s with name of the format.) Format to show.
+    :type fmt: LMIInstance/CIM_LocalFileSystem or string
+    :param fmt: Filesystem to show.
     """
     print "Filesystem:", fmt.FileSystemType
     if "UUID" in fmt.properties() and fmt.UUID:

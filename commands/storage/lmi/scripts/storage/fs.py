@@ -18,12 +18,12 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-from lmi.scripts.common.errors import LmiFailed
-from lmi.scripts.storage import partition
 """
 Filesystem management functions.
 """
 
+from lmi.scripts.common.errors import LmiFailed
+from lmi.scripts.storage import partition
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
@@ -36,18 +36,20 @@ FORMAT_ALL = FORMAT_FS | FORMAT_DATA
 
 def str2format(c, fmt):
     """
-    Convert string with name of device to LMIInstance of the format on the device.
+    Convert string with name of device to LMIInstance of the format on the
+    device.
 
-    :param c: (``LmiConnection``)
-    :param device: (Either ``LMIInstance`` of ``CIM_LocalFileSystem`` or
-    ``LMI_DataFormat`` or ``string`` with name of device) If ``LMIInstance`` is
-    given, nothing is done and the instance is just returned. If string is
-    given, appropriate ``LMIInstance`` is looked up and returned.
-
-    :retval: ``LMIInstance`` of appropriate LMI_DataFormat or
-    CIM_LocalFileSystem.
+    If LMIInstance is provided, nothing is done and the instance is just
+    returned. If a string is given, appropriate LMIInstance is looked up and
+    returned.
 
     This functions throws an error when the device cannot be found.
+
+    :type fmt: LMIInstance/CIM_LocalFileSystem or LMIInstance/LMI_DataFormat or
+        string
+    :param fmt: The format.
+
+    :retval: LMIInstance/CIM_LocalFileSystem or LMIInstance/LMI_DataFormat
     """
     if isinstance(fmt, LMIInstance):
         return fmt
@@ -56,12 +58,14 @@ def str2format(c, fmt):
     device = common.str2device(fmt)
     return get_format_on_device(c, device)
 
-def get_fs_id(c, fsname):
+def _get_fs_id(c, fsname):
     """
-    Return integer value of given filesystem name in
+    Return integer value for given filesystem name in
     LMI_FileSystemConfigurationService.LMI_CreateFileSystem.FileSystemType
 
-    :param fsname: (``string``) Name of the filesystem.
+    :type fsname: string
+    :param fsname: Name of the filesystem.
+    :rtype: int
     """
     service = c.root.cimv2.LMI_FileSystemConfigurationService.first_instance()
     service.LMI_CreateFileSystem.XXX
@@ -70,17 +74,18 @@ def get_format_on_device(c, device, format_type=FORMAT_ALL):
     """
     Return filesystem or data format, which is on given device.
 
-    :param device: (Either ``LMIInstance``s of ``CIM_StorageExtent``
-    or ``string`` with name of the device.) Device to to query.
-    :param format_type: (``int``) Type of formats to find.
-    FORMAT_ALL - return either CIM_LocalFileSystem or LMI_DataFormat.
-    FORMAT_FS - return only CIM_LocalFileSystem or None, if there is no
-    filesystem on the device.
-    FORMAT_DATA - return only LMI_DataFormat or None, if there is no
-    data format on the device.
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device: Device to to examine.
+    :type format_type: int
+    :param format_type: Type of format to find.
 
-    :retval: (``LMIInstance`` of ``CIM_LocalFileSystem`` or ``LMI_DataFormat``)
-    or None, if there is no recognizable format on the device.
+        * FORMAT_ALL - return either CIM_LocalFileSystem or LMI_DataFormat.
+        * FORMAT_FS - return only CIM_LocalFileSystem or None, if there is no
+            filesystem on the device.
+        * FORMAT_DATA - return only LMI_DataFormat or None, if there is no
+            data format on the device.
+
+    :rtype: LMIInstance/CIM_LocalFileSystem or LMIInstance/LMI_DataFormat
     """
     device = common.str2device(c, device)
     if format_type == FORMAT_ALL:
@@ -105,23 +110,25 @@ def get_format_on_device(c, device, format_type=FORMAT_ALL):
 def get_formats(c, devices=None, format_type=FORMAT_ALL, nodevfs=False):
     """
     Retrieve list of filesystems on given devices.
-
-    :param c:
-    :param devices: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
-    or list of ``string``s with name of the devices.) Devices to list formats
-    on.
-    FORMAT_ALL - return either CIM_LocalFileSystem or LMI_DataFormat.
-    FORMAT_FS - return only CIM_LocalFileSystem or None, if there is no
-    filesystem on the device.
-    FORMAT_DATA - return only LMI_DataFormat or None, if there is no
-    data format on the device.
-    :param nodevfs: Whether non-device filesystems like tmpfs, cgroup, procfs
-    etc.
-
     If no devices are given, all formats on all devices are returned.
 
-    :retval: list of ``LMIInstance``s of ``CIM_LocalFileSystem`` or
-    ``LMI_DataFormat``
+    :type devices: list of LMIInstance/CIM_StorageExtent or list of strings
+    :param devices: Devices to list formats on.
+    :type format_type: int
+    :param format_type: Type of formats to find.
+
+        * FORMAT_ALL - return either CIM_LocalFileSystem or LMI_DataFormat.
+        * FORMAT_FS - return only CIM_LocalFileSystem or None, if there is no
+            filesystem on the device.
+        * FORMAT_DATA - return only LMI_DataFormat or None, if there is no
+            data format on the device.
+
+    :type nodevfs: bool
+    :param nodevfs: Whether non-device filesystems like tmpfs, cgroup, procfs
+        etc. should be returned.
+
+    :rtype: list of LMIInstance/CIM_LocalFileSystem or
+        LMIInstance/LMI_DataFormat
     """
     if devices:
         for device in devices:
@@ -142,14 +149,17 @@ def get_formats(c, devices=None, format_type=FORMAT_ALL, nodevfs=False):
 def create_fs(c, devices, fs, label=None):
     """
     Format given devices with a filesystem.
+    If multiple devices are provided, the format will span over all these
+    devices (currently supported only for btrfs).
 
-    :param c:
-    :param devices: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
-    or list of ``string``s with name of the devices.) Devices to list formats
-    on.
-    :param fs: (``string``) Requested filesystem type.
-    :param label: (``string``) The filesystem label.
-    :retval: (``LMIInstance``) of the CIM_LocalFileSystem.
+    
+    :type devices: list of LMIInstance/CIM_StorageExtent or list of strings
+    :param devices: Devices to format.
+    :type fs: string
+    :param fs: Requested filesystem type (case-insensitive).
+    :type label: string
+    :param label: The filesystem label.
+    :rtype: LMIInstance/CIM_LocalFileSystem
     """
     devs = []
     for device in devices:
@@ -173,10 +183,8 @@ def delete_format(c, fmt):
     """
     Remove given filesystem or data format from all devices, where it resides.
 
-    :param c:
-    :param fmt: (Either ``LMIInstance``s of ``LMI_DataFormat`` or
-    ``CIM_LocalFileSystem`` or ``string`` with name of the device.)
-    Format to delete.
+    :type fmt: LMIInstance/CIM_LocalFileSystem or LMIInstance/LMI_DataFormat
+    :param fmt: Format to delete.
     """
     fmt = str2format(c, fmt)
     if not fmt:
@@ -191,13 +199,12 @@ def delete_format(c, fmt):
 
 def get_format_label(c, fmt):
     """
-    Return short text description of the format.
+    Return short text description of the format, ready for printing.
 
-    :param fmt: (Either ``LMIInstance``s of ``LMI_DataFormat`` or
-    ``CIM_LocalFileSystem`` or ``string`` with name of the device.)
-    Format to describe.
+    :type fmt: LMIInstance/CIM_LocalFileSystem or LMIInstance/LMI_DataFormat
+    :param fmt: Format to describe.
 
-    :retval: (``string``) The label.
+    :rtype: string
     """
     if "FormatType" in fmt.properties():
         return fmt.FormatTypeDescription
@@ -208,12 +215,12 @@ def get_format_label(c, fmt):
 
 def get_device_format_label(c, device):
     """
-    Return short text description of the format on the device.
+    Return short text description of the format, ready for printing.
 
-    :param fmt: (Either ``LMIInstance``s of ``CIM_StorageExtent`` or
-    or ``string`` with name of the device.) Device to describe.
+    :type device: LMIInstance/CIM_StorageExtent or string
+    :param device: Device to describe.
 
-    :retval: (``string``) The label.
+    :rtype: string
     """
     fmt = get_format_on_device(c, device)
     if fmt:
@@ -229,4 +236,3 @@ def get_device_format_label(c, device):
                 return cls.PartitionStyleValues.value_name(
                         table.PartitionStyle) + " partition table"
     return "Unknown"
-

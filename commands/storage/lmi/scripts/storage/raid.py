@@ -18,12 +18,11 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-from lmi.scripts.common.errors import LmiFailed
-
 """
 MD RAID management functions.
 """
 
+from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
@@ -31,25 +30,24 @@ import pywbem
 
 def get_raids(c):
     """
-    Retrieve list of all MD RAIDs.
+    Retrieve list of all MD RAIDs on the system.
 
-    :param c:
-    :retval: list of ``LMIInstance``s of LMI_MDRAIDStorageExtent.
+    :rtype: list of LMIInstance/LMI_MDRAIDStorageExtent.
     """
     for raid in c.root.cimv2.LMI_MDRAIDStorageExtent.instances():
         yield raid
 
 def create_raid(c, devices, level, name=None):
     """
-    Create a MD RAID device.
-    
-    :param c:
-    :param device: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
-    or ``string``s with name of the devices.) Devices to add to the RAID.
-    :param level: (``int``) RAID level.
-    :param name: (``string``) RAID name.
-    
-    :retval: (``LMIInstance``) of the MD RAID.
+    Create new MD RAID device.
+
+    :type devices: list of LMIInstance/CIM_StorageExtent or list of strings
+    :param device: Devices to add to the RAID.
+    :type level: int
+    :param level: RAID level.
+    :type name: string
+    :param name: RAID name.
+    :rtype: LMIInstance/LMI_MDRAIDStorageExtent
     """
     devs = [common.str2device(c, device) for device in devices]
     args = { 'InExtents': devs,
@@ -68,9 +66,8 @@ def delete_raid(c, raid):
     """
     Destroy given RAID device
 
-    :param c:
-    :param raid: (Either ``LMIInstance`` of ``LMI_MDRAIDStorageExtent``
-    or ``string`` with name of the device.) 
+    :type raid: LMIInstance/LMI_MDRAIDStorageExtent
+    :param raid: MD RAID to destroy.
     """
     raid = common.str2device(c, raid)
     service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
@@ -83,10 +80,9 @@ def get_raid_members(c, raid):
     """
     Return member devices of the RAID.
 
-    :param device: (Either ``LMIInstance`` of ``LMI_MDRAIDStorageExtent``
-    or ``string`` with name of the device.) RAID to query.
-
-    :retval: List of ``LMIInstance``s of ``CIM_StorageExtent``.
+    :type raid: LMIInstance/LMI_MDRAIDStorageExtent
+    :param raid: MD RAID to examine.
+    :rtype: List of LMIInstance/CIM_StorageExtent
     """
     raid = common.str2device(c, raid)
     members = raid.associators(AssocClass="LMI_MDRAIDBasedOn",
