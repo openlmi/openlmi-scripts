@@ -25,6 +25,7 @@ Usage:
     %(cmd)s list [--all] [<devices>]...
     %(cmd)s create [ --label=<label> ] <type> [<devices>]...
     %(cmd)s delete <devices>...
+    %(cmd)s list-supported
 
 Commands:
     list        List filesystems and and other data formats (RAID metadata, ...)
@@ -78,7 +79,7 @@ def list_supported(c):
     caps = c.root.cimv2.LMI_FileSystemConfigurationCapabilities.first_instance()
     cls = c.root.cimv2.LMI_FileSystemConfigurationCapabilities
     for fstype in caps.SupportedActualFileSystemTypes:
-        yield cls.SupportedActualFileSystemTypesValues.value_name(fstype)
+        yield [cls.SupportedActualFileSystemTypesValues.value_name(fstype)]
 
 def create(c, devices, type, __label=None):
     fs.create_fs(c, devices, type, __label)
