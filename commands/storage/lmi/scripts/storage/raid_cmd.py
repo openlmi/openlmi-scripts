@@ -23,8 +23,9 @@ MD RAID management.
 
 Usage:
     %(cmd)s list
-    %(cmd)s create [ --name=<name> ] <level> [<devices>]...
+    %(cmd)s create [ --name=<name> ] <level> <devices>...
     %(cmd)s delete <devices>...
+    %(cmd)s show [<devices>]...
 
 Commands:
     list        List all MD RAID devices on the system.
@@ -32,16 +33,27 @@ Commands:
     create      Create MD RAID array with given RAID level from list of devices.
 
     delete      Delete given MD RAID devices.
+
+    show        Show detailed information about given MD RAID devices. If no
+                devices are provided, all MD RAID devices are displayed.
 """
 
 from lmi.scripts.common import command
-from lmi.scripts.storage import raid
+from lmi.scripts.storage import raid, show
 from lmi.scripts.storage.common import str2device
 
 def list(c):
     for r in raid.get_raids(c):
         members = raid.get_raid_members(c, r)
         yield (r.DeviceID, r.ElementName, r.Level, len(members))
+
+def cmd_show(c, devices=None):
+    if not devices:
+        devices = raid.get_raids(c)
+    for r in devices:
+        show.raid_show(c, r)
+        print ""
+    return 0
 
 def create(c, devices, level, __name=None):
     raid.create_raid(c, devices, level, __name)
@@ -64,10 +76,15 @@ class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.raid_cmd:delete'
     EXPECT = 0
 
+class Show(command.LmiCheckResult):
+    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_show'
+    EXPECT = 0
+
 Raid = command.register_subcommands(
         'raid', __doc__,
         { 'list'    : Lister ,
           'create'  : Create,
           'delete'  : Delete,
+          'show'    : Show,
         },
     )

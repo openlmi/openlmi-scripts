@@ -23,7 +23,8 @@ Partition management.
 
 Usage:
     %(cmd)s list [<devices>]...
-    %(cmd)s create [ --gpt | --msdos ] [<devices>]...
+    %(cmd)s create [ --gpt | --msdos ] <devices>...
+    %(cmd)s show  [<devices>]...
 
 Commands:
     list        List partition tables on given device.
@@ -33,12 +34,15 @@ Commands:
                 empty, i.e. must not have any partitions on them. GPT partition
                 table is created by default.
 
+    show        Show detailed information about partition table on given
+                devices. If no devices are provided, all of them are displayed.
+
 Remarks:
-    Use 'lmi format delete' to remove a partition table from a device.
+    Use 'lmi fs delete' to remove a partition table from a device.
 """
 
 from lmi.scripts.common import command
-from lmi.scripts.storage import partition
+from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device
 
 def list(c, devices=None):
@@ -51,6 +55,14 @@ def list(c, devices=None):
                 device.Name,
                 device.ElementName,
                 partition.get_largest_partition_size(c, device))
+
+def cmd_show(c, devices=None):
+    if not devices:
+        devices = partition.get_partition_tables(c)
+    for device in devices:
+        show.partition_table_show(c, device)
+        print ""
+    return 0
 
 def create(c, devices, __gpt, __msdos):
     if __msdos:
@@ -68,9 +80,14 @@ class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:create'
     EXPECT = None
 
+class Show(command.LmiCheckResult):
+    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:cmd_show'
+    EXPECT = None
+
 PartitionTable = command.register_subcommands(
         'PartitionTable', __doc__,
         { 'list'    : Lister ,
           'create'  : Create,
+          'show'    : Show,
         },
     )

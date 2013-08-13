@@ -25,6 +25,7 @@ Usage:
     %(cmd)s list [<devices>]...
     %(cmd)s create [ --logical | --extended ] <device> [<size>]
     %(cmd)s delete <partitions>...
+    %(cmd)s show [<partitions>]...
 
 Commands:
     list        List available partitions on given devices.
@@ -53,6 +54,9 @@ Commands:
 
     delete      Delete given partitions.
 
+    show        Show detailed information about given partitions. If no
+                partitions are provided, all of them are displayed.
+
 Options:
     size        Size of the partition in sectors.
     --logical   Override the automatic behavior and request logical partition.
@@ -60,7 +64,7 @@ Options:
 """
 
 from lmi.scripts.common import command
-from lmi.scripts.storage import partition
+from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
 
 def list(c, devices=None):
@@ -84,11 +88,18 @@ def list(c, devices=None):
                 type,
                 size2str(part.NumberOfBlocks * part.BlockSize))
 
+def cmd_show(c, partitions=None):
+    if not partitions:
+        partitions = partition.get_partitions(c)
+    for part in partitions:
+        show.partition_show(c, part)
+        print ""
+    return 0
+
 def create(c, device, size=None, __extended=None, __logical=None):
     device = str2device(c, device)
     size = str2size(size)
     ptype = None
-    print device, size
     if __extended:
         ptype = partition.PARTITION_TYPE_EXTENDED
     elif __logical:
@@ -112,10 +123,15 @@ class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:delete'
     EXPECT = 0
 
+class Show(command.LmiCheckResult):
+    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_show'
+    EXPECT = 0
+
 Partition = command.register_subcommands(
         'Partition', __doc__,
         { 'list'    : Lister ,
           'create'  : Create,
           'delete'  : Delete,
+          'show'    : Show,
         },
     )

@@ -62,7 +62,7 @@ def str2vg(c, vg):
     return vgs[0]
 
 
-def get_lvs(c, vgs):
+def get_lvs(c, vgs=None):
     """
     Retrieve list of all logical volumes allocated from given volume groups.
 
@@ -204,7 +204,7 @@ def get_vg_lvs(c, vg):
     vg = str2vg(c, vg)
     return vg.associators(AssocClass="LMI_LVAllocatedFromStoragePool")
 
-def get_lv_vg(c, vg):
+def get_lv_vg(c, lv):
     """
     Return Volume Group of given Logical Volume.
 
@@ -213,7 +213,7 @@ def get_lv_vg(c, vg):
     :retval: (``LMIInstance`` of LMI_VGStoragePool) or None,
     if there is no such VG.
     """
-    lv = common.str2device(lv)
+    lv = common.str2device(c, lv)
     return lv.first_associator(AssocClass="LMI_LVAllocatedFromStoragePool")
 
 def get_vg_pvs(c, vg):

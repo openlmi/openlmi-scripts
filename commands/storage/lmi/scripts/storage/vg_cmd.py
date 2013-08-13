@@ -23,8 +23,9 @@ Volume Group management.
 
 Usage:
     %(cmd)s list
-    %(cmd)s create [ --extent-size=<size> ] <name> [<devices>]...
+    %(cmd)s create [ --extent-size=<size> ] <name> <devices>...
     %(cmd)s delete <vgs>...
+    %(cmd)s show [<vgs>]...
 
 Commands:
     list        List all volume groups on the system.
@@ -32,10 +33,13 @@ Commands:
     create      Create Volume Group with given name from list of devices.
 
     delete      Delete given Volume Groups.
+
+    show        Show detailed information about given Volume Groups. If no
+                Volume Groups are provided, all of them are displayed.
 """
 
 from lmi.scripts.common import command
-from lmi.scripts.storage import lvm
+from lmi.scripts.storage import lvm, show
 from lmi.scripts.storage.common import str2device, str2size, size2str
 
 def list(c):
@@ -44,6 +48,14 @@ def list(c):
                 vg.ElementName,
                 size2str(vg.ExtentSize),
                 size2str(vg.RemainingManagedSpace))
+
+def cmd_show(c, vgs=None):
+    if not vgs:
+        vgs = lvm.get_vgs(c)
+    for vg in vgs:
+        show.vg_show(c, vg)
+        print ""
+    return 0
 
 def create(c, name, devices, __extent_size=None):
     if __extent_size:
@@ -68,10 +80,15 @@ class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.vg_cmd:delete'
     EXPECT = 0
 
+class Show(command.LmiCheckResult):
+    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_show'
+    EXPECT = 0
+
 Vg = command.register_subcommands(
         'vg', __doc__,
         { 'list'    : Lister ,
           'create'  : Create,
           'delete'  : Delete,
+          'show'    : Show,
         },
     )

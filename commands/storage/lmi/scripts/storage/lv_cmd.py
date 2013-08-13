@@ -25,6 +25,7 @@ Usage:
     %(cmd)s list [<vgs>]...
     %(cmd)s create <vg> <name> <size>
     %(cmd)s delete <lvs>...
+    %(cmd)s show [<lvs>]...
 
 Commands:
     list        List available logical volumes on given volume groups.
@@ -37,10 +38,13 @@ Commands:
                 e.g. '100e' is 100 extents.
 
     delete      Delete given logical volume.
+
+    show        Show detailed information about given Logical Volumes. If no
+                Logical Volumes are provided, all of them are displayed.
 """
 
 from lmi.scripts.common import command
-from lmi.scripts.storage import lvm
+from lmi.scripts.storage import lvm, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
 
 def list(c, vgs=None):
@@ -49,6 +53,14 @@ def list(c, vgs=None):
                 lv.Name,
                 lv.ElementName,
                 size2str(lv.NumberOfBlocks * lv.BlockSize))
+
+def cmd_show(c, lvs=None):
+    if not lvs:
+        lvs = lvm.get_lvs(c)
+    for lv in lvs:
+        show.lv_show(c, lv)
+        print ""
+    return 0
 
 def create(c, vg, name, size):
     vg = lvm.str2vg(c, vg)
@@ -72,10 +84,15 @@ class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.lv_cmd:delete'
     EXPECT = 0
 
+class Show(command.LmiCheckResult):
+    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_show'
+    EXPECT = 0
+
 Lv = command.register_subcommands(
         'Lv', __doc__,
         { 'list'    : Lister ,
           'create'  : Create,
           'delete'  : Delete,
+          'show'    : Show,
         },
     )

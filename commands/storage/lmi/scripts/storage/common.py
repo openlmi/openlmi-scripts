@@ -152,3 +152,21 @@ def size2str(size):
         ret = ret[:-1]
 
     return ret + suffix
+
+def get_devices(c, devices=None):
+    """
+    Returns list of devices.
+    If no devices are given, all devices are returned.
+
+    :param devices: (Either list of ``LMIInstance``s of ``CIM_StorageExtent``
+    or list of ``string``s with name of the devices.) Devices to list.
+
+    :retval: (list of ``LMIInstance``s of ``CIM_StorageExtent`` List of
+    the devices.
+    """
+    if devices:
+        for dev in devices:
+            yield str2device(dev)
+    else:
+        for dev in c.root.cimv2.CIM_StorageExtent.instances():
+            yield dev

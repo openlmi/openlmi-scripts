@@ -36,6 +36,46 @@ PARTITION_TYPE_LOGICAL = 3
 PARTITION_TABLE_TYPE_GPT = 3  # from CIM_DiskPartitionConfigurationCapabilities
 PARTITION_TABLE_TYPE_MSDOS = 2
 
+def get_disk_partitions(c, disk):
+    """
+    Return list of partitions on the device (not necessarily disk).
+    :param device: (Either ``LMIInstance`` of ``CIM_StorageExtent``
+    or ``string`` with name of the device.) Device which should be partitioned.
+    :retval: List of ``LMIInstance``s of ``CIM_GenericDiskPartition``.
+    """
+    disk = common.str2device(c, disk)
+    parts = disk.associators(
+            AssocClass="CIM_BasedOn", Role="Antecedent")
+    for part in parts:
+        yield part
+        # List also logical partitions, which are 'BasedOn'
+        # on extended partition.
+        if "PartitionType" in part.properties():
+            cls = c.root.cimv2.LMI_DiskPartition
+            if part.PartitionType == cls.PartitionTypeValues.Extended:
+                for logical in part.associators(
+                        "CIM_BasedOn", Role="Antecedent"):
+                    yield logical
+
+
+def get_partition_disk(c, partition):
+    """
+    Return device on which is the given partition located.
+
+    :param partition: (Either ``LMIInstance`` of ``CIM_GenericDiskPartition``
+    or ``string`` with name of the device.)
+
+    :retval: ``LMIInstance`` of ``CIM_GenericDiskPartition``.
+    """
+    partition = common.str2device(c, partition)
+    device = partition.first_associator(
+            AssocClass="CIM_BasedOn", Role="Dependent")
+    if "PartitionType" in device.properties():
+        # we got extended partition, find the disk
+        device = device.first_associator(
+            AssocClass="CIM_BasedOn", Role="Dependent")
+    return device
+
 def get_partitions(c, devices=None):
     """
     Retrieve list of partitions on given devices.
@@ -53,17 +93,9 @@ def get_partitions(c, devices=None):
         for device in devices:
             device = common.str2device(c, device)
             LOG().debug("Getting list of partitions on %s", device.Name)
-            parts = device.associators(
-                    AssocClass="CIM_BasedOn", Role="Antecedent")
+            parts = get_disk_partitions(c, disk)
             for part in parts:
                 yield part
-                # List also logical partitions, which are 'BasedOn'
-                # on extended partition.
-                if "PartitionType" in part.properties():
-                    if part.PartitionType == 2:  # TODO: use enumeration
-                        for logical in part.associators(
-                                "CIM_BasedOn", Role="Antecedent"):
-                            yield logical
     else:
         # No devices supplied, list all partitions.
         for part in c.root.cimv2.CIM_GenericDiskPartition.instances():
@@ -180,11 +212,26 @@ def get_partition_tables(c, devices=None):
             yield table.Antecedent.to_instance(), table.Dependent.to_instance()
     else:
         for device in devices:
-            device = common.str2device(c, device)
-            table = device.first_associator(
-                    AssocClass="LMI_InstalledPartitionTable")
+            table = get_disk_partition_table(c, device)
             if table:
                 yield device, table
+
+def get_disk_partition_table(c, device):
+    """
+    Returns LMI_DiskPartitionTableCapabilities representing partition table
+    on the disk.
+
+    :param device:  (Either ``LMIInstance`` of ``CIM_StorageExtent``
+    or ``string`` with name of the device.) Device which should be examined.
+    There must be partition table present on this device.
+
+    :retval: (``LMIInstance`` of ``LMI_DiskPartitionConfigurationCapabilities``)
+    Partition table on the device or None, if the device is not partitioned.
+    """
+    device = common.str2device(c, device)
+    table = device.first_associator(
+                    AssocClass="LMI_InstalledPartitionTable")
+    return table
 
 def get_largest_partition_size(c, device):
     """
@@ -205,7 +252,8 @@ def get_largest_partition_size(c, device):
         raise LmiFailed("Cannot find partition table on %s" % device.name)
     (ret, outparams, err) = cap.FindPartitionLocation(Extent=device)
     if ret != 0:
-        raise LmiFailed("Cannot find largest partition size: %d." % ret)
+        LOG().warning("Cannot find largest partition size: %d." % ret)
+        return 0
     blocks = outparams['EndingAddress'] - outparams['StartingAddress']
     size = blocks * device.BlockSize
     return size

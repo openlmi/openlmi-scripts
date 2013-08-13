@@ -46,6 +46,7 @@ setup(
             'raid = lmi.scripts.storage.raid_cmd:Raid',
             'lv = lmi.scripts.storage.lv_cmd:Lv',
             'vg = lmi.scripts.storage.vg_cmd:Vg',
+            'device = lmi.scripts.storage.device_cmd:Device',
             ],
         },
     )

@@ -19,7 +19,7 @@
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
 from lmi.scripts.common.errors import LmiFailed
-
+from lmi.scripts.storage import partition
 """
 Filesystem management functions.
 """
@@ -82,18 +82,22 @@ def get_format_on_device(c, device, format_type=FORMAT_ALL):
     :retval: (``LMIInstance`` of ``CIM_LocalFileSystem`` or ``LMI_DataFormat``)
     or None, if there is no recognizable format on the device.
     """
-    if format_type == FORMAT_ALL:
-        result = "CIM_ManagedElement"
-    elif format_type == FORMAT_FS:
-        result = "CIM_LocalFileSystem"
-    elif format_type == FORMAT_DATA:
-        result = "LMI_DataFormat"
-
     device = common.str2device(c, device)
-    fmt = device.first_associator(
+    if format_type == FORMAT_ALL:
+        fmt = device.first_associator(
+                AssocClass="CIM_ResidesOnExtent",
+                Role="Antecedent")
+    elif format_type == FORMAT_FS:
+        fmt = device.first_associator(
                 AssocClass="CIM_ResidesOnExtent",
                 Role="Antecedent",
-                ResultClass=result)
+                ResultClass="CIM_LocalFileSystem")
+    elif format_type == FORMAT_DATA:
+        fmt = device.first_associator(
+                AssocClass="CIM_ResidesOnExtent",
+                Role="Antecedent",
+                ResultClass="LMI_DataFormat")
+
     if fmt:
         return fmt
     return None
@@ -184,3 +188,45 @@ def delete_format(c, fmt):
     if ret != 0:
         raise LmiFailed("Cannot delete the format: %s."
                 % (service.DeleteFileSystem.DeleteFileSystemValues.value_name(ret)))
+
+def get_format_label(c, fmt):
+    """
+    Return short text description of the format.
+
+    :param fmt: (Either ``LMIInstance``s of ``LMI_DataFormat`` or
+    ``CIM_LocalFileSystem`` or ``string`` with name of the device.)
+    Format to describe.
+
+    :retval: (``string``) The label.
+    """
+    if "FormatType" in fmt.properties():
+        return fmt.FormatTypeDescription
+    elif "FileSystemType" in fmt.properties():
+        return fmt.FileSystemType
+    else:
+        return "Unknown"
+
+def get_device_format_label(c, device):
+    """
+    Return short text description of the format on the device.
+
+    :param fmt: (Either ``LMIInstance``s of ``CIM_StorageExtent`` or
+    or ``string`` with name of the device.) Device to describe.
+
+    :retval: (``string``) The label.
+    """
+    fmt = get_format_on_device(c, device)
+    if fmt:
+        return get_format_label(c, fmt)
+    else:
+        # check if there is partition table on the device
+        table = partition.get_disk_partition_table(c, device)
+        if table:
+            cls = c.root.cimv2.LMI_DiskPartitionConfigurationCapabilities
+            if table.PartitionStyle == cls.PartitionStyleValues.MBR:
+                return "MS-DOS partition table"
+            else:
+                return cls.PartitionStyleValues.value_name(
+                        table.PartitionStyle) + " partition table"
+    return "Unknown"
+
