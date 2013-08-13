@@ -19,53 +19,57 @@
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
 """
-MD RAID management.
+Volume Group management.
 
 Usage:
     %(cmd)s list
-    %(cmd)s create [ --name=<name> ] <level> [<devices>]...
-    %(cmd)s delete <devices>...
+    %(cmd)s create [ --extent-size=<size> ] <name> [<devices>]...
+    %(cmd)s delete <vgs>...
 
 Commands:
-    list        List all MD RAID devices on the system.
+    list        List all volume groups on the system.
 
-    create      Create MD RAID array with given RAID level from list of devices.
+    create      Create Volume Group with given name from list of devices.
 
-    delete      Delete given MD RAID devices.
+    delete      Delete given Volume Groups.
 """
 
 from lmi.scripts.common import command
-from lmi.scripts.storage import raid
-from lmi.scripts.storage.common import str2device
+from lmi.scripts.storage import lvm
+from lmi.scripts.storage.common import str2device, str2size, size2str
 
 def list(c):
-    for r in raid.get_raids(c):
-        members = raid.get_raid_members(c, r)
-        yield (r.DeviceID, r.ElementName, r.Level, len(members))
+    for vg in lvm.get_vgs(c):
+        yield (vg.InstanceID,
+                vg.ElementName,
+                size2str(vg.ExtentSize),
+                size2str(vg.RemainingManagedSpace))
 
-def create(c, devices, level, __name=None):
-    raid.create_raid(c, devices, level, __name)
+def create(c, name, devices, __extent_size=None):
+    if __extent_size:
+        __extent_size = str2size(__extent_size)
+    lvm.create_vg(c, devices, name, __extent_size)
     return 0
 
-def delete(c, devices):
-    for dev in devices:
-        raid.delete_raid(c, dev)
+def delete(c, vgs):
+    for vg in vgs:
+        lvm.delete_vg(c, vg)
     return 0
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:list'
-    COLUMNS = ('DeviceID', 'Name', "Level", "Nr. of members")
+    CALLABLE = 'lmi.scripts.storage.vg_cmd:list'
+    COLUMNS = ('InstanceID', 'ElementName', "ExtentSize", "Free space")
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:create'
+    CALLABLE = 'lmi.scripts.storage.vg_cmd:create'
     EXPECT = 0
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:delete'
+    CALLABLE = 'lmi.scripts.storage.vg_cmd:delete'
     EXPECT = 0
 
-Raid = command.register_subcommands(
-        'raid', __doc__,
+Vg = command.register_subcommands(
+        'vg', __doc__,
         { 'list'    : Lister ,
           'create'  : Create,
           'delete'  : Delete,

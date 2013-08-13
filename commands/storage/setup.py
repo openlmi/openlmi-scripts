@@ -44,6 +44,8 @@ setup(
             'partition = lmi.scripts.storage.partition_cmd:Partition',
             'partition-table = lmi.scripts.storage.partitiontable_cmd:PartitionTable',
             'raid = lmi.scripts.storage.raid_cmd:Raid',
+            'lv = lmi.scripts.storage.lv_cmd:Lv',
+            'vg = lmi.scripts.storage.vg_cmd:Vg',
             ],
         },
     )

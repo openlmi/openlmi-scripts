@@ -28,6 +28,7 @@ from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
 import pywbem
+from lmi.shell import LMIInstance
 
 FORMAT_DATA = 1
 FORMAT_FS = 2
@@ -48,7 +49,7 @@ def str2format(c, fmt):
 
     This functions throws an error when the device cannot be found.
     """
-    if isinstance(fmt, _LMIInstance):
+    if isinstance(fmt, LMIInstance):
         return fmt
     if not isinstance(fmt, str):
         raise TypeError("string or _LMIInstance expected")
@@ -121,7 +122,7 @@ def get_formats(c, devices=None, format_type=FORMAT_ALL, nodevfs=False):
     if devices:
         for device in devices:
             LOG().debug("Getting filesystem on %s", device.Name)
-            yield get_fs_on_device(device, format_type)
+            yield get_format_on_device(device, format_type)
     else:
         # No devices supplied, list all formats
         if format_type & FORMAT_FS:
@@ -150,7 +151,7 @@ def create_fs(c, devices, fs, label=None):
     for device in devices:
         devs.append(common.str2device(device))
 
-    fsid = get_filesystem_id(c, fs)
+    fsid = _get_fs_id(c, fs)
     service = c.root.cimv2.LMI_FileSystemConfigurationService.first_instance()
     args = {
         'FyleSystemType': fsid,

@@ -61,9 +61,7 @@ Options:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import partition
-from lmi.scripts.storage.common import str2size, str2device
-
-MEGABYTE = 1024 * 1024
+from lmi.scripts.storage.common import str2size, str2device, size2str
 
 def list(c, devices=None):
     """
@@ -84,7 +82,7 @@ def list(c, devices=None):
                 part.Name,
                 part.ElementName,
                 type,
-                part.NumberOfBlocks * part.BlockSize / MEGABYTE)
+                size2str(part.NumberOfBlocks * part.BlockSize))
 
 def create(c, device, size=None, __extended=None, __logical=None):
     device = str2device(c, device)
@@ -104,7 +102,7 @@ def delete(c, partitions):
 
 class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:list'
-    COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size [MB]")
+    COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
 
 class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:create'
