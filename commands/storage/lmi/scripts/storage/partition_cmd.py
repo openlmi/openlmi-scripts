@@ -79,11 +79,11 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
 
-def list(c, devices=None):
+def list(ns, devices=None):
     """
     This is tiny wrapper around get_partitions to list only interesting fields.
     """
-    for part in partition.get_partitions(c, devices):
+    for part in partition.get_partitions(ns, devices):
         type = ""
         if "PartitionType" in part.properties():
             if part.PartitionType == 1:  # TODO: use enumeration
@@ -100,28 +100,28 @@ def list(c, devices=None):
                 type,
                 size2str(part.NumberOfBlocks * part.BlockSize))
 
-def cmd_show(c, partitions=None):
+def cmd_show(ns, partitions=None):
     if not partitions:
-        partitions = partition.get_partitions(c)
+        partitions = partition.get_partitions(ns)
     for part in partitions:
-        show.partition_show(c, part)
+        show.partition_show(ns, part)
         print ""
     return 0
 
-def create(c, device, size=None, __extended=None, __logical=None):
-    device = str2device(c, device)
+def create(ns, device, size=None, __extended=None, __logical=None):
+    device = str2device(ns, device)
     size = str2size(size)
     ptype = None
     if __extended:
         ptype = partition.PARTITION_TYPE_EXTENDED
     elif __logical:
         ptype = partition.PARTITION_TYPE_LOGICAL
-    p = partition.create_partition(c, device, size, ptype)
+    p = partition.create_partition(ns, device, size, ptype)
     print "Partition %s, with DeviceID %s created." % (p.Name, p.DeviceID)
 
-def delete(c, partitions):
+def delete(ns, partitions):
     for part in partitions:
-        partition.delete_partition(c, part)
+        partition.delete_partition(ns, part)
 
 class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:list'

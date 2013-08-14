@@ -54,32 +54,32 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device
 
-def list(c, devices=None):
+def list(ns, devices=None):
     """
     This is tiny wrapper around get_partition_tables to list only interesting
     fields.
     """
-    for (device, table) in partition.get_partition_tables(c, devices):
+    for (device, table) in partition.get_partition_tables(ns, devices):
         yield (device.DeviceID,
                 device.Name,
                 device.ElementName,
-                partition.get_largest_partition_size(c, device))
+                partition.get_largest_partition_size(ns, device))
 
-def cmd_show(c, devices=None):
+def cmd_show(ns, devices=None):
     if not devices:
-        devices = partition.get_partition_tables(c)
+        devices = partition.get_partition_tables(ns)
     for device in devices:
-        show.partition_table_show(c, device)
+        show.partition_table_show(ns, device)
         print ""
     return 0
 
-def create(c, devices, __gpt, __msdos):
+def create(ns, devices, __gpt, __msdos):
     if __msdos:
         ptype = partition.PARTITION_TABLE_TYPE_MSDOS
     else:
         ptype = partition.PARTITION_TABLE_TYPE_GPT
     for device in devices:
-        partition.create_partition_table(c, device, ptype)
+        partition.create_partition_table(ns, device, ptype)
 
 class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:list'

@@ -54,30 +54,30 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
 from lmi.scripts.storage.common import str2device, str2size, size2str
 
-def list(c):
-    for vg in lvm.get_vgs(c):
+def list(ns):
+    for vg in lvm.get_vgs(ns):
         yield (vg.InstanceID,
                 vg.ElementName,
                 size2str(vg.ExtentSize),
                 size2str(vg.RemainingManagedSpace))
 
-def cmd_show(c, vgs=None):
+def cmd_show(ns, vgs=None):
     if not vgs:
-        vgs = lvm.get_vgs(c)
+        vgs = lvm.get_vgs(ns)
     for vg in vgs:
-        show.vg_show(c, vg)
+        show.vg_show(ns, vg)
         print ""
     return 0
 
-def create(c, name, devices, __extent_size=None):
+def create(ns, name, devices, __extent_size=None):
     if __extent_size:
         __extent_size = str2size(__extent_size)
-    lvm.create_vg(c, devices, name, __extent_size)
+    lvm.create_vg(ns, devices, name, __extent_size)
     return 0
 
-def delete(c, vgs):
+def delete(ns, vgs):
     for vg in vgs:
-        lvm.delete_vg(c, vg)
+        lvm.delete_vg(ns, vg)
     return 0
 
 class Lister(command.LmiLister):

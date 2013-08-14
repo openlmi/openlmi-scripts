@@ -41,7 +41,7 @@ from lmi.scripts.storage import common
 from lmi.shell import LMIInstance
 import pywbem
 
-def str2vg(c, vg):
+def str2vg(ns, vg):
     """
     Convert string with name of volume group to LMIInstance of the
     LMI_VGStoragePool.
@@ -63,7 +63,7 @@ def str2vg(c, vg):
         raise TypeError("string or LMIInstance expected")
     query = 'SELECT * FROM LMI_VGStoragePool WHERE ElementName="%(vg)s"' \
             % {'vg': common.escape_cql(vg)}
-    vgs = c.root.cimv2.wql(query)
+    vgs = ns.wql(query)
     if not vgs:
         raise LmiFailed("Volume Group '%s' not found" % (vg,))
     if len(vgs) > 1:
@@ -74,7 +74,7 @@ def str2vg(c, vg):
     return vgs[0]
 
 
-def get_lvs(c, vgs=None):
+def get_lvs(ns, vgs=None):
     """
     Retrieve list of all logical volumes allocated from given volume groups.
 
@@ -88,14 +88,14 @@ def get_lvs(c, vgs=None):
     if vgs:
         for vg in vgs:
             LOG().debug("Getting LVs on %s", vg.ElementName)
-            for lv in get_lvs_on_vg(vg):
+            for lv in get_vg_lvs(ns, vg):
                 yield lv
     else:
         # No vgs supplied, list all LVs
-        for lv in c.root.cimv2.LMI_LVStorageExtent.instances():
+        for lv in ns.LMI_LVStorageExtent.instances():
             yield lv
 
-def create_lv(c, vg, name, size):
+def create_lv(ns, vg, name, size):
     """
     Create new Logical Volume on given Volume Group.
 
@@ -107,8 +107,8 @@ def create_lv(c, vg, name, size):
     :param size: Size of the logical volume in bytes.
     :rtype: LMIInstance/LMI_LVStorageExtent
     """
-    vg = str2vg(c, vg)
-    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
+    vg = str2vg(ns, vg)
+    service = ns.LMI_StorageConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncCreateOrModifyLV(
             ElementName=name,
             Size=size,
@@ -119,30 +119,30 @@ def create_lv(c, vg, name, size):
     return outparams['TheElement']
 
 
-def delete_lv(c, lv):
+def delete_lv(ns, lv):
     """
     Destroy given Logical Volume.
 
     :type lv: LMIInstance/LMI_LVStorageExtent or string
     :param lv: Logical Volume to destroy.
     """
-    lv = common.str2device(c, lv)
-    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
+    lv = common.str2device(ns, lv)
+    service = ns.LMI_StorageConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncDeleteLV(TheElement=lv)
     if ret != 0:
         raise LmiFailed("Cannot delete the LV: %s."
                 % (service.DeleteLV.DeleteLVValues.value_name(ret),))
 
-def get_vgs(c):
+def get_vgs(ns):
     """
     Retrieve list of all volume groups on the system.
 
     :rtype: list of LMIInstance/LMI_VGStoragePool
     """
-    for vg in c.root.cimv2.LMI_VGStoragePool.instances():
+    for vg in ns.LMI_VGStoragePool.instances():
         yield vg
 
-def create_vg(c, devices, name, extent_size=None):
+def create_vg(ns, devices, name, extent_size=None):
     """
     Create new Volume Group from given devices.
 
@@ -154,7 +154,7 @@ def create_vg(c, devices, name, extent_size=None):
     :param extent_size: Extent size in bytes.
     :rtype: LMIInstance/LMI_VGStoragePool
     """
-    devs = [common.str2device(c, device) for device in devices]
+    devs = [common.str2device(ns, device) for device in devices]
     args = { 'InExtents': devs,
             'ElementName': name}
     goal = None
@@ -162,7 +162,7 @@ def create_vg(c, devices, name, extent_size=None):
     try:
         if extent_size:
             # create (and use) VGStorageSetting
-            caps = c.root.cimv2.LMI_VGStorageCapabilities.first_instance()
+            caps = ns.LMI_VGStorageCapabilities.first_instance()
             (ret, outparams, err) = caps.CreateVGStorageSetting(
                     InExtents=devs)
             if ret != 0:
@@ -176,7 +176,7 @@ def create_vg(c, devices, name, extent_size=None):
                         % ret)
             args['Goal'] = goal
 
-        service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
+        service = ns.LMI_StorageConfigurationService.first_instance()
         (ret, outparams, err) = service.SyncCreateOrModifyVG(**args)
         if ret != 0:
             raise LmiFailed("Cannot create the volume group: %s."
@@ -188,21 +188,21 @@ def create_vg(c, devices, name, extent_size=None):
     return outparams['Pool']
 
 
-def delete_vg(c, vg):
+def delete_vg(ns, vg):
     """
     Destroy given Volume Group.
 
     :type vg: LMIInstance/LMI_VGStoragePool or string
     :param vg: Volume Group to delete.
     """
-    vg = str2vg(c, vg)
-    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
+    vg = str2vg(ns, vg)
+    service = ns.LMI_StorageConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncDeleteVG(Pool=vg)
     if ret != 0:
         raise LmiFailed("Cannot delete the VG: %s."
                 % (service.DeleteVG.DeleteVGValues.value_name(ret),))
 
-def get_vg_lvs(c, vg):
+def get_vg_lvs(ns, vg):
     """
     Return list of Logical Volumes on given Volume Group.
 
@@ -210,10 +210,10 @@ def get_vg_lvs(c, vg):
     :param vg: Volume Group to examine.
     :rtype: list of LMIInstance/LMI_LVStorageExtent
     """
-    vg = str2vg(c, vg)
+    vg = str2vg(ns, vg)
     return vg.associators(AssocClass="LMI_LVAllocatedFromStoragePool")
 
-def get_lv_vg(c, lv):
+def get_lv_vg(ns, lv):
     """
     Return Volume Group of given Logical Volume.
 
@@ -221,10 +221,10 @@ def get_lv_vg(c, lv):
     :param lv: Logical Volume to examine.
     :rtype: LMIInstance/LMI_VGStoragePool
     """
-    lv = common.str2device(c, lv)
+    lv = common.str2device(ns, lv)
     return lv.first_associator(AssocClass="LMI_LVAllocatedFromStoragePool")
 
-def get_vg_pvs(c, vg):
+def get_vg_pvs(ns, vg):
     """
     Return Physical Volumes of given Volume Group.
 
@@ -232,5 +232,5 @@ def get_vg_pvs(c, vg):
     :param vg: Volume Group to examine.
     :rtype: list of LMIInstance/CIM_StorageExtent
     """
-    vg = str2vg(c, vg)
+    vg = str2vg(ns, vg)
     return vg.associators(AssocClass="LMI_VGAssociatedComponentExtent")
