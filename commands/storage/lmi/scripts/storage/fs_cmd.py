@@ -66,11 +66,11 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import fs
 from lmi.scripts.storage.common import str2device
 
-def list(c, devices=None, __all=False):
+def list(ns, devices=None, __all=False):
     """
     This is tiny wrapper around get_fs to list only interesting fields.
     """
-    for fmt in fs.get_formats(c, devices, fs.FORMAT_ALL, __all):
+    for fmt in fs.get_formats(ns, devices, fs.FORMAT_ALL, __all):
         device = fmt.first_associator(AssocClass="CIM_ResidesOnExtent")
         if device:
             devname = device.DeviceID
@@ -87,18 +87,18 @@ def list(c, devices=None, __all=False):
             type = fmt.FormatTypeDescription
         yield (devname, name, label, type)
 
-def list_supported(c):
-    caps = c.root.cimv2.LMI_FileSystemConfigurationCapabilities.first_instance()
-    cls = c.root.cimv2.LMI_FileSystemConfigurationCapabilities
+def list_supported(ns):
+    caps = ns.LMI_FileSystemConfigurationCapabilities.first_instance()
+    cls = ns.LMI_FileSystemConfigurationCapabilities
     for fstype in caps.SupportedActualFileSystemTypes:
         yield [cls.SupportedActualFileSystemTypesValues.value_name(fstype)]
 
-def create(c, devices, type, __label=None):
-    fs.create_fs(c, devices, type, __label)
+def create(ns, devices, type, __label=None):
+    fs.create_fs(ns, devices, type, __label)
 
-def delete(c, devices):
+def delete(ns, devices):
     for dev in devices:
-        fs.delete_format(c, dev)
+        fs.delete_format(ns, dev)
 
 class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.fs_cmd:list'

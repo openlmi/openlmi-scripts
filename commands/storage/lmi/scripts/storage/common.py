@@ -51,7 +51,7 @@ def escape_cql(s):
     """
     return re.sub(r'(["\\])', r'\\\1', s)
 
-def str2device(c, device):
+def str2device(ns, device):
     """
     Convert string with name of device to LMIInstance of the device.
     If LMIInstance is provided, nothing is done and the instance is just
@@ -68,7 +68,7 @@ def str2device(c, device):
     if not isinstance(device, str):
         raise TypeError("string or LMIInstance expected")
     query = 'SELECT * FROM CIM_StorageExtent WHERE DeviceID="%(device)s" OR Name="%(device)s" OR ElementName="%(device)s"' % {'device': escape_cql(device)}
-    devices = c.root.cimv2.wql(query)
+    devices = ns.wql(query)
     if not devices:
         raise LmiFailed("Device '%s' not found" % (device,))
     if len(devices) > 1:
@@ -167,7 +167,7 @@ def size2str(size):
 
     return ret + suffix
 
-def get_devices(c, devices=None):
+def get_devices(ns, devices=None):
     """
     Returns list of block devices.
     If no devices are given, all block devices on the system are returned.
@@ -182,7 +182,7 @@ def get_devices(c, devices=None):
     """
     if devices:
         for dev in devices:
-            yield str2device(dev)
+            yield str2device(ns, dev)
     else:
-        for dev in c.root.cimv2.CIM_StorageExtent.instances():
+        for dev in ns.CIM_StorageExtent.instances():
             yield dev

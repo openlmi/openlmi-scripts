@@ -40,16 +40,16 @@ LOG = get_logger(__name__)
 from lmi.scripts.storage import common
 import pywbem
 
-def get_raids(c):
+def get_raids(ns):
     """
     Retrieve list of all MD RAIDs on the system.
 
     :rtype: list of LMIInstance/LMI_MDRAIDStorageExtent.
     """
-    for raid in c.root.cimv2.LMI_MDRAIDStorageExtent.instances():
+    for raid in ns.LMI_MDRAIDStorageExtent.instances():
         yield raid
 
-def create_raid(c, devices, level, name=None):
+def create_raid(ns, devices, level, name=None):
     """
     Create new MD RAID device.
 
@@ -61,12 +61,12 @@ def create_raid(c, devices, level, name=None):
     :param name: RAID name.
     :rtype: LMIInstance/LMI_MDRAIDStorageExtent
     """
-    devs = [common.str2device(c, device) for device in devices]
+    devs = [common.str2device(ns, device) for device in devices]
     args = { 'InExtents': devs,
             'Level': level}
     if name:
         args['ElementName'] = name
-    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
+    service = ns.LMI_StorageConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncCreateOrModifyMDRAID(**args)
     if ret != 0:
         raise LmiFailed("Cannot create the partition: %s."
@@ -74,21 +74,21 @@ def create_raid(c, devices, level, name=None):
     return outparams['TheElement']
 
 
-def delete_raid(c, raid):
+def delete_raid(ns, raid):
     """
     Destroy given RAID device
 
     :type raid: LMIInstance/LMI_MDRAIDStorageExtent
     :param raid: MD RAID to destroy.
     """
-    raid = common.str2device(c, raid)
-    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
+    raid = common.str2device(ns, raid)
+    service = ns.LMI_StorageConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncDeleteMDRAID(TheElement=raid)
     if ret != 0:
         raise LmiFailed("Cannot delete the raid: %s."
                 % (service.DeleteMDRAID.DeleteMDRAIDValues.value_name(ret),))
 
-def get_raid_members(c, raid):
+def get_raid_members(ns, raid):
     """
     Return member devices of the RAID.
 
@@ -96,7 +96,7 @@ def get_raid_members(c, raid):
     :param raid: MD RAID to examine.
     :rtype: List of LMIInstance/CIM_StorageExtent
     """
-    raid = common.str2device(c, raid)
+    raid = common.str2device(ns, raid)
     members = raid.associators(AssocClass="LMI_MDRAIDBasedOn",
             Role="Dependent")
     return members

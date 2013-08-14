@@ -54,26 +54,26 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import raid, show
 from lmi.scripts.storage.common import str2device
 
-def list(c):
-    for r in raid.get_raids(c):
-        members = raid.get_raid_members(c, r)
+def list(ns):
+    for r in raid.get_raids(ns):
+        members = raid.get_raid_members(ns, r)
         yield (r.DeviceID, r.ElementName, r.Level, len(members))
 
-def cmd_show(c, devices=None):
+def cmd_show(ns, devices=None):
     if not devices:
-        devices = raid.get_raids(c)
+        devices = raid.get_raids(ns)
     for r in devices:
-        show.raid_show(c, r)
+        show.raid_show(ns, r)
         print ""
     return 0
 
-def create(c, devices, level, __name=None):
-    raid.create_raid(c, devices, level, __name)
+def create(ns, devices, level, __name=None):
+    raid.create_raid(ns, devices, level, __name)
     return 0
 
-def delete(c, devices):
+def delete(ns, devices):
     for dev in devices:
-        raid.delete_raid(c, dev)
+        raid.delete_raid(ns, dev)
     return 0
 
 class Lister(command.LmiLister):

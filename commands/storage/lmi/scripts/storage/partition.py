@@ -47,7 +47,7 @@ PARTITION_TYPE_LOGICAL = 3
 PARTITION_TABLE_TYPE_GPT = 3  # from CIM_DiskPartitionConfigurationCapabilities
 PARTITION_TABLE_TYPE_MSDOS = 2
 
-def get_disk_partitions(c, disk):
+def get_disk_partitions(ns, disk):
     """
     Return list of partitions on the device (not necessarily disk).
 
@@ -55,7 +55,7 @@ def get_disk_partitions(c, disk):
     :param device: Device which should be partitioned.
     :rtype: List of LMIInstance/CIM_GenericDiskPartition.
     """
-    disk = common.str2device(c, disk)
+    disk = common.str2device(ns, disk)
     parts = disk.associators(
             AssocClass="CIM_BasedOn", Role="Antecedent")
     for part in parts:
@@ -63,14 +63,14 @@ def get_disk_partitions(c, disk):
         # List also logical partitions, which are 'BasedOn'
         # on extended partition.
         if "PartitionType" in part.properties():
-            cls = c.root.cimv2.LMI_DiskPartition
+            cls = ns.LMI_DiskPartition
             if part.PartitionType == cls.PartitionTypeValues.Extended:
                 for logical in part.associators(
                         "CIM_BasedOn", Role="Antecedent"):
                     yield logical
 
 
-def get_partition_disk(c, partition):
+def get_partition_disk(ns, partition):
     """
     Return a device on which is located the given partition.
 
@@ -78,7 +78,7 @@ def get_partition_disk(c, partition):
     :param partition: Partition to examine.
     :rtype: LMIInstance/CIM_StorageExtent.
     """
-    partition = common.str2device(c, partition)
+    partition = common.str2device(ns, partition)
     device = partition.first_associator(
             AssocClass="CIM_BasedOn", Role="Dependent")
     if "PartitionType" in device.properties():
@@ -87,7 +87,7 @@ def get_partition_disk(c, partition):
             AssocClass="CIM_BasedOn", Role="Dependent")
     return device
 
-def get_partitions(c, devices=None):
+def get_partitions(ns, devices=None):
     """
     Retrieve list of partitions on given devices.
     If no devices are given, all partitions on all devices are returned.
@@ -98,17 +98,17 @@ def get_partitions(c, devices=None):
     """
     if devices:
         for device in devices:
-            device = common.str2device(c, device)
+            device = common.str2device(ns, device)
             LOG().debug("Getting list of partitions on %s", device.Name)
-            parts = get_disk_partitions(c, disk)
+            parts = get_disk_partitions(ns, device)
             for part in parts:
                 yield part
     else:
         # No devices supplied, list all partitions.
-        for part in c.root.cimv2.CIM_GenericDiskPartition.instances():
+        for part in ns.CIM_GenericDiskPartition.instances():
             yield part
 
-def create_partition(c, device, size=None, partition_type=None):
+def create_partition(ns, device, size=None, partition_type=None):
     """
     Create new partition on given device.
 
@@ -126,7 +126,7 @@ def create_partition(c, device, size=None, partition_type=None):
 
     :rtype: LMIInstance/CIM_GenericDiskPartition.
     """
-    device = common.str2device(c, device)
+    device = common.str2device(ns, device)
     setting = None
 
     try:
@@ -136,7 +136,7 @@ def create_partition(c, device, size=None, partition_type=None):
 
         if partition_type:
             # create a setting and modify it
-            caps = c.root.cimv2.LMI_DiskPartitionConfigurationCapabilities.first_instance()
+            caps = ns.LMI_DiskPartitionConfigurationCapabilities.first_instance()
             (ret, outparams, err) = caps.CreateSetting()
             if ret != 0:
                 raise LmiFailed("Cannot create LMI_DiskPartitionConfigurationSetting for the partition: %d." % ret)
@@ -148,7 +148,7 @@ def create_partition(c, device, size=None, partition_type=None):
             args['Goal'] = setting
 
         print args
-        service = c.root.cimv2.LMI_DiskPartitionConfigurationService.first_instance()
+        service = ns.LMI_DiskPartitionConfigurationService.first_instance()
         (ret, outparams, err) = service.SyncLMI_CreateOrModifyPartition(**args)
         if ret != 0:
             raise LmiFailed("Cannot create the partition: %s."
@@ -159,21 +159,21 @@ def create_partition(c, device, size=None, partition_type=None):
     return outparams['Partition']
 
 
-def delete_partition(c, partition):
+def delete_partition(ns, partition):
     """
     Remove given partition
 
     :type partition: LMIInstance/CIM_GenericDiskPartition
     :param partition: Partition to delete.
     """
-    partition = common.str2device(c, partition)
-    service = c.root.cimv2.LMI_DiskPartitionConfigurationService.first_instance()
+    partition = common.str2device(ns, partition)
+    service = ns.LMI_DiskPartitionConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncLMI_DeletePartition(Partition=partition)
     if ret != 0:
         raise LmiFailed("Cannot delete the partition: %s."
                 % (service.LMI_DeletePartition.LMI_DeletePartitionValues.value_name(ret)))
 
-def create_partition_table(c, device, table_type):
+def create_partition_table(ns, device, table_type):
     """
     Create new partition table on a device. The device must be empty, i.e.
     must not have any partitions on it.
@@ -184,15 +184,15 @@ def create_partition_table(c, device, table_type):
     :param table_type: Requested partition table type. See
         PARTITION_TABLE_TYPE_xxx variables.
     """
-    device = common.str2device(c, device)
+    device = common.str2device(ns, device)
     query = "SELECT * FROM LMI_DiskPartitionConfigurationCapabilities WHERE " \
             "PartitionStyle=%d" % table_type
-    caps = c.root.cimv2.wql(query)
+    caps = ns.wql(query)
 
     if not caps:
         raise LmiFailed("Unsupported partition table type: %d" % table_type)
     cap = caps[0]
-    service = c.root.cimv2.LMI_DiskPartitionConfigurationService.first_instance()
+    service = ns.LMI_DiskPartitionConfigurationService.first_instance()
     (ret, outparams, err) = service.SetPartitionStyle(
             Extent=device,
             PartitionStyle=cap)
@@ -201,7 +201,7 @@ def create_partition_table(c, device, table_type):
                 % (service.SetPartitionStyle.SetPartitionStyleValues.value_name(ret)))
 
 
-def get_partition_tables(c, devices=None):
+def get_partition_tables(ns, devices=None):
     """
     Returns list of partition tables on given devices.
     If no devices are given, all partitions on all devices are returned.
@@ -213,16 +213,16 @@ def get_partition_tables(c, devices=None):
         LMIInstance/LMI_DiskPartitionConfigurationCapabilities).
     """
     if not devices:
-        tables = c.root.cimv2.LMI_InstalledPartitionTable.instances()
+        tables = ns.LMI_InstalledPartitionTable.instances()
         for table in tables:
             yield table.Antecedent.to_instance(), table.Dependent.to_instance()
     else:
         for device in devices:
-            table = get_disk_partition_table(c, device)
+            table = get_disk_partition_table(ns, device)
             if table:
                 yield device, table
 
-def get_disk_partition_table(c, device):
+def get_disk_partition_table(ns, device):
     """
     Returns LMI_DiskPartitionTableCapabilities representing partition table
     on given disk.
@@ -232,12 +232,12 @@ def get_disk_partition_table(c, device):
 
     :rtype: LMIInstance/LMI_DiskPartitionConfigurationCapabilities.
     """
-    device = common.str2device(c, device)
+    device = common.str2device(ns, device)
     table = device.first_associator(
                     AssocClass="LMI_InstalledPartitionTable")
     return table
 
-def get_largest_partition_size(c, device):
+def get_largest_partition_size(ns, device):
     """
     Returns size of the largest free region (in blocks), which can accommodate
     a partition on given device.
@@ -247,7 +247,7 @@ def get_largest_partition_size(c, device):
     :param device:  Device which should be examined.
     :rtype: int
     """
-    device = common.str2device(c, device)
+    device = common.str2device(ns, device)
     # find the partition table (=LMI_DiskPartitionConfigurationCapabilities)
     cap = device.first_associator(
             ResultClass="LMI_DiskPartitionConfigurationCapabilities")

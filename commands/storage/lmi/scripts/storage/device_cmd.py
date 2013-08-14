@@ -49,20 +49,20 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import show, fs
 from lmi.scripts.storage.common import str2device, size2str, get_devices
 
-def list(c, devices=None):
-    devices = get_devices(c, devices)
+def list(ns, devices=None):
+    devices = get_devices(ns, devices)
     for dev in devices:
         yield (dev.DeviceID,
                 dev.Name,
                 dev.ElementName,
                 size2str(dev.NumberOfBlocks * dev.BlockSize),
-                fs.get_device_format_label(c, dev))
+                fs.get_device_format_label(ns, dev))
 
-def cmd_show(c, devices=None):
+def cmd_show(ns, devices=None):
     if not devices:
-        devices = get_devices(c)
+        devices = get_devices(ns)
     for dev in devices:
-        show.device_show(c, dev)
+        show.device_show(ns, dev)
         print ""
     return 0
 

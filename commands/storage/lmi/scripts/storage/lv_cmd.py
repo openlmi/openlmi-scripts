@@ -59,29 +59,29 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
 
-def list(c, vgs=None):
-    for lv in lvm.get_lvs(c, vgs):
+def list(ns, vgs=None):
+    for lv in lvm.get_lvs(ns, vgs):
         yield (lv.DeviceID,
                 lv.Name,
                 lv.ElementName,
                 size2str(lv.NumberOfBlocks * lv.BlockSize))
 
-def cmd_show(c, lvs=None):
+def cmd_show(ns, lvs=None):
     if not lvs:
-        lvs = lvm.get_lvs(c)
+        lvs = lvm.get_lvs(ns)
     for lv in lvs:
-        show.lv_show(c, lv)
+        show.lv_show(ns, lv)
         print ""
     return 0
 
-def create(c, vg, name, size):
-    vg = lvm.str2vg(c, vg)
-    lv = lvm.create_lv(c, vg, name, str2size(size, vg.ExtentSize, 'E'))
+def create(ns, vg, name, size):
+    vg = lvm.str2vg(ns, vg)
+    lv = lvm.create_lv(ns, vg, name, str2size(size, vg.ExtentSize, 'E'))
     return 0
 
-def delete(c, lvs):
+def delete(ns, lvs):
     for lv in lvs:
-        lvm.delete_lv(c, lv)
+        lvm.delete_lv(ns, lv)
     return 0
 
 class Lister(command.LmiLister):

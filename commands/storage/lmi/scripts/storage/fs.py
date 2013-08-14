@@ -46,7 +46,7 @@ FORMAT_DATA = 1
 FORMAT_FS = 2
 FORMAT_ALL = FORMAT_FS | FORMAT_DATA
 
-def str2format(c, fmt):
+def str2format(ns, fmt):
     """
     Convert string with name of device to LMIInstance of the format on the
     device.
@@ -68,9 +68,9 @@ def str2format(c, fmt):
     if not isinstance(fmt, str):
         raise TypeError("string or _LMIInstance expected")
     device = common.str2device(fmt)
-    return get_format_on_device(c, device)
+    return get_format_on_device(ns, device)
 
-def _get_fs_id(c, fsname):
+def _get_fs_id(ns, fsname):
     """
     Return integer value for given filesystem name in
     LMI_FileSystemConfigurationService.LMI_CreateFileSystem.FileSystemType
@@ -79,10 +79,10 @@ def _get_fs_id(c, fsname):
     :param fsname: Name of the filesystem.
     :rtype: int
     """
-    service = c.root.cimv2.LMI_FileSystemConfigurationService.first_instance()
+    service = ns.LMI_FileSystemConfigurationService.first_instance()
     service.LMI_CreateFileSystem.XXX
 
-def get_format_on_device(c, device, format_type=FORMAT_ALL):
+def get_format_on_device(ns, device, format_type=FORMAT_ALL):
     """
     Return filesystem or data format, which is on given device.
 
@@ -99,7 +99,7 @@ def get_format_on_device(c, device, format_type=FORMAT_ALL):
 
     :rtype: LMIInstance/CIM_LocalFileSystem or LMIInstance/LMI_DataFormat
     """
-    device = common.str2device(c, device)
+    device = common.str2device(ns, device)
     if format_type == FORMAT_ALL:
         fmt = device.first_associator(
                 AssocClass="CIM_ResidesOnExtent",
@@ -119,7 +119,7 @@ def get_format_on_device(c, device, format_type=FORMAT_ALL):
         return fmt
     return None
 
-def get_formats(c, devices=None, format_type=FORMAT_ALL, nodevfs=False):
+def get_formats(ns, devices=None, format_type=FORMAT_ALL, nodevfs=False):
     """
     Retrieve list of filesystems on given devices.
     If no devices are given, all formats on all devices are returned.
@@ -149,16 +149,16 @@ def get_formats(c, devices=None, format_type=FORMAT_ALL, nodevfs=False):
     else:
         # No devices supplied, list all formats
         if format_type & FORMAT_FS:
-            cls = c.root.cimv2.CIM_LocalFileSystem
-            for fs in c.root.cimv2.CIM_LocalFileSystem.instances():
+            cls = ns.CIM_LocalFileSystem
+            for fs in ns.CIM_LocalFileSystem.instances():
                 if fs.PersistenceType == cls.PersistenceTypeValues.Persistent \
                         or nodevfs:
                     yield fs
         if format_type & FORMAT_DATA:
-            for fmt in c.root.cimv2.LMI_DataFormat.instances():
+            for fmt in ns.LMI_DataFormat.instances():
                 yield fmt
 
-def create_fs(c, devices, fs, label=None):
+def create_fs(ns, devices, fs, label=None):
     """
     Format given devices with a filesystem.
     If multiple devices are provided, the format will span over all these
@@ -177,8 +177,8 @@ def create_fs(c, devices, fs, label=None):
     for device in devices:
         devs.append(common.str2device(device))
 
-    fsid = _get_fs_id(c, fs)
-    service = c.root.cimv2.LMI_FileSystemConfigurationService.first_instance()
+    fsid = _get_fs_id(ns, fs)
+    service = ns.LMI_FileSystemConfigurationService.first_instance()
     args = {
         'FyleSystemType': fsid,
         'InExtents': devs,
@@ -191,25 +191,25 @@ def create_fs(c, devices, fs, label=None):
                 % (devs[0].Name, service.LMI_CreateFileSystem.LMI_CreateFileSystemValues.value_name(ret)))
     return outparams['TheElement']
 
-def delete_format(c, fmt):
+def delete_format(ns, fmt):
     """
     Remove given filesystem or data format from all devices, where it resides.
 
     :type fmt: LMIInstance/CIM_LocalFileSystem or LMIInstance/LMI_DataFormat
     :param fmt: Format to delete.
     """
-    fmt = str2format(c, fmt)
+    fmt = str2format(ns, fmt)
     if not fmt:
         LOG().info("Nothing to delete.")
         return
 
-    service = c.root.cimv2.LMI_FileSystemConfigurationService.first_instance()
+    service = ns.LMI_FileSystemConfigurationService.first_instance()
     (ret, outparams, err) = service.DeleteFileSystem(TheFileSystem=fmt)
     if ret != 0:
         raise LmiFailed("Cannot delete the format: %s."
                 % (service.DeleteFileSystem.DeleteFileSystemValues.value_name(ret)))
 
-def get_format_label(c, fmt):
+def get_format_label(ns, fmt):
     """
     Return short text description of the format, ready for printing.
 
@@ -225,7 +225,7 @@ def get_format_label(c, fmt):
     else:
         return "Unknown"
 
-def get_device_format_label(c, device):
+def get_device_format_label(ns, device):
     """
     Return short text description of the format, ready for printing.
 
@@ -234,14 +234,14 @@ def get_device_format_label(c, device):
 
     :rtype: string
     """
-    fmt = get_format_on_device(c, device)
+    fmt = get_format_on_device(ns, device)
     if fmt:
-        return get_format_label(c, fmt)
+        return get_format_label(ns, fmt)
     else:
         # check if there is partition table on the device
-        table = partition.get_disk_partition_table(c, device)
+        table = partition.get_disk_partition_table(ns, device)
         if table:
-            cls = c.root.cimv2.LMI_DiskPartitionConfigurationCapabilities
+            cls = ns.LMI_DiskPartitionConfigurationCapabilities
             if table.PartitionStyle == cls.PartitionStyleValues.MBR:
                 return "MS-DOS partition table"
             else:
