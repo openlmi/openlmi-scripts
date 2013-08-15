@@ -110,7 +110,7 @@ class TopLevelCommand(base.LmiBaseCommand):
             raise TypeError("args must be a list")
         try:
             options = docopt.docopt(self.get_usage(), args,
-                    version=util.get_version(), help=False)
+                    version=util.get_version(), help=False, options_first=True)
         except docopt.DocoptLanguageError as exc:
             self.app.stderr.write("%s\n" % str(exc))
             return 1

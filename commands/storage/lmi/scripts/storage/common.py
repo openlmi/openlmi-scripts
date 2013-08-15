@@ -29,7 +29,6 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-
 """
 Common storage functionality
 """
@@ -38,6 +37,7 @@ from lmi.scripts.common import get_logger
 import re
 from lmi.shell import LMIInstance
 from lmi.scripts.common.errors import LmiFailed
+from lmi.shell.LMIUtil import lmi_isinstance
 
 LOG = get_logger(__name__)
 
@@ -78,6 +78,71 @@ def str2device(ns, device):
             device, devices[0].DeviceID)
     return devices[0]
 
+def str2vg(ns, vg):
+    """
+    Convert string with name of volume group to LMIInstance of the
+    LMI_VGStoragePool.
+
+    If LMIInstance is provided, nothing is done and the instance is just
+    returned. If string is provided, appropriate LMIInstance is looked up and
+    returned.
+
+    This functions throws an error when the device cannot be found.
+
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: VG to retrieve.
+    :rtype: LMIInstance/LMI_VGStoragePool
+
+    """
+    if isinstance(vg, LMIInstance):
+        return vg
+    if not isinstance(vg, str):
+        raise TypeError("string or LMIInstance expected")
+    query = 'SELECT * FROM LMI_VGStoragePool WHERE ElementName="%(vg)s"' \
+            % {'vg': escape_cql(vg)}
+    vgs = ns.wql(query)
+    if not vgs:
+        raise LmiFailed("Volume Group '%s' not found" % (vg,))
+    if len(vgs) > 1:
+        raise LmiFailed("Too many volume groups with name '%s' found" % (vg,))
+
+    LOG().debug("String %s translated to Volume Group '%s'",
+            vg, vgs[0].InstanceID)
+    return vgs[0]
+
+
+def str2obj(ns, obj):
+    """
+    Convert string with name of device or volume group to LMIInstance of the
+    device or the volume group.
+
+    If LMIInstance is provided, nothing is done and the instance is just
+    returned. If string is given, appropriate LMIInstance is looked up and
+    returned.
+    This functions throws an error when the device or volume group
+    cannot be found.
+
+    :type obj: LMIInstance/CIM_StorageExtent or LMIInstance/LMI_VGStoragePool
+        or string with name of device or pool
+    :param obj: Object to convert.
+    :rtype: LMIInstance/CIM_StorageExtent or LMIInstance/LMI_VGStoragePool
+    """
+    if isinstance(obj, LMIInstance):
+        return obj
+    if not isinstance(obj, str):
+        raise TypeError("string or LMIInstance expected")
+
+    # try VG first
+    try:
+        vg = str2vg(ns, obj)
+        return vg
+    except LmiFailed:
+        pass
+
+    # try device now
+    return str2device(ns, obj)
+
+
 multipliers = {
     'B': 1,
     'K': 1024,
@@ -85,7 +150,6 @@ multipliers = {
     'G': 1024 * 1024 * 1024,
     'T': 1024 * 1024 * 1024 * 1024
 }
-
 
 def str2size(size, additional_unit_size=None, additional_unit_suffix=None):
     """
@@ -186,3 +250,134 @@ def get_devices(ns, devices=None):
     else:
         for dev in ns.CIM_StorageExtent.instances():
             yield dev
+
+def get_parents(ns, obj, deep=False):
+    """
+    Return list of all parents of given LMIInstance.
+
+    For example:
+
+      * If ``obj`` is LMIInstance/LMI_LVStorageExtent (=Logical Volume), it
+        returns LMIInstance/LMI_VGStoragePool (=Volume Group).
+      * If ``obj`` is LMIInstance/LMI_VGStoragePool (=Volume Group), it returns
+        all its Physical Volumes (=LMIInstance/CIM_StorageExtent).
+
+    :type obj: LMIInstance/CIM_StorageExtent or LMIInstance/LMI_VGStoragePool
+        or string
+    :param obj: Object to find parents of.
+    :type deep: Boolean
+    :param deep: Whether all parents of the object should be returned or only
+        immediate ones.
+    """
+    obj = str2obj(ns, obj)
+    if deep:
+        # use loop of get_parents(ns, xxx, deep=False)
+        known_parents = set()
+        todo = [obj, ]  # a TO-DO list
+        while todo:
+            obj = todo.pop()
+            new_parents = get_parents(ns, obj, False)
+            for parent in new_parents:
+                if "DeviceID" in parent.properties():
+                    id = parent.DeviceID
+                else:
+                    id = parent.InstanceID
+                if id not in known_parents:
+                    known_parents.add(id)
+                    todo.append(parent)
+                    yield parent
+        return
+
+    # only direct parents requested
+    if lmi_isinstance(obj, ns.CIM_StorageExtent):
+        # Try to get parent VG first
+        parents = obj.associators(
+                AssocClass="LMI_LVAllocatedFromStoragePool",
+                Role="Dependent")
+        if parents:
+            for parent in parents:
+                yield parent
+            return
+        # Try usual BasedOn next
+        parents = obj.associators(AssocClass="CIM_BasedOn", Role="Dependent")
+        for parent in parents:
+            yield parent
+
+    elif lmi_isinstance(obj, ns.CIM_StoragePool):
+        parents = obj.associators(
+                AssocClass="LMI_VGAssociatedComponentExtent",
+                Role="GroupComponent")
+        for parent in parents:
+            yield parent
+
+    else:
+        raise LmiFailed("CIM_StorageExtent or LMI_VGStragePool expected: %s",
+            obj.classname)
+
+def get_children(ns, obj, deep=False):
+    """
+    Return list of all children of given LMIInstance.
+
+    For example:
+
+      * If ``obj`` is LMIInstance/LMI_VGStoragePool (=Volume Group), it returns
+        all its Logical Volumes (=LMIInstance/LMI_LVStorageExtent).
+      * If ``obj`` is LMIInstance/LMI_StorageExtent of a disk, it returns
+        all its partitions (=LMIInstance/CIM_GenericDiskPartition).
+      * If ``obj`` is LMIInstance/LMI_DiskPartition and the partition is
+        Physical Volume of a Volume Group,, it returns the pool
+        (LMIInstance/LMI_VGStoragePool).
+
+    :type obj: LMIInstance/CIM_StorageExtent or LMIInstance/LMI_VGStoragePool
+        or string
+    :param obj: Object to find children of.
+    :type deep: Boolean
+    :param deep: Whether all children of the object should be returned or only
+        immediate ones.
+    """
+    obj = str2obj(ns, obj)
+    if deep:
+        # use loop of get_children(ns, xxx, deep=False)
+        known_children = set()
+        todo = [obj, ]  # a TO-DO list
+        while todo:
+            obj = todo.pop()
+            new_children = get_children(ns, obj, False)
+            for child in new_children:
+                if "DeviceID" in child.properties():
+                    id = child.DeviceID
+                else:
+                    id = child.InstanceID
+                if id not in known_children:
+                    known_children.add(id)
+                    todo.append(child)
+                    yield child
+        return
+
+    # only direct children requested
+    if lmi_isinstance(obj, ns.CIM_StorageExtent):
+        # try to find children VG first
+        children = obj.associators(
+                AssocClass="LMI_VGAssociatedComponentExtent",
+                Role="PartComponent")
+        if children:
+            for child in children:
+                yield child
+            return
+
+        # try usual BasedOn next
+        children = obj.associators(AssocClass="CIM_BasedOn", Role="Antecedent")
+        for child in children:
+            yield child
+
+    elif lmi_isinstance(obj, ns.CIM_StoragePool):
+        children = obj.associators(
+                AssocClass="LMI_LVAllocatedFromStoragePool",
+                Role="Antecedent")
+        for child in children:
+            yield child
+    else:
+        raise LmiFailed("CIM_StorageExtent or LMI_VGStragePool expected: %s"
+            % obj.classname)
+
+
