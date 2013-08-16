@@ -7,9 +7,14 @@ These commands allow listing and manipulation with block devices.
 device
 ------
 
+Basic device information.
+
 Usage:
-    lmi device list [<devices>]...
-    lmi device show [<devices>]...
+    device list [<devices>]...
+    device show [<devices>]...
+    device depends [ --deep ] [<devices>]...
+    device provides [ --deep ] [<devices>]...
+    device tree [<device>]
 
 Commands:
     list        List short information about given device. If no devices
@@ -18,6 +23,29 @@ Commands:
     show        Show detailed information about given devices. If no devices
                 are provided, all of them are displayed.
 
+    provides    Show devices, which are created from given devices
+                (= show children of the devices).
+
+                For example, if disk is provided, all partitions on it are
+                returned. If 'deep' is used, all RAIDs, Volume Groups and
+                Logical Volumes indirectly allocated from it are returned too.
+
+    depends     Show devices, which are required by given devices to operate
+                correctly (= show parents of the devices).
+
+                For example, if a Logical Volume is provided, its Volume Group
+                is returned. If 'deep' is used, also all Physical Volumes and
+                disk are returned.
+
+    tree        Show tree of devices, similar to lsblk.
+                (Note that the output is really crude and needs to be worked
+                on).
+
+                If no device is provided, all devices are shown, starting
+                with physical disks.
+
+                If a device is provided, tree starts with the device
+                and all dependent devices are shown.
 
 partition-table
 ---------------
