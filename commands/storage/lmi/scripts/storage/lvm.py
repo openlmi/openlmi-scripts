@@ -41,39 +41,6 @@ from lmi.scripts.storage import common
 from lmi.shell import LMIInstance
 import pywbem
 
-def str2vg(ns, vg):
-    """
-    Convert string with name of volume group to LMIInstance of the
-    LMI_VGStoragePool.
-
-    If LMIInstance is provided, nothing is done and the instance is just
-    returned. If string is provided, appropriate LMIInstance is looked up and
-    returned.
-
-    This functions throws an error when the device cannot be found.
-
-    :type vg: LMIInstance/LMI_VGStoragePool or string
-    :param vg: VG to retrieve.
-    :rtype: LMIInstance/LMI_VGStoragePool
-
-    """
-    if isinstance(vg, LMIInstance):
-        return vg
-    if not isinstance(vg, str):
-        raise TypeError("string or LMIInstance expected")
-    query = 'SELECT * FROM LMI_VGStoragePool WHERE ElementName="%(vg)s"' \
-            % {'vg': common.escape_cql(vg)}
-    vgs = ns.wql(query)
-    if not vgs:
-        raise LmiFailed("Volume Group '%s' not found" % (vg,))
-    if len(vgs) > 1:
-        raise LmiFailed("Too many volume groups with name '%s' found" % (vg,))
-
-    LOG().debug("String %s translated to Volume Group '%s'",
-            vg, vgs[0].InstanceID)
-    return vgs[0]
-
-
 def get_lvs(ns, vgs=None):
     """
     Retrieve list of all logical volumes allocated from given volume groups.
@@ -107,8 +74,8 @@ def create_lv(ns, vg, name, size):
     :param size: Size of the logical volume in bytes.
     :rtype: LMIInstance/LMI_LVStorageExtent
     """
-    vg = str2vg(ns, vg)
-    service = ns.LMI_StorageConfigurationService.first_instance()
+    vg = common.str2vg(ns, vg)
+    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncCreateOrModifyLV(
             ElementName=name,
             Size=size,
@@ -195,8 +162,8 @@ def delete_vg(ns, vg):
     :type vg: LMIInstance/LMI_VGStoragePool or string
     :param vg: Volume Group to delete.
     """
-    vg = str2vg(ns, vg)
-    service = ns.LMI_StorageConfigurationService.first_instance()
+    vg = common.str2vg(ns, vg)
+    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
     (ret, outparams, err) = service.SyncDeleteVG(Pool=vg)
     if ret != 0:
         raise LmiFailed("Cannot delete the VG: %s."
@@ -210,7 +177,7 @@ def get_vg_lvs(ns, vg):
     :param vg: Volume Group to examine.
     :rtype: list of LMIInstance/LMI_LVStorageExtent
     """
-    vg = str2vg(ns, vg)
+    vg = common.str2vg(ns, vg)
     return vg.associators(AssocClass="LMI_LVAllocatedFromStoragePool")
 
 def get_lv_vg(ns, lv):
@@ -232,5 +199,5 @@ def get_vg_pvs(ns, vg):
     :param vg: Volume Group to examine.
     :rtype: list of LMIInstance/CIM_StorageExtent
     """
-    vg = str2vg(ns, vg)
+    vg = common.str2vg(ns, vg)
     return vg.associators(AssocClass="LMI_VGAssociatedComponentExtent")
