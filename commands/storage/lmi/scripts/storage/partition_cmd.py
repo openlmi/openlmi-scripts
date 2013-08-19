@@ -34,10 +34,10 @@
 Partition management.
 
 Usage:
-    %(cmd)s list [<devices>]...
+    %(cmd)s list [ <device> ...]
     %(cmd)s create [ --logical | --extended ] <device> [<size>]
-    %(cmd)s delete <partitions>...
-    %(cmd)s show [<partitions>]...
+    %(cmd)s delete <partition> ...
+    %(cmd)s show [ <partition> ...]
 
 Commands:
     list        List available partitions on given devices.
@@ -52,17 +52,17 @@ Commands:
                 partitions using these rules:
 
                 * If no partition type (logical or extended) is provided and
-                MS-DOS partition is requested and there is extended partition
-                already on the device, a logical partition is created.
+                  MS-DOS partition is requested and there is extended partition
+                  already on the device, a logical partition is created.
 
                 * If there is no extended partition on the device and there are
-                at most two primary partitions on the device, primary partition
-                is created.
+                  at most two primary partitions on the device, primary
+                  partition is created.
 
                 * If there is no extended partition and three primary partitions
-                already exist, new extended partition with all remaining space
-                is created and a logical partition with requested size is
-                created.
+                  already exist, new extended partition with all remaining space
+                  is created and a logical partition with requested size is
+                  created.
 
     delete      Delete given partitions.
 
@@ -127,6 +127,13 @@ class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:create'
     EXPECT = 0
@@ -135,9 +142,23 @@ class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:delete'
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        Rename 'partitions' option to 'partition' parameter name for better
+        readability
+        """
+        options['<partitions>'] = options.pop('<partition>')
+
 class Show(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_show'
     EXPECT = 0
+
+    def transform_options(self, options):
+        """
+        Rename 'partitions' option to 'partition' parameter name for better
+        readability
+        """
+        options['<partitions>'] = options.pop('<partition>')
 
 Partition = command.register_subcommands(
         'Partition', __doc__,

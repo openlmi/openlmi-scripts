@@ -34,9 +34,9 @@
 Filesystem and other data format management.
 
 Usage:
-    %(cmd)s list [--all] [<devices>]...
-    %(cmd)s create [ --label=<label> ] <type> [<devices>]...
-    %(cmd)s delete <devices>...
+    %(cmd)s list [--all] [ <device> ...]
+    %(cmd)s create [ --label=<label> ] <type>  <device> ...
+    %(cmd)s delete <device> ...
     %(cmd)s list-supported
 
 Commands:
@@ -104,6 +104,13 @@ class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.fs_cmd:list'
     COLUMNS = ('Device', 'Name', "ElementName", "Type")
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class ListSupported(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.fs_cmd:list_supported'
     COLUMNS = ('Filesystem',)
@@ -112,9 +119,23 @@ class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.fs_cmd:create'
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.fs_cmd:delete'
     EXPECT = 0
+
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
 
 Fs = command.register_subcommands(
         'fs', __doc__,
