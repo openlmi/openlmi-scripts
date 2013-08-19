@@ -37,6 +37,19 @@ help:
 	@echo "  changes    to make an overview of all changed/added/deprecated items"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
+	@echo " "
+	@echo "  cmdregen   to regenerate cmdline.generate with actual content from installed lmi help"
+
+cmdregen:
+	( \
+	echo "!!!!!!!!!"; \
+	echo ".. This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
+	echo "!!!!!!!!!"; \
+	echo ;\
+	for i in device partition-table partition raid vg lv fs; \
+		do lmi help $$i | python ../../../tools/help2rst $$i | tr -d '\033' |sed 's/..1034h//' ;  \
+	done \
+	) > cmdline.generated
 
 clean:
 	-rm -rf $(BUILDDIR)/*

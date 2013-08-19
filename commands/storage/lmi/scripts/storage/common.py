@@ -66,7 +66,8 @@ def str2device(ns, device):
     if isinstance(device, LMIInstance):
         return device
     if not isinstance(device, str):
-        raise TypeError("string or LMIInstance expected")
+        raise TypeError("string or LMIInstance expected, got %s"
+                % device.__class__.__name__)
     query = 'SELECT * FROM CIM_StorageExtent WHERE DeviceID="%(device)s" OR Name="%(device)s" OR ElementName="%(device)s"' % {'device': escape_cql(device)}
     devices = ns.wql(query)
     if not devices:
@@ -97,7 +98,8 @@ def str2vg(ns, vg):
     if isinstance(vg, LMIInstance):
         return vg
     if not isinstance(vg, str):
-        raise TypeError("string or LMIInstance expected")
+        raise TypeError("string or LMIInstance expected, got %s"
+                % vg.__class__.__name__)
     query = 'SELECT * FROM LMI_VGStoragePool WHERE ElementName="%(vg)s"' \
             % {'vg': escape_cql(vg)}
     vgs = ns.wql(query)
@@ -130,7 +132,8 @@ def str2obj(ns, obj):
     if isinstance(obj, LMIInstance):
         return obj
     if not isinstance(obj, str):
-        raise TypeError("string or LMIInstance expected")
+        raise TypeError("string or LMIInstance expected, got %s"
+                % obj.__class__.__name__)
 
     # try VG first
     try:

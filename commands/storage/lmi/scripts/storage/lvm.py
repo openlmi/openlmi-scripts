@@ -54,6 +54,7 @@ def get_lvs(ns, vgs=None):
     """
     if vgs:
         for vg in vgs:
+            vg = common.str2vg(ns, vg)
             LOG().debug("Getting LVs on %s", vg.ElementName)
             for lv in get_vg_lvs(ns, vg):
                 yield lv

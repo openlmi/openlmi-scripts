@@ -35,9 +35,9 @@ Volume Group management.
 
 Usage:
     %(cmd)s list
-    %(cmd)s create [ --extent-size=<size> ] <name> <devices>...
-    %(cmd)s delete <vgs>...
-    %(cmd)s show [<vgs>]...
+    %(cmd)s create [ --extent-size=<size> ] <name> <device> ...
+    %(cmd)s delete <vg> ...
+    %(cmd)s show [ <vg> ...]
 
 Commands:
     list        List all volume groups on the system.
@@ -88,13 +88,34 @@ class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.vg_cmd:create'
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.vg_cmd:delete'
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        Rename 'vg' option to 'vgs' parameter name for better
+        readability
+        """
+        options['<vgs>'] = options.pop('<vg>')
+
 class Show(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_show'
     EXPECT = 0
+
+    def transform_options(self, options):
+        """
+        Rename 'vg' option to 'vgs' parameter name for better
+        readability
+        """
+        options['<vgs>'] = options.pop('<vg>')
 
 Vg = command.register_subcommands(
         'vg', __doc__,

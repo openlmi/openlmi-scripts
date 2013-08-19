@@ -144,8 +144,11 @@ def get_formats(ns, devices=None, format_type=FORMAT_ALL, nodevfs=False):
     """
     if devices:
         for device in devices:
+            device = common.str2device(ns, device)
             LOG().debug("Getting filesystem on %s", device.Name)
-            yield get_format_on_device(device, format_type)
+            fs = get_format_on_device(ns, device, format_type)
+            if fs:
+                yield fs
     else:
         # No devices supplied, list all formats
         if format_type & FORMAT_FS:
