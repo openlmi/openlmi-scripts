@@ -34,9 +34,9 @@
 Partition management.
 
 Usage:
-    %(cmd)s list [<devices>]...
-    %(cmd)s create [ --gpt | --msdos ] <devices>...
-    %(cmd)s show  [<devices>]...
+    %(cmd)s list [ <device> ...]
+    %(cmd)s create [ --gpt | --msdos ] <device> ...
+    %(cmd)s show  [ <device> ...]
 
 Commands:
     list        List partition tables on given device.
@@ -85,13 +85,34 @@ class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:list'
     COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Largest free region')
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:create'
     EXPECT = None
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Show(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:cmd_show'
     EXPECT = None
+
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
 
 PartitionTable = command.register_subcommands(
         'PartitionTable', __doc__,

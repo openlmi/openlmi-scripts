@@ -142,7 +142,7 @@ def vg_show(ns, vg):
     :type vg: LMIInstance/LMI_VGStoragePool or string
     :param vg: Volume Group to show.
     """
-    vg = lvm.str2vg(ns, vg)
+    vg = common.str2vg(ns, vg)
     print "InstanceID:", vg.InstanceID
     print "ElementName", vg.ElementName
     print "Extent Size:", common.size2str(vg.ExtentSize)

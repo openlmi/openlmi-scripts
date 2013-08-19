@@ -33,11 +33,11 @@
 Basic device information.
 
 Usage:
-    %(cmd)s list [<devices>]...
-    %(cmd)s show [<devices>]...
-    %(cmd)s depends [ --deep ] [<devices>]...
-    %(cmd)s provides [ --deep ] [<devices>]...
-    %(cmd)s tree [<device>]
+    %(cmd)s list [ <device> ...]
+    %(cmd)s show [ <device> ...]
+    %(cmd)s depends [ --deep ] [ <device> ...]
+    %(cmd)s provides [ --deep ] [ <device> ...]
+    %(cmd)s tree [ <device> ]
 
 Commands:
     list        List short information about given device. If no devices
@@ -194,17 +194,45 @@ class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.device_cmd:list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Show(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.device_cmd:cmd_show'
     EXPECT = 0
+
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
 
 class Depends(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.device_cmd:cmd_depends'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Provides(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.device_cmd:cmd_provides'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
+
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
 
 class Tree(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.device_cmd:cmd_tree'

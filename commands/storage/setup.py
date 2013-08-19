@@ -20,7 +20,7 @@ setup(
     url='https://github.com/openlmi/openlmi-scripts',
     download_url='https://github.com/openlmi/openlmi-scripts/tarball/master',
     platforms=['Any'],
-    license="LGPLv2+",
+    license="BSD",
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Operating System :: POSIX :: Linux',

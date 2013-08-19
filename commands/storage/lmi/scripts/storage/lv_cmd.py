@@ -34,10 +34,10 @@
 Logical Volume management.
 
 Usage:
-    %(cmd)s list [<vgs>]...
+    %(cmd)s list [ <vg> ...]
     %(cmd)s create <vg> <name> <size>
-    %(cmd)s delete <lvs>...
-    %(cmd)s show [<lvs>]...
+    %(cmd)s delete <lv> ...
+    %(cmd)s show [ <lv> ...]
 
 Commands:
     list        List available logical volumes on given volume groups.
@@ -88,6 +88,13 @@ class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.lv_cmd:list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size")
 
+    def transform_options(self, options):
+        """
+        Rename 'vg' option to 'vgs' parameter name for better
+        readability
+        """
+        options['<vgs>'] = options.pop('<vg>')
+
 class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.lv_cmd:create'
     EXPECT = 0
@@ -96,9 +103,25 @@ class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.lv_cmd:delete'
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        Rename 'lv' option to 'lvs' parameter name for better
+        readability
+        """
+        options['<lvs>'] = options.pop('<lv>')
+
+
 class Show(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_show'
     EXPECT = 0
+
+    def transform_options(self, options):
+        """
+        Rename 'lv' option to 'lvs' parameter name for better
+        readability
+        """
+        options['<lvs>'] = options.pop('<lv>')
+
 
 Lv = command.register_subcommands(
         'Lv', __doc__,

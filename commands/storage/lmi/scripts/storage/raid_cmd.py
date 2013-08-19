@@ -35,9 +35,9 @@ MD RAID management.
 
 Usage:
     %(cmd)s list
-    %(cmd)s create [ --name=<name> ] <level> <devices>...
-    %(cmd)s delete <devices>...
-    %(cmd)s show [<devices>]...
+    %(cmd)s create [ --name=<name> ] <level> <device> ...
+    %(cmd)s delete <device> ...
+    %(cmd)s show [ <device> ...]
 
 Commands:
     list        List all MD RAID devices on the system.
@@ -84,13 +84,34 @@ class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.raid_cmd:create'
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.raid_cmd:delete'
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
+
 class Show(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_show'
     EXPECT = 0
+
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability
+        """
+        options['<devices>'] = options.pop('<device>')
 
 Raid = command.register_subcommands(
         'raid', __doc__,
