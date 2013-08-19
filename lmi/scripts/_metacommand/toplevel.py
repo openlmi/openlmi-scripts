@@ -30,8 +30,9 @@
 """
 OpenLMI command line interface for CIM providers. It's functionality is
 composed of registered subcommands, operating on top of simple libraries,
-interfacing with particular OpenLMI profile providers. Works also in
-interactive mode. It's entered, when <command> argument is ommited.
+interfacing with particular OpenLMI profile providers.
+Works also in interactive mode which is entered, when <command> argument is
+omitted.
 
 Usage:
     %(cmd)s [options] [-v]... [-h <host>]... <command> [<args> ...]
