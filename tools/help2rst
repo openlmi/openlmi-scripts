@@ -1,0 +1,143 @@
+#!/usr/bin/python
+# Copyright (c) 2013, Red Hat, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are
+# those of the authors and should not be interpreted as representing official
+# policies, either expressed or implied, of the FreeBSD Project.
+#
+# Authors: Jan Safranek <jsafrane@redhat.com>
+#
+
+"""
+Script to generate REstructured text from 'lmi help XYZ' output.
+It's highly tailored to docopt help style and expect the help
+to be formatted nicely.
+"""
+
+import sys
+import re
+
+def process_summary_line(line):
+    """
+    Parsing anything before Usage:,
+    just copy it to the output.
+    """
+    if line.startswith("Usage:"):
+        print
+        print "**Usage:**"
+        return process_usage_line
+    print line
+    return process_summary_line
+
+def process_usage_line(line):
+    """
+    Parsing usage strings after 'Usage:' and before 'Commands:'.
+    Just add formatting to usage strings.
+    """
+    if line.startswith("Commands:"):
+        print
+        print "**Commands:**"
+        print
+        return process_commands_line
+ 
+    # -o and --options should be bold, but they must *not* be preceeded
+    # by [a-z] character.
+    # I.e. 'partition-table' should be skipped, while '--option' should
+    # match.
+    line = re.sub(r'(?<![a-zA-Z])(-[\-a-zA-Z]+)', r'\\ **\1**\\ ', line)
+    # '<arg>' is italics
+    line = re.sub(r'(<[^>]*>)', r'\\ *\1*\\ ', line)
+    # words alone are bold, they can also contain a dash ('partition-table')
+    line = re.sub(r'\s([a-z\A-Z][\-a-zA-Z]*)\s', r' **\1** ', line)
+    line = re.sub(r'\s([a-z\A-Z][\-a-zA-Z]*)\s', r' **\1** ', line)
+
+    # There must be one line space before the option
+    print
+    print line
+    return process_usage_line
+
+def process_commands_line(line):
+    """
+    Parsing command or option list after 'Commands:'.
+    Separate the text into definition tables
+        term
+            description
+    """
+    if line.startswith(" "*5):
+        # it is description of an option
+        prefix_len=0
+        while line[prefix_len]==' ':
+            prefix_len +=1
+
+        # Remember shift of the first description line
+        if process_commands_line.first:
+            process_commands_line.first = False
+            process_commands_line.prefix = prefix_len
+
+        # Preserve shift of the line, relative to the first line
+        # of the description.
+        # This is useful to make '*' lists working.
+        shift = prefix_len - process_commands_line.prefix
+        if shift < 0:
+            shift = 0
+        print " "*(8+shift) + line.lstrip()
+
+    elif line.startswith(" "*4):
+        # it is start of new option
+        line = line.lstrip()
+        tokens = line.partition(" ")
+        print
+        print " "*4 + "**" + tokens[0] + "**"
+        print " "*8 + " ".join(tokens[1:]).lstrip()
+        process_commands_line.first = True
+
+    elif line.endswith(":"):
+        # it is probably Options:
+        print "**" + line + "**"
+        print
+
+    else:
+        # it's some garbage, probably empty line
+        print line
+
+    return process_commands_line
+
+if len(sys.argv) < 2:
+    print "Usage: lmi help <command> | %s <command>" % sys.argv[0]
+    sys.exit(1)
+
+print sys.argv[1]
+print "-" * len(sys.argv[1])
+print
+
+state=process_summary_line
+
+for line in sys.stdin:
+    # remove any trailing whitespaces, such as \n
+    line = line.rstrip()
+    # Call appropriate parser function.
+    # It returns next parser function (imagine it as dummy state machine).
+    state = state(line)
+
+print
