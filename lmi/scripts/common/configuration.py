@@ -66,6 +66,7 @@ class Configuration(BaseConfiguration):
         BaseConfiguration.__init__(self, **kwargs)
         self._verbosity = self.OUTPUT_WARNING
         self._trace = False
+        self._verify_certificate = None
 
     @classmethod
     def provider_prefix(cls):
@@ -81,12 +82,14 @@ class Configuration(BaseConfiguration):
         defaults['FileFormat'] = \
                 "%(asctime)s:%(levelname)-8s:%(name)s:%(lineno)d - %(message)s"
         defaults['ConsoleFormat'] = "%(levelname)s: %(message)s"
+        defaults['VerifyServerCertificate'] = 'True'
         return defaults
 
     @classmethod
     def mandatory_sections(cls):
         sects = set(BaseConfiguration.mandatory_sections())
         sects.add('Main')
+        sects.add('SSL')
         return list(sects)
 
     @property
@@ -106,6 +109,19 @@ class Configuration(BaseConfiguration):
         elif level > self.OUTPUT_DEBUG:
             level = self.OUTPUT_DEBUG
         self._verbosity = level
+
+    @property
+    def verify_certificate(self):
+        """
+        Return boolean saying, whether the server-side certificate should be
+        checked.
+        """
+        if self._verify_certificate is None:
+            return self.get_safe('SSL', 'VerifyServerCertificate', bool)
+        return self._verify_certificate
+    @verify_certificate.setter
+    def verify_certificate(self, verify):
+        self._verify_certificate = bool(verify)
 
     @property
     def silent(self):

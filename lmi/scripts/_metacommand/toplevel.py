@@ -50,6 +50,7 @@ Options:
     -v                        Increase verbosity of output.
     --trace                   Show tracebacks on errors.
     -q --quiet                Supress output except for errors.
+    -n --noverify             Do not verify cimom's ssl certificate.
 """
 
 import docopt
