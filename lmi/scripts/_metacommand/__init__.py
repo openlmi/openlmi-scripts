@@ -157,9 +157,8 @@ class MetaCommand(object):
             if self._options['--hosts-file']:
                 hosts_file = self._options['--hosts-file']
                 try:
-                    with open(self._options['--hosts-file'], 'rt'):
-                        hosts.extend(parse_hosts_file(
-                            self._options['--hosts-file']))
+                    with open(self._options['--hosts-file'], 'rt') as hosts_file:
+                        hosts.extend(parse_hosts_file(hosts_file))
                 except (OSError, IOError) as err:
                     LOG().critical('could not read hosts file "%s": %s',
                             hosts_file, err)

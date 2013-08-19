@@ -1,3 +1,5 @@
+* fixed parsing of hosts file
+
 0.1.1
 * support for (non)verification of server-side certificates
 * allowed *connection* to be an argument in command usage strings
