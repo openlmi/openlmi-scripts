@@ -50,6 +50,7 @@ from lmi.shell.LMIReturnValue import LMIReturnValue
 RE_CALLABLE = re.compile(
         r'^(?P<module>[a-z_]+(?:\.[a-z_]+)*):(?P<func>[a-z_]+)$',
         re.IGNORECASE)
+RE_ARRAY_SUFFIX = re.compile(r'^(?:[a-z_]+[a-z0-9_]*)?$', re.IGNORECASE)
 
 LOG = get_logger(__name__)
 
@@ -156,6 +157,49 @@ def _handle_callable(name, bases, dcl, namespace=None):
                 func.__module__ + '.' + func.__name__))
     _make_execute_method(bases, dcl, func, namespace)
 
+def _handle_opt_preprocess(name, dcl):
+    """
+    Process properties, that cause modification of parsed argument names before
+    passing them to ``verify_options()`` or ``transform_options()``. If any of
+    handled properties is supplied, it causes ``_preprocess_options()`` to be
+    overriden, where all of desired name modifications will be made.
+    Currently handled properties are:
+
+        * ``ARG_ARRAY_SUFFIX`` - Add given suffix to all arguments resulting
+            in list objects.
+
+    :param name: (``str``) Command class name.
+    :param dcl: (``dict``) Class dictionary being modified by this method.
+    """
+    if (   dcl.get('__metaclass__', None) is not EndPointCommandMetaClass
+       and '_preprocess_options' in dcl):
+        raise errors.LmiCommandError(dcl['__module__'], name,
+                '_preprocess_options() method must not be overriden in the'
+                'body of command class; use transform_options() instead')
+    arr_suffix = dcl.pop('ARG_ARRAY_SUFFIX', '')
+    if (  not isinstance(arr_suffix, str)
+       or not RE_ARRAY_SUFFIX.match(arr_suffix)):
+        raise errors.LmiCommandInvalidProperty(dcl['__module__'], name,
+                'ARG_ARRAY_SUFFIX must be a string matching regular'
+                ' expression "%s"' % RE_ARRAY_SUFFIX.pattern)
+    if arr_suffix:
+        def _new_preprocess_options(self, options):
+            """ Modify (in-place) given options dictionary by renaming keys. """
+            to_rename = [name for name, val in options.items()
+                    if isinstance(val, list)]
+            for name in to_rename:
+                match = util.RE_OPT_BRACKET_ARGUMENT.match(name)
+                if match:
+                    newname = '<' + match.group('name') + arr_suffix + '>'
+                else:
+                    match = util.RE_OPT_UPPER_ARGUMENT.match(name)
+                    if match:
+                        newname = name + arr_suffix.upper()
+                    else:
+                        newname = name + arr_suffix
+                options[newname] = options.pop(name)
+        dcl['_preprocess_options'] = _new_preprocess_options
+
 class EndPointCommandMetaClass(abc.ABCMeta):
     """
     End point command does not have any subcommands. It's a leaf of
@@ -165,11 +209,14 @@ class EndPointCommandMetaClass(abc.ABCMeta):
 
         * ``CALLABLE`` - An associated function. Mandatory property.
         * ``OWN_USAGE`` - Usage string. Optional property.
+        * ``ARG_ARRAY_SUFFIX`` - Suffix added to argument names containing
+            array of values. Optional property.
     """
 
     def __new__(mcs, name, bases, dcl):
         _handle_usage(name, dcl)
         _handle_callable(name, bases, dcl)
+        _handle_opt_preprocess(name, dcl)
 
         return super(EndPointCommandMetaClass, mcs).__new__(
                 mcs, name, bases, dcl)
@@ -393,24 +440,8 @@ class MultiplexerMetaClass(abc.ABCMeta):
             property.
     """
 
-    @classmethod
-    def is_root_multiplexer(mcs, bases):
-        """
-        Check, whether particular class is root multiplexer class. It's the
-        first class in an inheritance chain (from top to bottom) with assigned
-        metaclass ``MultiplexerMetaClass``.
-
-        :param bases: (``tuple``) List of base classes of particular class.
-            This is equavalent of ``__class__`` attribute.
-        :rtype: (``bool``) Is the
-        """
-        for bcls in bases:
-            if issubclass(type(bcls), MultiplexerMetaClass):
-                return False
-        return True
-
     def __new__(mcs, name, bases, dcl):
-        if not mcs.is_root_multiplexer(bases):
+        if dcl.get('__metaclass__', None) is not MultiplexerMetaClass:
             module_name = dcl.get('__module__', name)
             # check COMMANDS property and make it a classmethod
             if not 'COMMANDS' in dcl:

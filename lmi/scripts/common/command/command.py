@@ -40,13 +40,9 @@ from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common import formatter
-from lmi.scripts.common.command import meta
 from lmi.scripts.common.command import base
-
-RE_OPT_BRACKET_ARGUMENT = re.compile('^<(?P<name>[^>]+)>$')
-RE_OPT_UPPER_ARGUMENT = re.compile('^(?P<name>[A-Z]+(?:[_-][A-Z]+)*)$')
-RE_OPT_SHORT_OPTION = re.compile('^-(?P<name>[a-z])$', re.IGNORECASE)
-RE_OPT_LONG_OPTION = re.compile('^--(?P<name>[a-z_-]+)$', re.IGNORECASE)
+from lmi.scripts.common.command import meta
+from lmi.scripts.common.command import util
 
 LOG = get_logger(__name__)
 
@@ -76,11 +72,11 @@ def options_dict2kwargs(options):
     orig_names = {}
     for name, value in options.items():
         for (reg, func) in (
-                (RE_OPT_BRACKET_ARGUMENT, lambda m: m.group('name')),
-                (RE_OPT_UPPER_ARGUMENT,   lambda m: m.group('name')),
-                (RE_OPT_SHORT_OPTION,     lambda m: m.group(0)),
-                (RE_OPT_LONG_OPTION,      lambda m: m.group(0)),
-                (base.RE_COMMAND_NAME,    lambda m: m.group(0))):
+                (util.RE_OPT_BRACKET_ARGUMENT, lambda m: m.group('name')),
+                (util.RE_OPT_UPPER_ARGUMENT,   lambda m: m.group('name')),
+                (util.RE_OPT_SHORT_OPTION,     lambda m: m.group(0)),
+                (util.RE_OPT_LONG_OPTION,      lambda m: m.group(0)),
+                (base.RE_COMMAND_NAME,         lambda m: m.group(0))):
             match = reg.match(name)
             if match:
                 new_name = func(match)
@@ -172,6 +168,12 @@ class LmiEndPointCommand(base.LmiBaseCommand):
                           either as a string in form
                           ``"<module_name>:<callable>"`` or as a reference to
                           callable itself.
+        * ``ARG_ARRAY_SUFFIX``
+                        - String appended to every option parsed by ``docopt``
+                          having list as an associated value. It defaults to
+                          empty string. This modification is applied before
+                          calling ``verify_options()`` and
+                          ``transform_options()``.
         * ``FORMATTER`` - Default formatter factory for instances of given
                           command. This factory accepts an output stream as
                           the only parameter and returns an instance of
@@ -258,6 +260,19 @@ class LmiEndPointCommand(base.LmiBaseCommand):
             args.append(kwargs.pop(arg_name))
         return args, kwargs
 
+    def _preprocess_options(self, options):
+        """
+        This method may be overriden by EndPointCommandMetaClass as a result of
+        processing ``ARG_ARRAY_SUFFIX`` and other properties modifying names of
+        parsed options.
+
+        This should not be overriden in command class's body.
+
+        :param options: (``dict``) The result of docopt parser invocation
+            which can be modified by this method.
+        """
+        pass
+
     def _parse_args(self, args):
         """
         Run ``docopt`` command line parser on given list of arguments.
@@ -271,6 +286,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         """
         full_args = self.cmd_name_args[1:] + args
         options = docopt(self.get_usage(), full_args, help=False)
+        self._preprocess_options(options)
 
         # remove all command names from options
         cmd = self.parent
