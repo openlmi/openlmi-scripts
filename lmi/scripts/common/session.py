@@ -101,9 +101,15 @@ class Session(object):
         :rtype: (``LMIConnection``) Connection to remote host or ``None``.
         """
         username, password = self.get_credentials(hostname)
-        connection = connect(hostname, username, password,
-                interactive=interactive,
+        kwargs = dict(interactive=interactive,
                 verify_certificate=self._app.config.verify_certificate)
+        # TODO: remove inspect magic and add dependency on particular
+        # version of openlmi-tools, when its released
+        import inspect
+        if len(self._connections) > 1 \
+                and 'prompt_prefix' in inspect.getargspec(connect).args:
+            kwargs['prompt_prefix'] = '[%s] ' % hostname
+        connection = connect(hostname, username, password, **kwargs)
         if connection is not None:
             LOG().debug('connection to host "%s" successfully created',
                     hostname)
