@@ -168,7 +168,8 @@ class MetaCommand(object):
                 credentials = {h: (self._options['--user'], '') for h in hosts}
             else:
                 credentials = None
-            self._session = Session(self, hosts, credentials)
+            self._session = Session(self, hosts, credentials,
+                    same_credentials=self._options['--same-credentials'])
         return self._session
 
     def print_version(self):
