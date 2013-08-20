@@ -133,11 +133,12 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
             raise TypeError("args must be a list")
         try:
             cmd_cls = self.child_commands()[cmd_name]
-            return cmd_cls(self.app, cmd_name, self).run(args)
+            cmd = cmd_cls(self.app, cmd_name, self)
         except KeyError:
             self.app.stderr.write(self.get_usage())
             LOG().critical('unexpected command "%s"', cmd_name)
             return 1
+        return cmd.run(args)
 
     def run(self, args):
         """
