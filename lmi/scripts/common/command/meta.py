@@ -378,7 +378,7 @@ class ShowInstanceMetaClass(SessionCommandMetaClass):
         properties = dcl.pop('PROPERTIES', None)
         mcs._check_properties(name, dcl, properties)
         if properties is None and not dynamic_properties:
-            dcl['render'] = mcs._make_render_all_properties(bases, dcl)
+            mcs._make_render_all_properties(bases, dcl)
         elif properties is None and dynamic_properties:
             def _render_dynamic(self, return_value):
                 """ Renderer of dynamic properties. """
