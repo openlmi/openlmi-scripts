@@ -1,3 +1,4 @@
+# coding=utf-8
 # Storage Management Providers
 #
 # Copyright (c) 2013, Red Hat, Inc. All rights reserved.
@@ -29,14 +30,15 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
+
 """
 Basic device information.
 
 Usage:
     %(cmd)s list [ <device> ...]
-    %(cmd)s show [ <device> ...]
     %(cmd)s depends [ --deep ] [ <device> ...]
     %(cmd)s provides [ --deep ] [ <device> ...]
+    %(cmd)s show [ <device> ...]
     %(cmd)s tree [ <device> ]
 
 Commands:
@@ -74,7 +76,7 @@ Commands:
 from lmi.scripts.common import command
 from lmi.scripts.storage import show, fs
 from lmi.scripts.storage.common import (size2str, get_devices, get_children,
-        get_parents)
+        get_parents, str2device)
 from lmi.scripts.storage.lvm import get_vgs
 from lmi.shell.LMIUtil import lmi_isinstance
 
@@ -134,6 +136,30 @@ def cmd_show(ns, devices=None):
         print ""
     return 0
 
+def prepare_tree_line(level, name, subsequent):
+    """
+    Draw one line of device tree into string and return it.
+    """
+    if level == 0:
+        return u'' + name
+
+    line = [ u" " for i in xrange((level) * 2) ]
+    # Prepare '|' where appropriate
+    for (devid, l) in subsequent:
+        if l > 0:
+            line[(l - 1) * 2] = u"│"
+
+    l = level - 1
+    # add "├"
+    if line[l * 2] == u"│":
+        line[l * 2] = u"├"
+    else:
+        line[l * 2] = u"└"
+    # add "-"
+    line[l * 2 + 1] = u"─"
+
+    return u''.join(line) + name
+
 def cmd_tree(ns, device=None):
     """
     Implementation of 'device tree' command.
@@ -171,6 +197,7 @@ def cmd_tree(ns, device=None):
     # and display
     queue = []
     if device:
+        device = str2device(ns, device[0])
         queue = [(get_obj_id(ns, device), 0), ]
     else:
         for (devid, device) in devices.iteritems():
@@ -185,12 +212,12 @@ def cmd_tree(ns, device=None):
         info = get_obj_info(ns, device)
         if devid in shown:
             # If the device was already displayed, just show reference to it
-            yield (level, "*** " + info[0])
+            yield (prepare_tree_line(level, info[0], queue), "***")
             # Don't show children of already displayed elements
             continue
 
         # Display the device
-        yield (level,) + info
+        yield (prepare_tree_line(level, info[0], queue),) + info[1:]
         shown.add(devid)
         # And inspect all children
         children = [ dep[1] for dep in deps if dep[0] == devid ]
@@ -263,7 +290,7 @@ class Provides(command.LmiLister):
 
 class Tree(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.device_cmd:cmd_tree'
-    COLUMNS = ('Level', 'DeviceID', "Name", "ElementName", "Size", "Format")
+    COLUMNS = ('Level', "Name", "ElementName", "Size", "Format")
 
 Device = command.register_subcommands(
         'device', __doc__,
