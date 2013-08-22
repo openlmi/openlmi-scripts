@@ -136,23 +136,30 @@ def create_partition(ns, device, size=None, partition_type=None):
 
         if partition_type:
             # create a setting and modify it
-            caps = ns.LMI_DiskPartitionConfigurationCapabilities.first_instance()
-            (ret, outparams, err) = caps.CreateSetting()
+            caps = ns.LMI_DiskPartitionConfigurationCapabilities\
+                        .first_instance()
+            (ret, outparams, _err) = caps.CreateSetting()
             if ret != 0:
-                raise LmiFailed("Cannot create LMI_DiskPartitionConfigurationSetting for the partition: %d." % ret)
+                raise LmiFailed("Cannot create " \
+                        "LMI_DiskPartitionConfigurationSetting for the " \
+                        "partition: %d." % ret)
             setting = outparams['setting'].to_instance()
             setting.PartitionType = pywbem.Uint16(partition_type)
-            (ret, _outparams, err) = setting.push()
+            (ret, _outparams, _err) = setting.push()
             if ret != 0:
-                raise LmiFailed("Cannot change LMI_DiskPartitionConfigurationSetting for the partition: %d." % ret)
+                raise LmiFailed("Cannot change " \
+                        "LMI_DiskPartitionConfigurationSetting for the " \
+                        "partition: %d." % ret)
             args['Goal'] = setting
 
         print args
         service = ns.LMI_DiskPartitionConfigurationService.first_instance()
-        (ret, outparams, err) = service.SyncLMI_CreateOrModifyPartition(**args)
+        (ret, outparams, _err) = service.SyncLMI_CreateOrModifyPartition(**args)
         if ret != 0:
+            values = service.LMI_CreateOrModifyPartition\
+                    .LMI_CreateOrModifyPartitionValues
             raise LmiFailed("Cannot create the partition: %s."
-                    % (service.LMI_CreateOrModifyPartition.LMI_CreateOrModifyPartitionValues.value_name(ret)))
+                    % (values.value_name(ret)))
     finally:
         if setting:
             setting.delete()
@@ -168,10 +175,12 @@ def delete_partition(ns, partition):
     """
     partition = common.str2device(ns, partition)
     service = ns.LMI_DiskPartitionConfigurationService.first_instance()
-    (ret, outparams, err) = service.SyncLMI_DeletePartition(Partition=partition)
+    (ret, _outparams, _err) = service.SyncLMI_DeletePartition(
+            Partition=partition)
     if ret != 0:
+        values = service.LMI_DeletePartition.LMI_DeletePartitionValues
         raise LmiFailed("Cannot delete the partition: %s."
-                % (service.LMI_DeletePartition.LMI_DeletePartitionValues.value_name(ret)))
+                % (values.value_name(ret)))
 
 def create_partition_table(ns, device, table_type):
     """
@@ -193,12 +202,13 @@ def create_partition_table(ns, device, table_type):
         raise LmiFailed("Unsupported partition table type: %d" % table_type)
     cap = caps[0]
     service = ns.LMI_DiskPartitionConfigurationService.first_instance()
-    (ret, outparams, err) = service.SetPartitionStyle(
+    (ret, _outparams, _err) = service.SetPartitionStyle(
             Extent=device,
             PartitionStyle=cap)
     if ret != 0:
+        values = service.SetPartitionStyle.SetPartitionStyleValues
         raise LmiFailed("Cannot create partition table: %s."
-                % (service.SetPartitionStyle.SetPartitionStyleValues.value_name(ret)))
+                % (values.value_name(ret)))
 
 
 def get_partition_tables(ns, devices=None):
@@ -253,7 +263,7 @@ def get_largest_partition_size(ns, device):
             ResultClass="LMI_DiskPartitionConfigurationCapabilities")
     if not cap:
         raise LmiFailed("Cannot find partition table on %s" % device.name)
-    (ret, outparams, err) = cap.FindPartitionLocation(Extent=device)
+    (ret, outparams, _err) = cap.FindPartitionLocation(Extent=device)
     if ret != 0:
         LOG().warning("Cannot find largest partition size: %d." % ret)
         return 0

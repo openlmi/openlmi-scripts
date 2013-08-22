@@ -35,7 +35,7 @@ Filesystem and other data format management.
 
 Usage:
     %(cmd)s list [--all] [ <device> ...]
-    %(cmd)s create [ --label=<label> ] <type>  <device> ...
+    %(cmd)s create [ --label=<label> ] <fstype>  <device> ...
     %(cmd)s delete <device> ...
     %(cmd)s list-supported
 
@@ -59,16 +59,15 @@ Commands:
 
     list-supported
                 List supported filesystems, which can be used as
-                %(cmd)s create <type> option.
+                %(cmd)s create <fstype> option.
 """
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import fs
-from lmi.scripts.storage.common import str2device
 
-def list(ns, devices=None, __all=False):
+def cmd_list(ns, devices=None, __all=False):
     """
-    This is tiny wrapper around get_fs to list only interesting fields.
+    Implementation of 'fs list' command.
     """
     for fmt in fs.get_formats(ns, devices, fs.FORMAT_ALL, __all):
         device = fmt.first_associator(AssocClass="CIM_ResidesOnExtent")
@@ -81,59 +80,68 @@ def list(ns, devices=None, __all=False):
         if "FileSystemType" in fmt.properties():
             # it's CIM_LocalFileSystem
             # TODO: add filesystem size and free space
-            type = fmt.FileSystemType
+            fstype = fmt.FileSystemType
         else:
             # it must be LMI_DataFormat
-            type = fmt.FormatTypeDescription
-        yield (devname, name, label, type)
+            fstype = fmt.FormatTypeDescription
+        yield (devname, name, label, fstype)
 
-def list_supported(ns):
+def cmd_list_supported(ns):
+    """
+    Implementation of 'fs list-supported' command.
+    """
     caps = ns.LMI_FileSystemConfigurationCapabilities.first_instance()
     cls = ns.LMI_FileSystemConfigurationCapabilities
     for fstype in caps.SupportedActualFileSystemTypes:
         yield [cls.SupportedActualFileSystemTypesValues.value_name(fstype)]
 
-def create(ns, devices, type, __label=None):
-    fs.create_fs(ns, devices, type, __label)
+def cmd_create(ns, devices, fstype, __label=None):
+    """
+    Implementation of 'fs create' command.
+    """
+    fs.create_fs(ns, devices, fstype, __label)
 
-def delete(ns, devices):
+def cmd_delete(ns, devices):
+    """
+    Implementation of 'fs delete' command.
+    """
     for dev in devices:
         fs.delete_format(ns, dev)
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:list'
+    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_list'
     COLUMNS = ('Device', 'Name', "ElementName", "Type")
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
 class ListSupported(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:list_supported'
+    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_list_supported'
     COLUMNS = ('Filesystem',)
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:create'
+    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_create'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:delete'
+    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_delete'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 

@@ -52,9 +52,12 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
-from lmi.scripts.storage.common import str2device, str2size, size2str
+from lmi.scripts.storage.common import str2size, size2str
 
-def list(ns):
+def cmd_list(ns):
+    """
+    Implementation of 'vg list' command.
+    """
     for vg in lvm.get_vgs(ns):
         yield (vg.InstanceID,
                 vg.ElementName,
@@ -62,6 +65,9 @@ def list(ns):
                 size2str(vg.RemainingManagedSpace))
 
 def cmd_show(ns, vgs=None):
+    """
+    Implementation of 'vg show' command.
+    """
     if not vgs:
         vgs = lvm.get_vgs(ns)
     for vg in vgs:
@@ -69,40 +75,46 @@ def cmd_show(ns, vgs=None):
         print ""
     return 0
 
-def create(ns, name, devices, __extent_size=None):
+def cmd_create(ns, name, devices, __extent_size=None):
+    """
+    Implementation of 'vg create' command.
+    """
     if __extent_size:
         __extent_size = str2size(__extent_size)
     lvm.create_vg(ns, devices, name, __extent_size)
     return 0
 
-def delete(ns, vgs):
+def cmd_delete(ns, vgs):
+    """
+    Implementation of 'vg delete' command.
+    """
     for vg in vgs:
         lvm.delete_vg(ns, vg)
     return 0
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.vg_cmd:list'
+    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_list'
     COLUMNS = ('InstanceID', 'ElementName', "ExtentSize", "Free space")
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.vg_cmd:create'
+    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_create'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.vg_cmd:delete'
+    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_delete'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'vg' option to 'vgs' parameter name for better
-        readability
+        readability.
         """
         options['<vgs>'] = options.pop('<vg>')
 
@@ -113,7 +125,7 @@ class Show(command.LmiCheckResult):
     def transform_options(self, options):
         """
         Rename 'vg' option to 'vgs' parameter name for better
-        readability
+        readability.
         """
         options['<vgs>'] = options.pop('<vg>')
 

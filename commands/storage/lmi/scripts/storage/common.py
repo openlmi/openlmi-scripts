@@ -30,7 +30,7 @@
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
 """
-Common storage functionality
+Common storage functionality.
 """
 
 from lmi.scripts.common import get_logger
@@ -41,15 +41,22 @@ from lmi.shell.LMIUtil import lmi_isinstance
 
 LOG = get_logger(__name__)
 
+ESCAPE_RE = re.compile(r'(["\\])')
+
 def escape_cql(s):
     """
     Escape potentially unsafe string for CQL.
+
+    It is generally not possible to do anything really harmful in CQL
+    (there is no DELETE nor DROP TABLE), but just to be nice,
+    all strings passed to CQL should escape backslash '\' and double quote
+    '"'.
 
     :type s: string
     :param s: String to escape.
     :rtype: string
     """
-    return re.sub(r'(["\\])', r'\\\1', s)
+    return ESCAPE_RE.sub(r'\\\1', s)
 
 def str2device(ns, device):
     """
@@ -58,6 +65,9 @@ def str2device(ns, device):
     returned. If string is given, appropriate LMIInstance is looked up and
     returned.
     This functions throws an error when the device cannot be found.
+
+    The main purpose of this function is to convert parameters in functions,
+    where both string and LMIInstance is allowed.
 
     :type device: LMIInstance/CIM_StorageExtent or string with name of device
     :param device: Device to convert.
@@ -68,7 +78,10 @@ def str2device(ns, device):
     if not isinstance(device, str):
         raise TypeError("string or LMIInstance expected, got %s"
                 % device.__class__.__name__)
-    query = 'SELECT * FROM CIM_StorageExtent WHERE DeviceID="%(device)s" OR Name="%(device)s" OR ElementName="%(device)s"' % {'device': escape_cql(device)}
+    query = 'SELECT * FROM CIM_StorageExtent WHERE ' \
+                'DeviceID="%(device)s" ' \
+                'OR Name="%(device)s" ' \
+                'OR ElementName="%(device)s"' % {'device': escape_cql(device)}
     devices = ns.wql(query)
     if not devices:
         raise LmiFailed("Device '%s' not found" % (device,))
@@ -89,6 +102,9 @@ def str2vg(ns, vg):
     returned.
 
     This functions throws an error when the device cannot be found.
+
+    The main purpose of this function is to convert parameters in functions,
+    where both string and LMIInstance is allowed.
 
     :type vg: LMIInstance/LMI_VGStoragePool or string
     :param vg: VG to retrieve.
@@ -123,6 +139,9 @@ def str2obj(ns, obj):
     returned.
     This functions throws an error when the device or volume group
     cannot be found.
+
+    The main purpose of this function is to convert parameters in functions,
+    where both string and LMIInstance is allowed.
 
     :type obj: LMIInstance/CIM_StorageExtent or LMIInstance/LMI_VGStoragePool
         or string with name of device or pool
@@ -184,7 +203,8 @@ def str2size(size, additional_unit_size=None, additional_unit_suffix=None):
 
     m = multipliers.get(suffix.upper(), None)
     if not m:
-        if additional_unit_suffix and suffix.upper() == additional_unit_suffix.upper():
+        if (additional_unit_suffix and suffix.upper()
+                == additional_unit_suffix.upper()):
             m = additional_unit_size
         else:
             # Sort the units by their size
@@ -282,11 +302,11 @@ def get_parents(ns, obj, deep=False):
             new_parents = get_parents(ns, obj, False)
             for parent in new_parents:
                 if "DeviceID" in parent.properties():
-                    id = parent.DeviceID
+                    devid = parent.DeviceID
                 else:
-                    id = parent.InstanceID
-                if id not in known_parents:
-                    known_parents.add(id)
+                    devid = parent.InstanceID
+                if devid not in known_parents:
+                    known_parents.add(devid)
                     todo.append(parent)
                     yield parent
         return
@@ -307,6 +327,7 @@ def get_parents(ns, obj, deep=False):
             yield parent
 
     elif lmi_isinstance(obj, ns.CIM_StoragePool):
+        # find physical volumes of the VG
         parents = obj.associators(
                 AssocClass="LMI_VGAssociatedComponentExtent",
                 Role="GroupComponent")
@@ -348,11 +369,11 @@ def get_children(ns, obj, deep=False):
             new_children = get_children(ns, obj, False)
             for child in new_children:
                 if "DeviceID" in child.properties():
-                    id = child.DeviceID
+                    devid = child.DeviceID
                 else:
-                    id = child.InstanceID
-                if id not in known_children:
-                    known_children.add(id)
+                    devid = child.InstanceID
+                if devid not in known_children:
+                    known_children.add(devid)
                     todo.append(child)
                     yield child
         return
@@ -374,6 +395,7 @@ def get_children(ns, obj, deep=False):
             yield child
 
     elif lmi_isinstance(obj, ns.CIM_StoragePool):
+        # find LVs allocated from the VG
         children = obj.associators(
                 AssocClass="LMI_LVAllocatedFromStoragePool",
                 Role="Antecedent")
@@ -382,5 +404,4 @@ def get_children(ns, obj, deep=False):
     else:
         raise LmiFailed("CIM_StorageExtent or LMI_VGStragePool expected: %s"
             % obj.classname)
-
 
