@@ -73,42 +73,60 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import show, fs
-from lmi.scripts.storage.common import str2device, size2str, get_devices, \
-        get_children, get_parents
+from lmi.scripts.storage.common import (size2str, get_devices, get_children,
+        get_parents)
 from lmi.scripts.storage.lvm import get_vgs
 from lmi.shell.LMIUtil import lmi_isinstance
 
 def get_device_info(ns, device):
+    """
+    Return detailed information of the device to show.
+    """
     return (device.DeviceID,
             device.Name,
             device.ElementName,
             size2str(device.NumberOfBlocks * device.BlockSize),
             fs.get_device_format_label(ns, device))
 
-def get_pool_info(ns, pool):
+def get_pool_info(_ns, pool):
+    """
+    Return detailed information of the Volume Group to show.
+    """
     return (pool.InstanceID,
             pool.ElementName,
             size2str(pool.TotalManagedSpace),
             "volume group (LVM)")
 
 def get_obj_info(ns, obj):
+    """
+    Return detailed information of the device or VG to show.
+    """
     if lmi_isinstance(obj, ns.CIM_StorageExtent):
         return get_device_info(ns, obj)
     else:
         return get_pool_info(ns, obj)
 
 def get_obj_id(ns, obj):
+    """
+    Return unique ID of a device or a Volume group.
+    """
     if lmi_isinstance(obj, ns.CIM_StorageExtent):
         return obj.DeviceID
     else:
         return obj.InstanceID
 
-def list(ns, devices=None):
+def cmd_list(ns, devices=None):
+    """
+    Implementation of 'device list' command.
+    """
     devices = get_devices(ns, devices)
     for dev in devices:
         yield get_device_info(ns, dev)
 
 def cmd_show(ns, devices=None):
+    """
+    Implementation of 'device show' command.
+    """
     if not devices:
         devices = get_devices(ns)
     for dev in devices:
@@ -117,66 +135,72 @@ def cmd_show(ns, devices=None):
     return 0
 
 def cmd_tree(ns, device=None):
+    """
+    Implementation of 'device tree' command.
+    """
     # Note, this is high-speed version of the device tree.
     # Walking through associations using get_children() functions
     # was kind of slow, even for small number of devices (~5).
 
-    # devices = dict id -> LMIInstance
+    # devices = dict devid -> LMIInstance
     devices = {}
-    # Load *all* CIM_StorageExtents to speed things up, calling get_children
-    # iteratively is slow
+    # Load *all* CIM_StorageExtents to speed things up.
     for dev in get_devices(ns):
         devices[get_obj_id(ns, dev)] = dev
-    # Add *all* LMI_VGStoragePools
+    # Add *all* LMI_VGStoragePools.
     for vg in get_vgs(ns):
         devices[get_obj_id(ns, vg)] = vg
 
-    # deps = array of tuples (parent id, child id)
+    # deps = array of tuples (parent devid, child devid)
     # Load all dependencies, calling get_children iteratively is slow
     # Add CIM_BasedOn dependencies
     # (and omit LMI_LVBasedOn, we need LMI_LVAllocatedFromStoragePool instead)
-    deps = [ (get_obj_id(ns, i.Antecedent), get_obj_id(ns, i.Dependent))
+    deps = [(get_obj_id(ns, i.Antecedent), get_obj_id(ns, i.Dependent))
                     for i in ns.CIM_BasedOn.instances()
                         if not lmi_isinstance(i, ns.LMI_LVBasedOn)]
 
     # Add VG-LV dependencies from LMI_LVAllocatedFromStoragePool association
-    deps += [ (get_obj_id(ns, i.Antecedent), get_obj_id(ns, i.Dependent))
+    deps += [(get_obj_id(ns, i.Antecedent), get_obj_id(ns, i.Dependent))
                     for i in ns.LMI_LVAllocatedFromStoragePool.instances()]
 
     # Add PV-VG dependencies from LMI_VGAssociatedComponentExtent association
-    deps += [ (get_obj_id(ns, i.PartComponent), get_obj_id(ns, i.GroupComponent))
+    deps += [(get_obj_id(ns, i.PartComponent), get_obj_id(ns, i.GroupComponent))
                     for i in ns.LMI_VGAssociatedComponentExtent.instances()]
 
-    # queue = array of tuples (id, level), queue of items to inspect and display
+    # queue = array of tuples (devid, level), queue of items to inspect
+    # and display
     queue = []
     if device:
         queue = [(get_obj_id(ns, device), 0), ]
     else:
-        for (id, device) in devices.iteritems():
+        for (devid, device) in devices.iteritems():
             if device.Primordial:
-                queue.append((id, 0))
+                queue.append((devid, 0))
     shown = set()
 
     while queue:
-        (id, level) = queue.pop()
+        (devid, level) = queue.pop()
 
-        device = devices[id]
+        device = devices[devid]
         info = get_obj_info(ns, device)
-        if id in shown:
-            info = ("*** " + info[0],)
-        yield (level,) + info
-        # don't show children of already displayed elements
-        if id in shown:
+        if devid in shown:
+            # If the device was already displayed, just show reference to it
+            yield (level, "*** " + info[0])
+            # Don't show children of already displayed elements
             continue
 
-        shown.add(id)
-        children = [ dep[1] for dep in deps if dep[0] == id ]
+        # Display the device
+        yield (level,) + info
+        shown.add(devid)
+        # And inspect all children
+        children = [ dep[1] for dep in deps if dep[0] == devid ]
         for child in reversed(children):
             queue.append((child, level + 1))
 
-
-
 def cmd_depends(ns, devices=None, __deep=None):
+    """
+    Implementation of 'device depends' command.
+    """
     for device in devices:
         # TODO: do a better output
         print "%s:" % (device,)
@@ -184,6 +208,9 @@ def cmd_depends(ns, devices=None, __deep=None):
             yield get_obj_info(ns, parent)
 
 def cmd_provides(ns, devices=None, __deep=None):
+    """
+    Implementation of 'device provides' command.
+    """
     for device in devices:
         # TODO: do a better output
         print "%s:" % (device,)
@@ -191,7 +218,7 @@ def cmd_provides(ns, devices=None, __deep=None):
             yield get_obj_info(ns, child)
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.device_cmd:list'
+    CALLABLE = 'lmi.scripts.storage.device_cmd:cmd_list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
 
     def transform_options(self, options):

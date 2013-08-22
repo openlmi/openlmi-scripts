@@ -52,14 +52,19 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import raid, show
-from lmi.scripts.storage.common import str2device
 
-def list(ns):
+def cmd_list(ns):
+    """
+    Implementation of 'raid list' command.
+    """
     for r in raid.get_raids(ns):
         members = raid.get_raid_members(ns, r)
         yield (r.DeviceID, r.ElementName, r.Level, len(members))
 
 def cmd_show(ns, devices=None):
+    """
+    Implementation of 'raid show' command.
+    """
     if not devices:
         devices = raid.get_raids(ns)
     for r in devices:
@@ -67,38 +72,44 @@ def cmd_show(ns, devices=None):
         print ""
     return 0
 
-def create(ns, devices, level, __name=None):
+def cmd_create(ns, devices, level, __name=None):
+    """
+    Implementation of 'raid create' command.
+    """
     raid.create_raid(ns, devices, level, __name)
     return 0
 
-def delete(ns, devices):
+def cmd_delete(ns, devices):
+    """
+    Implementation of 'raid delete' command.
+    """
     for dev in devices:
         raid.delete_raid(ns, dev)
     return 0
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:list'
+    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_list'
     COLUMNS = ('DeviceID', 'Name', "Level", "Nr. of members")
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:create'
+    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_create'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:delete'
+    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_delete'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
@@ -109,7 +120,7 @@ class Show(command.LmiCheckResult):
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 

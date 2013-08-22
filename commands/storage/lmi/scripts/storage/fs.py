@@ -39,7 +39,6 @@ from lmi.scripts.storage import partition
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
-import pywbem
 from lmi.shell import LMIInstance
 
 FORMAT_DATA = 1
@@ -67,7 +66,7 @@ def str2format(ns, fmt):
         return fmt
     if not isinstance(fmt, str):
         raise TypeError("string or _LMIInstance expected")
-    device = common.str2device(fmt)
+    device = common.str2device(ns, fmt)
     return get_format_on_device(ns, device)
 
 def _get_fs_id(ns, fsname):
@@ -80,7 +79,11 @@ def _get_fs_id(ns, fsname):
     :rtype: int
     """
     service = ns.LMI_FileSystemConfigurationService.first_instance()
-    service.LMI_CreateFileSystem.XXX
+    values = service.LMI_CreateFileSystem.FileSystemTypeValues
+    fsid = values.values_dict.get(fsname.upper, None)
+    if not fsid:
+        raise LmiFailed("Unsupported filesystem name: %s" % fsname)
+    return fsid
 
 def get_format_on_device(ns, device, format_type=FORMAT_ALL):
     """
@@ -178,7 +181,7 @@ def create_fs(ns, devices, fs, label=None):
     """
     devs = []
     for device in devices:
-        devs.append(common.str2device(device))
+        devs.append(common.str2device(ns, device))
 
     fsid = _get_fs_id(ns, fs)
     service = ns.LMI_FileSystemConfigurationService.first_instance()
@@ -188,10 +191,11 @@ def create_fs(ns, devices, fs, label=None):
     }
     if label:
         args['ElementName'] = label
-    (ret, outparams, err) = service.LMI_CreateFileSystem(**args)
+    (ret, outparams, _err) = service.LMI_CreateFileSystem(**args)
     if ret != 0:
+        values = service.LMI_CreateFileSystem.LMI_CreateFileSystemValues
         raise LmiFailed("Cannot format the device %s: %s."
-                % (devs[0].Name, service.LMI_CreateFileSystem.LMI_CreateFileSystemValues.value_name(ret)))
+                % (devs[0].Name, values.value_name(ret)))
     return outparams['TheElement']
 
 def delete_format(ns, fmt):
@@ -207,12 +211,13 @@ def delete_format(ns, fmt):
         return
 
     service = ns.LMI_FileSystemConfigurationService.first_instance()
-    (ret, outparams, err) = service.DeleteFileSystem(TheFileSystem=fmt)
+    (ret, _outparams, _err) = service.DeleteFileSystem(TheFileSystem=fmt)
     if ret != 0:
+        values = service.DeleteFileSystem.DeleteFileSystemValues
         raise LmiFailed("Cannot delete the format: %s."
-                % (service.DeleteFileSystem.DeleteFileSystemValues.value_name(ret)))
+                % (values.value_name(ret)))
 
-def get_format_label(ns, fmt):
+def get_format_label(_ns, fmt):
     """
     Return short text description of the format, ready for printing.
 

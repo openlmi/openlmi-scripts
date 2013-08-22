@@ -38,7 +38,6 @@ from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
-import pywbem
 
 def get_raids(ns):
     """
@@ -67,10 +66,11 @@ def create_raid(ns, devices, level, name=None):
     if name:
         args['ElementName'] = name
     service = ns.LMI_StorageConfigurationService.first_instance()
-    (ret, outparams, err) = service.SyncCreateOrModifyMDRAID(**args)
+    (ret, outparams, _err) = service.SyncCreateOrModifyMDRAID(**args)
     if ret != 0:
+        values = service.CreateOrModifyMDRAID.CreateOrModifyMDRAIDValues
         raise LmiFailed("Cannot create the partition: %s."
-                % (service.CreateOrModifyMDRAID.CreateOrModifyMDRAIDValues.value_name(ret),))
+                % (values.value_name(ret),))
     return outparams['TheElement']
 
 
@@ -83,7 +83,7 @@ def delete_raid(ns, raid):
     """
     raid = common.str2device(ns, raid)
     service = ns.LMI_StorageConfigurationService.first_instance()
-    (ret, outparams, err) = service.SyncDeleteMDRAID(TheElement=raid)
+    (ret, _outparams, _err) = service.SyncDeleteMDRAID(TheElement=raid)
     if ret != 0:
         raise LmiFailed("Cannot delete the raid: %s."
                 % (service.DeleteMDRAID.DeleteMDRAIDValues.value_name(ret),))

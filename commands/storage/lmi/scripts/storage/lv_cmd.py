@@ -57,9 +57,12 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
-from lmi.scripts.storage.common import str2size, str2device, size2str
+from lmi.scripts.storage.common import str2size, size2str
 
-def list(ns, vgs=None):
+def cmd_list(ns, vgs=None):
+    """
+    Implementation of 'lv list' command.
+    """
     for lv in lvm.get_lvs(ns, vgs):
         yield (lv.DeviceID,
                 lv.Name,
@@ -67,6 +70,9 @@ def list(ns, vgs=None):
                 size2str(lv.NumberOfBlocks * lv.BlockSize))
 
 def cmd_show(ns, lvs=None):
+    """
+    Implementation of 'lv show' command.
+    """
     if not lvs:
         lvs = lvm.get_lvs(ns)
     for lv in lvs:
@@ -74,39 +80,44 @@ def cmd_show(ns, lvs=None):
         print ""
     return 0
 
-def create(ns, vg, name, size):
-    vg = lvm.str2vg(ns, vg)
-    lv = lvm.create_lv(ns, vg, name, str2size(size, vg.ExtentSize, 'E'))
+def cmd_create(ns, vg, name, size):
+    """
+    Implementation of 'lv create' command.
+    """
+    lvm.create_lv(ns, vg, name, str2size(size, vg.ExtentSize, 'E'))
     return 0
 
-def delete(ns, lvs):
+def cmd_delete(ns, lvs):
+    """
+    Implementation of 'lv delete' command.
+    """
     for lv in lvs:
         lvm.delete_lv(ns, lv)
     return 0
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.lv_cmd:list'
+    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size")
 
     def transform_options(self, options):
         """
         Rename 'vg' option to 'vgs' parameter name for better
-        readability
+        readability.
         """
         options['<vgs>'] = options.pop('<vg>')
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.lv_cmd:create'
+    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_create'
     EXPECT = 0
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.lv_cmd:delete'
+    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_delete'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'lv' option to 'lvs' parameter name for better
-        readability
+        readability.
         """
         options['<lvs>'] = options.pop('<lv>')
 
@@ -118,7 +129,7 @@ class Show(command.LmiCheckResult):
     def transform_options(self, options):
         """
         Rename 'lv' option to 'lvs' parameter name for better
-        readability
+        readability.
         """
         options['<lvs>'] = options.pop('<lv>')
 

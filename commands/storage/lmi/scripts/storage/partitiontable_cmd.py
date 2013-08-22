@@ -52,20 +52,21 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
-from lmi.scripts.storage.common import str2size, str2device
 
-def list(ns, devices=None):
+def cmd_list(ns, devices=None):
     """
-    This is tiny wrapper around get_partition_tables to list only interesting
-    fields.
+    Implementation of 'partition-table list' command.
     """
-    for (device, table) in partition.get_partition_tables(ns, devices):
+    for (device, _table) in partition.get_partition_tables(ns, devices):
         yield (device.DeviceID,
                 device.Name,
                 device.ElementName,
                 partition.get_largest_partition_size(ns, device))
 
 def cmd_show(ns, devices=None):
+    """
+    Implementation of 'partition-table show' command.
+    """
     if not devices:
         devices = partition.get_partition_tables(ns)
     for device in devices:
@@ -73,7 +74,10 @@ def cmd_show(ns, devices=None):
         print ""
     return 0
 
-def create(ns, devices, __gpt, __msdos):
+def cmd_create(ns, devices, __gpt, __msdos):
+    """
+    Implementation of 'partition-table create' command.
+    """
     if __msdos:
         ptype = partition.PARTITION_TABLE_TYPE_MSDOS
     else:
@@ -82,24 +86,24 @@ def create(ns, devices, __gpt, __msdos):
         partition.create_partition_table(ns, device, ptype)
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:list'
+    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:cmd_list'
     COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Largest free region')
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:create'
+    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:cmd_create'
     EXPECT = None
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
@@ -110,7 +114,7 @@ class Show(command.LmiCheckResult):
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 

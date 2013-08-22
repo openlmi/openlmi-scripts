@@ -38,8 +38,6 @@ from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
-from lmi.shell import LMIInstance
-import pywbem
 
 def get_lvs(ns, vgs=None):
     """
@@ -76,14 +74,15 @@ def create_lv(ns, vg, name, size):
     :rtype: LMIInstance/LMI_LVStorageExtent
     """
     vg = common.str2vg(ns, vg)
-    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
-    (ret, outparams, err) = service.SyncCreateOrModifyLV(
+    service = ns.LMI_StorageConfigurationService.first_instance()
+    (ret, outparams, _err) = service.SyncCreateOrModifyLV(
             ElementName=name,
             Size=size,
             InPool=vg)
     if ret != 0:
+        values = service.CreateOrModifyLV.CreateOrModifyLVValues
         raise LmiFailed("Cannot create the logical volume: %s."
-                % (service.CreateOrModifyLV.CreateOrModifyLVValues.value_name(ret),))
+                % (values.value_name(ret),))
     return outparams['TheElement']
 
 
@@ -96,7 +95,7 @@ def delete_lv(ns, lv):
     """
     lv = common.str2device(ns, lv)
     service = ns.LMI_StorageConfigurationService.first_instance()
-    (ret, outparams, err) = service.SyncDeleteLV(TheElement=lv)
+    (ret, _outparams, _err) = service.SyncDeleteLV(TheElement=lv)
     if ret != 0:
         raise LmiFailed("Cannot delete the LV: %s."
                 % (service.DeleteLV.DeleteLVValues.value_name(ret),))
@@ -131,24 +130,26 @@ def create_vg(ns, devices, name, extent_size=None):
         if extent_size:
             # create (and use) VGStorageSetting
             caps = ns.LMI_VGStorageCapabilities.first_instance()
-            (ret, outparams, err) = caps.CreateVGStorageSetting(
+            (ret, outparams, _err) = caps.CreateVGStorageSetting(
                     InExtents=devs)
             if ret != 0:
-                raise LmiFailed("Cannot create setting for the volume group: %s."
-                    % (caps.CreateVGStorageSetting.CreateVGStorageSettingValues.value_name(ret),))
+                vals = caps.CreateVGStorageSetting.CreateVGStorageSettingValues
+                raise LmiFailed("Cannot create setting for the volume group:" \
+                        " %s." % (vals.value_name(ret),))
             goal = outparams['Setting']
             goal.ExtentSize = extent_size
-            (ret, outparams, err) = goal.push()
+            (ret, outparams, _err) = goal.push()
             if ret != 0:
-                raise LmiFailed("Cannot modify setting for the volume group: %d."
-                        % ret)
+                raise LmiFailed("Cannot modify setting for the volume group:" \
+                        " %d." % ret)
             args['Goal'] = goal
 
         service = ns.LMI_StorageConfigurationService.first_instance()
         (ret, outparams, err) = service.SyncCreateOrModifyVG(**args)
         if ret != 0:
+            values = service.CreateOrModifyVG.CreateOrModifyVGValues
             raise LmiFailed("Cannot create the volume group: %s."
-                    % (service.CreateOrModifyVG.CreateOrModifyVGValues.value_name(ret),))
+                    % (values.value_name(ret),))
     finally:
         if goal:
             goal.delete()
@@ -164,8 +165,8 @@ def delete_vg(ns, vg):
     :param vg: Volume Group to delete.
     """
     vg = common.str2vg(ns, vg)
-    service = c.root.cimv2.LMI_StorageConfigurationService.first_instance()
-    (ret, outparams, err) = service.SyncDeleteVG(Pool=vg)
+    service = ns.LMI_StorageConfigurationService.first_instance()
+    (ret, _outparams, _err) = service.SyncDeleteVG(Pool=vg)
     if ret != 0:
         raise LmiFailed("Cannot delete the VG: %s."
                 % (service.DeleteVG.DeleteVGValues.value_name(ret),))

@@ -73,16 +73,16 @@ def partition_show(ns, part):
     if "PartitionType" in part.properties():
         cls = ns.LMI_DiskPartition
         if part.PartitionType == cls.PartitionTypeValues.Primary:
-            type = "primary"
+            ptype = "primary"
         elif part.PartitionType == cls.PartitionTypeValues.Extended:
-            type = "extended"
+            ptype = "extended"
         elif part.PartitionType == cls.PartitionTypeValues.Logical:
-            type = "logical"
+            ptype = "logical"
         else:
-            type = "unknown"
+            ptype = "unknown"
     else:
-        type = "N/A"
-    print "Partition Type:", type
+        ptype = "N/A"
+    print "Partition Type:", ptype
 
     basedon = part.first_reference(ResultClass="CIM_BasedOn", Role="Dependent")
     print "Starting sector:", basedon.StartingAddress
@@ -173,7 +173,8 @@ def lv_show(ns, lv):
     vg = lvm.get_lv_vg(ns, lv)
     print "Volume Group:", vg.ElementName
     print "Extent Size:", common.size2str(vg.ExtentSize)
-    print "Number of Occupied Extents:", lv.BlockSize * lv.NumberOfBlocks / vg.ExtentSize
+    print "Number of Occupied Extents:", \
+            lv.BlockSize * lv.NumberOfBlocks / vg.ExtentSize
     device_show_data(ns, lv)
 
 def device_show_device(ns, device):

@@ -79,28 +79,32 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
 
-def list(ns, devices=None):
+def cmd_list(ns, devices=None):
     """
-    This is tiny wrapper around get_partitions to list only interesting fields.
+    Implementation of 'partition list' command.
     """
     for part in partition.get_partitions(ns, devices):
-        type = ""
+        ptype = ""
+        values = ns.LMI_DiskPartition.PartitionTypeValues
         if "PartitionType" in part.properties():
-            if part.PartitionType == 1:  # TODO: use enumeration
-                type = "primary"
-            elif part.PartitionType == 2:
-                type = "extended"
-            elif part.PartitionType == 3:
-                type = "logical"
+            if part.PartitionType == values.Primary:
+                ptype = "primary"
+            elif part.PartitionType == values.Extended:
+                ptype = "extended"
+            elif part.PartitionType == values.Logical:
+                ptype = "logical"
             else:
-                type = "unknown"
+                ptype = "unknown"
         yield (part.DeviceID,
                 part.Name,
                 part.ElementName,
-                type,
+                ptype,
                 size2str(part.NumberOfBlocks * part.BlockSize))
 
 def cmd_show(ns, partitions=None):
+    """
+    Implementation of 'partition show' command.
+    """
     if not partitions:
         partitions = partition.get_partitions(ns)
     for part in partitions:
@@ -108,7 +112,10 @@ def cmd_show(ns, partitions=None):
         print ""
     return 0
 
-def create(ns, device, size=None, __extended=None, __logical=None):
+def cmd_create(ns, device, size=None, __extended=None, __logical=None):
+    """
+    Implementation of 'partition create' command.
+    """
     device = str2device(ns, device)
     size = str2size(size)
     ptype = None
@@ -119,33 +126,36 @@ def create(ns, device, size=None, __extended=None, __logical=None):
     p = partition.create_partition(ns, device, size, ptype)
     print "Partition %s, with DeviceID %s created." % (p.Name, p.DeviceID)
 
-def delete(ns, partitions):
+def cmd_delete(ns, partitions):
+    """
+    Implementation of 'partition delete' command.
+    """
     for part in partitions:
         partition.delete_partition(ns, part)
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.partition_cmd:list'
+    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
 
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
-        readability
+        readability.
         """
         options['<devices>'] = options.pop('<device>')
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partition_cmd:create'
+    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_create'
     EXPECT = 0
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partition_cmd:delete'
+    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_delete'
     EXPECT = 0
 
     def transform_options(self, options):
         """
         Rename 'partitions' option to 'partition' parameter name for better
-        readability
+        readability.
         """
         options['<partitions>'] = options.pop('<partition>')
 
@@ -156,7 +166,7 @@ class Show(command.LmiCheckResult):
     def transform_options(self, options):
         """
         Rename 'partitions' option to 'partition' parameter name for better
-        readability
+        readability.
         """
         options['<partitions>'] = options.pop('<partition>')
 
