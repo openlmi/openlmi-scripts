@@ -33,6 +33,47 @@
 Script to generate REstructured text from 'lmi help XYZ' output.
 It's highly tailored to docopt help style and expect the help
 to be formatted nicely.
+
+Requirements:
+
+- The help output must have following structure:
+
+    <description>
+    <another line of description>
+
+    Usage:
+        <all possible invocations of a cmd>
+
+    Commands:
+        <cmd name>  <description>
+                    <another line of description>
+
+                    <another paragraph of description
+
+    Options:
+        <option name>  <description>
+                       <another line of description>
+
+                       <another paragraph of description
+
+- The 'Options:' section is optional
+- For 'Options:' and 'Commands:'
+    - There must be *exactly* 4 spaces before <cmd name>
+    - There must be *at least* 5 spaces (8 recommended) before
+      <another line of description>
+    - Paragraphs are separated by one empty line
+      - Applies also to '*' lists.
+      - '*' lists must be indented accordingly:
+
+                    <another line of description>
+
+                    * List item 1.
+                      Second line of list item description.
+
+                    * List item 2.
+                      Second line of list item description.
+
+                    <another line of description>
 """
 
 import sys

@@ -30,7 +30,7 @@
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
 """
-Common storage functionality
+Common storage functionality.
 """
 
 from lmi.scripts.common import get_logger
@@ -41,15 +41,22 @@ from lmi.shell.LMIUtil import lmi_isinstance
 
 LOG = get_logger(__name__)
 
+ESCAPE_RE = re.compile(r'(["\\])')
+
 def escape_cql(s):
     """
     Escape potentially unsafe string for CQL.
+
+    It is generally not possible to do anything really harmful in CQL
+    (there is no DELETE nor DROP TABLE), but just to be nice,
+    all strings passed to CQL should escape backslash '\' and double quote
+    '"'.
 
     :type s: string
     :param s: String to escape.
     :rtype: string
     """
-    return re.sub(r'(["\\])', r'\\\1', s)
+    return ESCAPE_RE.sub(r'\\\1', s)
 
 def str2device(ns, device):
     """
@@ -58,6 +65,9 @@ def str2device(ns, device):
     returned. If string is given, appropriate LMIInstance is looked up and
     returned.
     This functions throws an error when the device cannot be found.
+
+    The main purpose of this function is to convert parameters in functions,
+    where both string and LMIInstance is allowed.
 
     :type device: LMIInstance/CIM_StorageExtent or string with name of device
     :param device: Device to convert.
@@ -89,6 +99,9 @@ def str2vg(ns, vg):
     returned.
 
     This functions throws an error when the device cannot be found.
+
+    The main purpose of this function is to convert parameters in functions,
+    where both string and LMIInstance is allowed.
 
     :type vg: LMIInstance/LMI_VGStoragePool or string
     :param vg: VG to retrieve.
@@ -123,6 +136,9 @@ def str2obj(ns, obj):
     returned.
     This functions throws an error when the device or volume group
     cannot be found.
+
+    The main purpose of this function is to convert parameters in functions,
+    where both string and LMIInstance is allowed.
 
     :type obj: LMIInstance/CIM_StorageExtent or LMIInstance/LMI_VGStoragePool
         or string with name of device or pool
