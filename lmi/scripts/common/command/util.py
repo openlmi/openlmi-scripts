@@ -31,6 +31,13 @@
 Utility functions used in command sub-package.
 """
 
+import re
+
+RE_OPT_BRACKET_ARGUMENT = re.compile('^<(?P<name>[^>]+)>$')
+RE_OPT_UPPER_ARGUMENT = re.compile('^(?P<name>[A-Z]+(?:[_-][A-Z]+)*)$')
+RE_OPT_SHORT_OPTION = re.compile('^-(?P<name>[a-z])$', re.IGNORECASE)
+RE_OPT_LONG_OPTION = re.compile('^--(?P<name>[a-z_-]+)$', re.IGNORECASE)
+
 def is_abstract_method(clss, method, missing_is_abstract=False):
     """
     Check, whether the given method is abstract in given class or list of

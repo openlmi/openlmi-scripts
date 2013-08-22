@@ -51,6 +51,7 @@ Options:
     --trace                   Show tracebacks on errors.
     -q --quiet                Supress output except for errors.
     -n --noverify             Do not verify cimom's ssl certificate.
+    --same-credentials        Use the first credentials given for all hosts.
 """
 
 import docopt

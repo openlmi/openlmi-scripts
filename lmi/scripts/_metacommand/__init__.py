@@ -157,9 +157,8 @@ class MetaCommand(object):
             if self._options['--hosts-file']:
                 hosts_file = self._options['--hosts-file']
                 try:
-                    with open(self._options['--hosts-file'], 'rt'):
-                        hosts.extend(parse_hosts_file(
-                            self._options['--hosts-file']))
+                    with open(self._options['--hosts-file'], 'rt') as hosts_file:
+                        hosts.extend(parse_hosts_file(hosts_file))
                 except (OSError, IOError) as err:
                     LOG().critical('could not read hosts file "%s": %s',
                             hosts_file, err)
@@ -169,7 +168,8 @@ class MetaCommand(object):
                 credentials = {h: (self._options['--user'], '') for h in hosts}
             else:
                 credentials = None
-            self._session = Session(self, hosts, credentials)
+            self._session = Session(self, hosts, credentials,
+                    same_credentials=self._options['--same-credentials'])
         return self._session
 
     def print_version(self):

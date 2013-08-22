@@ -49,17 +49,25 @@ class Session(object):
 
     :param app: Instance of main application.
     :param hosts: (``list``) List of hostname strings.
-    :param credentials: (``dict``) Mapping assigning pair (user, passward) to
+    :param credentials: (``dict``) Mapping assigning pair (user, password) to
         each hostname.
+    :param same_credentials: (``bool``) Use the same credentials for all
+        hosts in session. The first credentials given will be used.
     """
 
-    def __init__(self, app, hosts, credentials=None):
+    def __init__(self, app, hosts, credentials=None, same_credentials=False):
         self._app = app
         self._connections = {h: None for h in hosts}
-        self._credentials = defaultdict(lambda: ('', ''))
+        # { hostname : (username, password, verified), ... }
+        # where verified is a flag saying, whether these credentials
+        # were successfuly used for logging in
+        self._credentials = defaultdict(lambda: ('', '', False))
+        self._same_credentials = same_credentials
         if credentials is not None:
             if not isinstance(credentials, dict):
                 raise TypeError("credentials must be a dictionary")
+            for hostname, creds in credentials.items():
+                credentials[hostname] = (creds[0], creds[1], False)
             self._credentials.update(credentials)
 
     def __getitem__(self, hostname):
@@ -101,17 +109,20 @@ class Session(object):
         :rtype: (``LMIConnection``) Connection to remote host or ``None``.
         """
         username, password = self.get_credentials(hostname)
-        connection = connect(hostname, username, password,
-                interactive=interactive,
+        kwargs = dict(interactive=interactive,
                 verify_certificate=self._app.config.verify_certificate)
+        # TODO: remove inspect magic and add dependency on particular
+        # version of openlmi-tools, when its released
+        import inspect
+        if len(self._connections) > 1 \
+                and 'prompt_prefix' in inspect.getargspec(connect).args:
+            kwargs['prompt_prefix'] = '[%s] ' % hostname
+        connection = connect(hostname, username, password, **kwargs)
         if connection is not None:
             LOG().debug('connection to host "%s" successfully created',
                     hostname)
-            if not username or not password:
-                # connect function of lmi shell may obtain credentials from
-                # user vie stdin
-                self._credentials[hostname] = \
-                        connection._client._cliconn.creds
+            tp = connection._client._cliconn.creds
+            self._credentials[hostname] = (tp[0], tp[1], True)
         else:
             LOG().error('failed to connect to host "%s"', hostname)
         return connection
@@ -127,7 +138,15 @@ class Session(object):
             hostname. If no credentials were given for this host,
             ('', '') is returned.
         """
-        return self._credentials[hostname]
+        username, password, verified = self._credentials[hostname]
+        if (   not verified
+           and (not username or not password)
+           and self._same_credentials):
+            for tp in self._credentials.values():
+                if tp[2]:
+                    username, password = tp[0], tp[1]
+                    break
+        return username, password
 
     def get_unconnected(self):
         """
