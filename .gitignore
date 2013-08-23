@@ -1,0 +1,4 @@
+*.py[oc]
+*.egg-info
+.project
+.pydevproject
