@@ -38,6 +38,7 @@ is removed from resulting class after being processed by meta class.
 """
 
 import abc
+import inspect
 import re
 
 from lmi.scripts.common import get_logger
@@ -155,6 +156,7 @@ def _handle_callable(name, bases, dcl, namespace=None):
         raise errors.LmiCommandInvalidCallable(
             '"%s" is not a callable object or function.' % (
                 func.__module__ + '.' + func.__name__))
+
     _make_execute_method(bases, dcl, func, namespace)
 
 def _handle_opt_preprocess(name, dcl):
@@ -218,8 +220,20 @@ class EndPointCommandMetaClass(abc.ABCMeta):
         _handle_callable(name, bases, dcl)
         _handle_opt_preprocess(name, dcl)
 
-        return super(EndPointCommandMetaClass, mcs).__new__(
+        cls = super(EndPointCommandMetaClass, mcs).__new__(
                 mcs, name, bases, dcl)
+
+        # make additional check for arguments count
+        dest = getattr(cls.execute, "dest", cls.execute)
+        argspec = inspect.getargspec(dest)
+        if (   not argspec.varargs
+           and len(argspec.args) < cls.dest_pos_args_count()):
+            raise errors.LmiCommandInvalidCallable(
+                    dcl['__module__'], name,
+                    'Callable must accept at least %d positional'
+                    ' arguments' % base.dest_pos_args_count())
+
+        return cls
 
 class SessionCommandMetaClass(EndPointCommandMetaClass):
     """

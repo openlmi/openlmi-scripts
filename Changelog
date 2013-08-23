@@ -1,3 +1,4 @@
+* fixed exit command
 * added ARG_ARRAY_SUFFIX
 * added --same-credentials flag
 * fixed parsing of hosts file

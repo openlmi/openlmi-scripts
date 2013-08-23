@@ -207,6 +207,23 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         """
         return formatter.Formatter
 
+    @classmethod
+    def dest_pos_args_count(cls):
+        """
+        Number of positional arguments the associated function takes from
+        command. These arguments are created by the command alone -- they do
+        not belong to options in usage string. Function can take additional
+        positional arguments that need to be covered by usage string.
+
+        :rtype: (``int``)
+        """
+        dest = getattr(cls.execute, "dest", cls.execute)
+        abstract = dest == cls.execute and util.is_abstract_method(
+                cls, 'execute', True)
+        # if the destination function is not yet defined (abstract is True)
+        # let's assume it's not a method => 0 positional arguments needed
+        return 1 if not abstract and inspect.ismethod(dest) else 0
+
     def run_with_args(self, args, kwargs):
         """
         Process end-point arguments and exit.
@@ -241,10 +258,15 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         dest = getattr(self.execute, "dest", self.execute)
         argspec = inspect.getargspec(dest)
         kwargs = options_dict2kwargs(options)
+        # number of positional arguments not covered by usage string
+        pos_args_count = self.dest_pos_args_count()
         to_remove = []
+        # if associated function takes keyword arguments in a single
+        # dictionary (kwargs), we can pass all options
         if argspec.keywords is None:
+            # otherwise we need to remove any unhandled
             for opt_name in kwargs:
-                if opt_name not in argspec.args[1:]:
+                if opt_name not in argspec.args[pos_args_count:]:
                     LOG().debug('option "%s" not handled in function "%s",'
                         ' ignoring', opt_name, self.cmd_name)
                     to_remove.append(opt_name)
@@ -252,7 +274,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
             # remove options unhandled by function
             del kwargs[opt_name]
         args = []
-        for arg_name in argspec.args[1:]:
+        for arg_name in argspec.args[pos_args_count:]:
             if arg_name not in kwargs:
                 raise errors.LmiCommandError(
                     self.__module__, self.__class__.__name__,
@@ -358,6 +380,14 @@ class LmiSessionCommand(LmiEndPointCommand):
     Base class for end-point commands operating upon a session object.
     """
     __metaclass__ = meta.SessionCommandMetaClass
+
+    @classmethod
+    def dest_pos_args_count(cls):
+        """
+        There is a namespace/connection object passed as the first positional
+        argument.
+        """
+        return LmiEndPointCommand.dest_pos_args_count() + 1
 
     @abc.abstractmethod
     def process_session(self, session, args, kwargs):
