@@ -73,7 +73,7 @@ def list(ns, all, disabled, oneshot):
                 ns.LMI_Service.EnabledDefaultValues.Enabled:
             # list only enabled
             continue
-        yield (s.Name, s.Started, s.Status)
+        yield s
 
 def start(ns, service):
     """
