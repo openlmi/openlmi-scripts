@@ -152,8 +152,13 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         full_args = self.cmd_name_args[1:] + args
         # check the --help ourselves (the default docopt behaviour checks
         # also for --version)
-        options = docopt(self.get_usage(), full_args, help=False,
-                options_first=True)
+        docopt_kwargs = {
+                'help' : False,
+                # let's ignore options following first command for generated
+                # usage string
+                'options_first' : not self.has_own_usage()
+        }
+        options = docopt(self.get_usage(), full_args, **docopt_kwargs)
         if options.pop('--help', False):
             self.app.stdout.write(self.get_usage())
             return 0
