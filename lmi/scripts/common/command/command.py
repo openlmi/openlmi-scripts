@@ -414,22 +414,7 @@ class LmiSessionCommand(LmiEndPointCommand):
     def run_with_args(self, args, kwargs):
         self.process_session(self.app.session, args, kwargs)
 
-class LmiLister(LmiSessionCommand):
-    """
-    End point command outputting a table for each host. Associated function
-    shall return a list of rows. Each row is represented as a tuple holding
-    column values.
-
-    List of additional recognized properties:
-
-        * ``COLUMNS`` - Column names. It's a tuple with name for each column.
-                        Each row shell then contain the same number of items
-                        as this tuple. If omitted, associated function is
-                        expected to provide them in the first row of returned
-                        list. It's translated to ``get_columns()`` class
-                        method.
-    """
-    __metaclass__ = meta.ListerMetaClass
+class LmiBaseListerCommand(LmiSessionCommand):
 
     @classmethod
     def get_columns(cls):
@@ -446,6 +431,48 @@ class LmiLister(LmiSessionCommand):
     @classmethod
     def default_formatter(cls):
         return formatter.CsvFormatter
+
+    @abc.abstractmethod
+    def take_action(self, connection, args, kwargs):
+        """
+        Collects results of single host.
+
+        :param connection: (``lmi.shell.LMIConnection``) Connection to
+            a single host.
+        :param args: (``list``) Positional arguments for associated function.
+        :param kwargs: (``dict``) Keyword arguments for associated function.
+        :rtype: (``tuple``) Column names and item list as a pair.
+        """
+        raise NotImplementedError("take_action must be implemented in subclass")
+
+    def process_session(self, session, args, kwargs):
+        for connection in session:
+            if len(session) > 1:
+                self.app.stdout.write("="*79 + "\n")
+                self.app.stdout.write("Host: %s\n" % connection.hostname)
+                self.app.stdout.write("="*79 + "\n")
+            column_names, data = self.take_action(connection, args, kwargs)
+            self.produce_output((column_names, data))
+            if len(session) > 1:
+                self.app.stdout.write("\n")
+        return 0
+
+class LmiLister(LmiBaseListerCommand):
+    """
+    End point command outputting a table for each host. Associated function
+    shall return a list of rows. Each row is represented as a tuple holding
+    column values.
+
+    List of additional recognized properties:
+
+        * ``COLUMNS`` - Column names. It's a tuple with name for each column.
+                        Each row shell then contain the same number of items
+                        as this tuple. If omitted, associated function is
+                        expected to provide them in the first row of returned
+                        list. It's translated to ``get_columns()`` class
+                        method.
+    """
+    __metaclass__ = meta.ListerMetaClass
 
     def take_action(self, connection, args, kwargs):
         """
@@ -464,17 +491,36 @@ class LmiLister(LmiSessionCommand):
             columns = next(res)
         return (columns, res)
 
-    def process_session(self, session, args, kwargs):
-        for connection in session:
-            if len(session) > 1:
-                self.app.stdout.write("="*79 + "\n")
-                self.app.stdout.write("Host: %s\n" % connection.hostname)
-                self.app.stdout.write("="*79 + "\n")
-            column_names, data = self.take_action(connection, args, kwargs)
-            self.produce_output((column_names, data))
-            if len(session) > 1:
-                self.app.stdout.write("\n")
-        return 0
+class LmiInstanceLister(LmiBaseListerCommand):
+    """
+    End point command outputting a table of instances for each host.
+    Associated function shall return a list of instances. They may be
+    prepended with column names depending on value of ``DYNAMIC_PROPERTIES``.
+    Each instance will occupy single row of table with property values being a
+    content of cells.
+
+    List of additional recognized properties is the same as for
+    ``LmiInstanceShow``. There is just one difference. Either
+    ``DYNAMIC_PROPERTIES`` must be True or PROPERTIES must be filled.
+    """
+    __metaclass__ = meta.InstanceListerMetaClass
+
+    def take_action(self, connection, args, kwargs):
+        """
+        Collects results of single host.
+
+        :param connection: (``lmi.shell.LMIConnection``) Connection to
+            a single host.
+        :param args: (``list``) Positional arguments for associated function.
+        :param kwargs: (``dict``) Keyword arguments for associated function.
+        :rtype: (``tuple``) Column names and item list as a pair.
+        """
+        cols = self.get_columns()
+        if cols is None:
+            cols, data = self.execute(connection, *args, **kwargs)
+        else:
+            data = self.execute(connection, *args, **kwargs)
+        return (cols, (self.render(inst) for inst in data))
 
 class LmiShowInstance(LmiSessionCommand):
     """

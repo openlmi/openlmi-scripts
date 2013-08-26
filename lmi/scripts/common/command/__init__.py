@@ -40,6 +40,7 @@ from lmi.scripts.common.command.command import LmiEndPointCommand
 from lmi.scripts.common.command.command import LmiSessionCommand
 from lmi.scripts.common.command.command import LmiCommandMultiplexer
 from lmi.scripts.common.command.command import LmiLister
+from lmi.scripts.common.command.command import LmiInstanceLister
 from lmi.scripts.common.command.command import LmiShowInstance
 from lmi.scripts.common.command.command import LmiCheckResult
 

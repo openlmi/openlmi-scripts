@@ -159,6 +159,168 @@ def _handle_callable(name, bases, dcl, namespace=None):
 
     _make_execute_method(bases, dcl, func, namespace)
 
+def _make_render_all_properties(bases):
+    """
+    Creates ``render()`` method, rendering all properties of instance.
+
+    :param bases: (``tuple``) Base classes of new command class.
+    :param dcl: (``dict``) Class dictionary, it gets gets modified.
+    :rtype: (``function``) Rendering method taking CIM instance as an
+        argument.
+    """
+    if util.is_abstract_method(bases, 'render', missing_is_abstract=True):
+        def _render(_self, inst):
+            """
+            Return tuple of ``(column_names, values)`` ready for output by
+            formatter.
+            """
+            column_names, values = [], []
+            for prop_name, value in inst.properties.items():
+                column_names.append(prop_name)
+                if value is None:
+                    value = ''
+                values.append(value)
+            return (column_names, values)
+
+        return _render
+
+def _make_render_with_properties(properties, target_formatter_lister=False):
+    """
+    Creates ``render()`` method, rendering given instance properties.
+
+    :param properties: (``list``) List of properties to render.
+    :param target_formatter_lister: (``bool``) Whether the output is targeted
+        for Show command or Lister. The former expects a pair of column_names
+        and values. The latter expects just values.
+    :rtype: (``function``) Rendering method taking CIM instance as an
+        argument.
+    """
+    def _process_property(prop, inst):
+        if isinstance(prop, basestring):
+            prop_name = prop
+            if not prop in inst.properties():
+                LOG().warn('property "%s" not present in instance of "%s"',
+                        prop, inst.path)
+                value = "UNKNOWN"
+            else:
+                value = getattr(inst, prop)
+        else:
+            prop_name = prop[0]
+            try:
+                value = prop[1](inst)
+            except Exception as exc:
+                if self.app.options.debug:
+                    LOG().exception('failed to render property "%s"',
+                            prop[0])
+                else:
+                    LOG().error('failed to render property "%s": %s',
+                            prop[0], exc)
+                value = "ERROR"
+        return prop_name, value
+
+    if target_formatter_lister:
+        def _render(self, inst):
+            """
+            Renders a limited set of properties and returns a row for instance
+            table composed of property values.
+            """
+            return tuple(_process_property(p, inst)[1] for p in properties)
+    
+    else:
+        def _render(self, inst):
+            """
+            Renders a limited set of properties and returns a pair of
+            column names and values.
+            """
+            column_names, values = [], []
+            for prop in properties:
+                prop_name, value = _process_property(prop, inst)
+                column_names.append(prop_name)
+                values.append(value)
+            return (column_names, values)
+
+    return _render
+
+def _check_render_properties(name, dcl, props):
+    """
+    Make sanity check for ``PROPERTIES`` class property. Exception will be
+    raised when any flaw discovered.
+
+    :param name: (``str``) Name of class to be created.
+    :param dcl: (``dict``) Class dictionary.
+    :param props: (``list``) List of properties of ``None``.
+    """
+    if props is not None:
+        for prop in props:
+            if not isinstance(prop, (basestring, tuple, list)):
+                raise errors.LmiCommandInvalidProperty(
+                        dcl['__module__'], name,
+                        'PROPERTIES must be a list of strings or tuples')
+            if isinstance(prop, (tuple, list)):
+                if (  len(prop) != 2
+                   or not isinstance(prop[0], basestring)
+                   or not callable(prop[1])):
+                    raise errors.LmiCommandInvalidProperty(
+                            dcl['__module__'], name,
+                        'tuples in PROPERTIES must be: ("name", callable)')
+
+def _handle_render_properties(name, bases, dcl, target_formatter_lister=False):
+    """
+    Process properties related to rendering function for commands operating
+    on CIM instances. Result of this function a ``render()`` and
+    ``get_columns()`` functions being added to class's dictionary with
+    regard to handled properties.
+
+    Currently handled properties are:
+
+        * DYNAMIC_PROPERTIES - Whether the associated function itself provides
+            list of properties. Optional property.
+        * PROPERTIES - List of instance properties to print. Optional property.
+
+    :param name: (``str``) Name of class to be created.
+    :param bases: (``tuple``) Base classes of new command.
+    :param dcl: (``dict``) Class dictionary being modified by this method.
+    :param target_formatter_lister: (``bool``) Whether the output is targeted
+        for Show command or Lister. The former expects a pair of column_names
+        and values. The latter expects just values.
+    """
+    dynamic_properties = dcl.pop('DYNAMIC_PROPERTIES', False)
+    if dynamic_properties and 'PROPERTIES' in dcl:
+        raise errors.LmiCommandError(
+                dcl['__module__'], name,
+                'DYNAMIC_PROPERTIES and PROPERTIES are mutually exclusive')
+
+    properties = dcl.pop('PROPERTIES', None)
+    _check_render_properties(name, dcl, properties)
+
+    renderer = None
+    get_columns = lambda cls: None
+    if properties is None and not dynamic_properties:
+        if (   target_formatter_lister
+           and dcl.get('__metaclass__', None) is not InstanceListerMetaClass):
+            raise errors.LmiCommandError(dcl['__module__'], name,
+                    "either PROPERTIES must be declared or"
+                    " DYNAMIC_PROPERTIES == True for InstanceLister"
+                    " commands")
+        renderer = _make_render_all_properties(bases)
+    elif properties is None and dynamic_properties:
+        def _render_dynamic(self, return_value):
+            """ Renderer of dynamic properties. """
+            properties, inst = return_value
+            return _make_render_with_properties(properties,
+                    target_formatter_lister)(self, inst)
+        renderer = _render_dynamic
+    elif properties is not None:
+        renderer = _make_render_with_properties(properties,
+                target_formatter_lister)
+        get_columns = (lambda cls:
+                    tuple((p[0] if isinstance(p, tuple) else p)
+                for p in properties))
+    if renderer is not None:
+        dcl['render'] = classmethod(renderer)
+    if target_formatter_lister:
+        dcl['get_columns'] = get_columns
+
 def _handle_opt_preprocess(name, dcl):
     """
     Process properties, that cause modification of parsed argument names before
@@ -293,116 +455,18 @@ class ShowInstanceMetaClass(SessionCommandMetaClass):
     abstract in base lister class.
     """
 
-    @classmethod
-    def _check_properties(mcs, name, dcl, props):
-        """
-        Make sanity check for ``PROPERTIES`` class property. Exception will
-        be raised when any flaw discovered.
-
-        :param mcs: (``type``) This meta-class.
-        :param name: (``str``) Name of resulting command class.
-        :param dcl: (``dict``) Class dictionary.
-        :param props: (``list``) List of properties of ``None``.
-        """
-        if props is not None:
-            for prop in props:
-                if not isinstance(prop, (basestring, tuple, list)):
-                    raise errors.LmiCommandInvalidProperty(
-                            dcl['__module__'], name,
-                            'PROPERTIES must be a list of strings or tuples')
-                if isinstance(prop, (tuple, list)):
-                    if (  len(prop) != 2
-                       or not isinstance(prop[0], basestring)
-                       or not callable(prop[1])):
-                        raise errors.LmiCommandInvalidProperty(
-                                dcl['__module__'], name,
-                            'tuples in PROPERTIES must be: ("name", callable)')
-
-    @classmethod
-    def _make_render_all_properties(mcs, bases, dcl):
-        """
-        Creates ``render()`` method, rendering all properties of instance.
-
-        :param bases: (``tuple``) Base classes of new command class.
-        :param dcl: (``dict``) Class dictionary, it gets gets modified.
-        """
-        if util.is_abstract_method(bases, 'render', missing_is_abstract=True):
-            def _render(_self, inst):
-                """
-                Return tuple of ``(column_names, values)`` ready for output by
-                formatter.
-                """
-                column_names, values = [], []
-                for prop_name, value in inst.properties.items():
-                    column_names.append(prop_name)
-                    if value is None:
-                        value = ''
-                    values.append(value)
-                return (column_names, values)
-            dcl['render'] = _render
-
-    @classmethod
-    def _make_render_with_properties(mcs, properties):
-        """
-        Creates ``render()`` method, rendering given instance properties.
-
-        :param properties: (``list``) List of properties to render.
-        :rtype: (``function``) Rendering method taking CIM instance as an
-            argument.
-        """
-        def _render(self, inst):
-            """
-            Renders a limited set of properties and returns a pair of
-            column names and values.
-            """
-            column_names, values = [], []
-            for prop in properties:
-                if isinstance(prop, basestring):
-                    prop_name = prop
-                    if not prop in inst.properties():
-                        LOG().warn('property "%s" not present in instance'
-                                ' of "%s"', prop, inst.path)
-                        value = "UNKNOWN"
-                    else:
-                        value = getattr(inst, prop)
-                else:
-                    prop_name = prop[0]
-                    try:
-                        value = prop[1](inst)
-                    except Exception as exc:
-                        if self.app.options.debug:
-                            LOG().exception(
-                                    'failed to render property "%s"', prop[0])
-                        else:
-                            LOG().error(
-                                    'failed to render property "%s": %s',
-                                    prop[0], exc)
-                        value = "ERROR"
-                column_names.append(prop_name)
-                values.append(value)
-            return (column_names, values)
-        return _render
-
     def __new__(mcs, name, bases, dcl):
-        dynamic_properties = dcl.pop('DYNAMIC_PROPERTIES', False)
-        if dynamic_properties and 'PROPERTIES' in dcl:
-            raise errors.LmiCommandError(
-                    dcl['__module__'], name,
-                    'DYNAMIC_PROPERTIES and PROPERTIES are mutually exclusive')
-        properties = dcl.pop('PROPERTIES', None)
-        mcs._check_properties(name, dcl, properties)
-        if properties is None and not dynamic_properties:
-            mcs._make_render_all_properties(bases, dcl)
-        elif properties is None and dynamic_properties:
-            def _render_dynamic(self, return_value):
-                """ Renderer of dynamic properties. """
-                properties, inst = return_value
-                return mcs._make_render_with_properties(properties)(self, inst)
-            dcl['render'] = _render_dynamic
-        elif properties is not None:
-            dcl['render'] = mcs._make_render_with_properties(properties)
+        _handle_render_properties(name, bases, dcl)
 
         return super(ShowInstanceMetaClass, mcs).__new__(
+                mcs, name, bases, dcl)
+
+class InstanceListerMetaClass(SessionCommandMetaClass):
+
+    def __new__(mcs, name, bases, dcl):
+        _handle_render_properties(name, bases, dcl, True)
+
+        return super(InstanceListerMetaClass, mcs).__new__(
                 mcs, name, bases, dcl)
 
 class CheckResultMetaClass(SessionCommandMetaClass):

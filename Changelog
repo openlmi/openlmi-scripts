@@ -1,3 +1,4 @@
+* added LmiInstanceLister base command class
 * fixed exit command
 * added ARG_ARRAY_SUFFIX
 * added --same-credentials flag
