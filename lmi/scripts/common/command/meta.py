@@ -41,6 +41,7 @@ import abc
 import inspect
 import re
 
+from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common.command import base
@@ -209,7 +210,7 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
             try:
                 value = prop[1](inst)
             except Exception as exc:
-                if self.app.options.debug:
+                if Configuration.get_instance().trace:
                     LOG().exception('failed to render property "%s"',
                             prop[0])
                 else:

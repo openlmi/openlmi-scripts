@@ -592,7 +592,7 @@ class LmiShowInstance(LmiSessionCommand):
             try:
                 self.produce_output(self.take_action(connection, args, kwargs))
             except Exception as exc:
-                if self.app.options.debug:
+                if self.app.config.trace:
                     LOG().exception('show instance failed for host "%s"',
                             connection.hostname)
                 else:
