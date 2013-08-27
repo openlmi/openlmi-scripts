@@ -392,7 +392,7 @@ class LmiSessionCommand(LmiEndPointCommand):
         There is a namespace/connection object passed as the first positional
         argument.
         """
-        return LmiEndPointCommand.dest_pos_args_count() + 1
+        return LmiEndPointCommand.dest_pos_args_count.im_func(cls) + 1
 
     @abc.abstractmethod
     def process_session(self, session, args, kwargs):
