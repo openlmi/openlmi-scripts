@@ -39,7 +39,7 @@ import sys
 from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
 
-PYTHON_EGG_NAME = "lmi-scripts"
+PYTHON_EGG_NAME = "openlmi-scripts"
 
 DEFAULT_LOGGING_CONFIG = {
     'version' : 1,
