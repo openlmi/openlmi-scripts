@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-PROJECT = 'lmi-scripts-storage'
+PROJECT = 'openlmi-scripts-storage'
 VERSION = '0.0.1'
 
 from setuptools import setup, find_packages
@@ -32,7 +32,7 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['lmi-scripts'],
+    install_requires=['openlmi-scripts'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=['lmi.scripts.storage'],

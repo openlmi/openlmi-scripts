@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-PROJECT = 'lmi-scripts-service'
+PROJECT = 'openlmi-scripts-service'
 VERSION = '0.0.1'
 
 from setuptools import setup, find_packages
@@ -32,7 +32,7 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['lmi-scripts'],
+    install_requires=['openlmi-scripts'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=['lmi', 'lmi.scripts', 'lmi.scripts.service'],
