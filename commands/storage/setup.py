@@ -32,10 +32,10 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts'],
+    install_requires=['openlmi-scripts', 'openlmi-tools'],
 
-    namespace_packages=['lmi', 'lmi.scripts'],
-    packages=['lmi.scripts.storage'],
+    namespace_packages=['lmi', 'lmi.scripts' ],
+    packages=['lmi', 'lmi.scripts', 'lmi.scripts.storage'],
     include_package_data=True,
 
     entry_points={
