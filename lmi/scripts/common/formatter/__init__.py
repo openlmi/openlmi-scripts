@@ -213,7 +213,7 @@ class TableFormatter(ListFormatter):
     def print_text_row(self, row, column_size):
         for i in xrange(len(row)):
             size = column_size[i]
-            item = self.render_value(str(row[i]).ljust(size))
+            item = self.render_value(unicode(row[i]).ljust(size))
             self.out.write(item)
             self.out.write(" ")
         self.out.write("\n")
@@ -228,7 +228,7 @@ class TableFormatter(ListFormatter):
             column_sizes.append(len(self.column_names[i]))
         for row in self.stash:
             for i in xrange(len(row)):
-                l = len(str(row[i]))
+                l = len(unicode(row[i]))
                 if column_sizes[i] < l:
                     column_sizes[i] = l
 

@@ -53,47 +53,20 @@ Commands:
 from lmi.scripts.common import command
 from lmi.scripts.storage import raid, show
 
-def cmd_list(ns):
-    """
-    Implementation of 'raid list' command.
-    """
-    for r in raid.get_raids(ns):
-        members = raid.get_raid_members(ns, r)
-        yield (r.DeviceID, r.ElementName, r.Level, len(members))
-
-def cmd_show(ns, devices=None):
-    """
-    Implementation of 'raid show' command.
-    """
-    if not devices:
-        devices = raid.get_raids(ns)
-    for r in devices:
-        show.raid_show(ns, r)
-        print ""
-    return 0
-
-def cmd_create(ns, devices, level, __name=None):
-    """
-    Implementation of 'raid create' command.
-    """
-    raid.create_raid(ns, devices, level, __name)
-    return 0
-
-def cmd_delete(ns, devices):
-    """
-    Implementation of 'raid delete' command.
-    """
-    for dev in devices:
-        raid.delete_raid(ns, dev)
-    return 0
-
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_list'
     COLUMNS = ('DeviceID', 'Name', "Level", "Nr. of members")
 
+    def execute(self, ns):
+        """
+        Implementation of 'raid list' command.
+        """
+        for r in raid.get_raids(ns):
+            members = raid.get_raid_members(ns, r)
+            yield (r.DeviceID, r.ElementName, r.Level, len(members))
+
+
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_create'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -101,10 +74,16 @@ class Create(command.LmiCheckResult):
         readability.
         """
         options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, devices, level, _name=None):
+        """
+        Implementation of 'raid create' command.
+        """
+        raid.create_raid(ns, devices, level, _name)
+
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_delete'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -112,10 +91,17 @@ class Delete(command.LmiCheckResult):
         readability.
         """
         options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, devices):
+        """
+        Implementation of 'raid delete' command.
+        """
+        for dev in devices:
+            raid.delete_raid(ns, dev)
+
 
 class Show(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.raid_cmd:cmd_show'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -123,6 +109,17 @@ class Show(command.LmiCheckResult):
         readability.
         """
         options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, devices=None):
+        """
+        Implementation of 'raid show' command.
+        """
+        if not devices:
+            devices = raid.get_raids(ns)
+        for r in devices:
+            show.raid_show(ns, r, self.app.human_friendly)
+            print ""
+
 
 Raid = command.register_subcommands(
         'raid', __doc__,

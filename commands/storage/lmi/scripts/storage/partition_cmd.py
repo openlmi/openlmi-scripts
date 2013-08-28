@@ -79,62 +79,7 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
 
-def cmd_list(ns, devices=None):
-    """
-    Implementation of 'partition list' command.
-    """
-    for part in partition.get_partitions(ns, devices):
-        ptype = ""
-        values = ns.LMI_DiskPartition.PartitionTypeValues
-        if "PartitionType" in part.properties():
-            if part.PartitionType == values.Primary:
-                ptype = "primary"
-            elif part.PartitionType == values.Extended:
-                ptype = "extended"
-            elif part.PartitionType == values.Logical:
-                ptype = "logical"
-            else:
-                ptype = "unknown"
-        yield (part.DeviceID,
-                part.Name,
-                part.ElementName,
-                ptype,
-                size2str(part.NumberOfBlocks * part.BlockSize))
-
-def cmd_show(ns, partitions=None):
-    """
-    Implementation of 'partition show' command.
-    """
-    if not partitions:
-        partitions = partition.get_partitions(ns)
-    for part in partitions:
-        show.partition_show(ns, part)
-        print ""
-    return 0
-
-def cmd_create(ns, device, size=None, __extended=None, __logical=None):
-    """
-    Implementation of 'partition create' command.
-    """
-    device = str2device(ns, device)
-    size = str2size(size)
-    ptype = None
-    if __extended:
-        ptype = partition.PARTITION_TYPE_EXTENDED
-    elif __logical:
-        ptype = partition.PARTITION_TYPE_LOGICAL
-    p = partition.create_partition(ns, device, size, ptype)
-    print "Partition %s, with DeviceID %s created." % (p.Name, p.DeviceID)
-
-def cmd_delete(ns, partitions):
-    """
-    Implementation of 'partition delete' command.
-    """
-    for part in partitions:
-        partition.delete_partition(ns, part)
-
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
 
     def transform_options(self, options):
@@ -144,9 +89,33 @@ class Lister(command.LmiLister):
         """
         options['<devices>'] = options.pop('<device>')
 
+    def execute(self, ns, devices=None):
+        """
+        Implementation of 'partition list' command.
+        """
+        for part in partition.get_partitions(ns, devices):
+            ptype = ""
+            values = ns.LMI_DiskPartition.PartitionTypeValues
+            if "PartitionType" in part.properties():
+                if part.PartitionType == values.Primary:
+                    ptype = "primary"
+                elif part.PartitionType == values.Extended:
+                    ptype = "extended"
+                elif part.PartitionType == values.Logical:
+                    ptype = "logical"
+                else:
+                    ptype = "unknown"
+            size = size2str(part.NumberOfBlocks * part.BlockSize,
+                    self.app.human_friendly)
+            yield (part.DeviceID,
+                    part.Name,
+                    part.ElementName,
+                    ptype,
+                    size)
+
+
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_create'
-    EXPECT = 0
+    EXPECT = None
     def transform_options(self, options):
         """
         There is only one <device> option, but docopt passes it as array
@@ -155,8 +124,22 @@ class Create(command.LmiCheckResult):
         """
         options['<device>'] = options.pop('<device>')[0]
 
+    def execute(self, ns, device, size=None, _extended=None, _logical=None):
+        """
+        Implementation of 'partition create' command.
+        """
+        device = str2device(ns, device)
+        size = str2size(size)
+        ptype = None
+        if _extended:
+            ptype = partition.PARTITION_TYPE_EXTENDED
+        elif _logical:
+            ptype = partition.PARTITION_TYPE_LOGICAL
+        p = partition.create_partition(ns, device, size, ptype)
+        print "Partition %s, with DeviceID %s created." % (p.Name, p.DeviceID)
+
+
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_delete'
     EXPECT = 0
 
     def transform_options(self, options):
@@ -165,9 +148,16 @@ class Delete(command.LmiCheckResult):
         readability.
         """
         options['<partitions>'] = options.pop('<partition>')
+
+    def execute(self, ns, partitions):
+        """
+        Implementation of 'partition delete' command.
+        """
+        for part in partitions:
+            partition.delete_partition(ns, part)
+
 
 class Show(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_show'
     EXPECT = 0
 
     def transform_options(self, options):
@@ -176,6 +166,18 @@ class Show(command.LmiCheckResult):
         readability.
         """
         options['<partitions>'] = options.pop('<partition>')
+
+    def execute(self, ns, partitions=None):
+        """
+        Implementation of 'partition show' command.
+        """
+        if not partitions:
+            partitions = partition.get_partitions(ns)
+        for part in partitions:
+            show.partition_show(ns, part, self.app.human_friendly)
+            print ""
+        return 0
+
 
 Partition = command.register_subcommands(
         'Partition', __doc__,

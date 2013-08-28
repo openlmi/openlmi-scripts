@@ -65,51 +65,7 @@ Commands:
 from lmi.scripts.common import command
 from lmi.scripts.storage import fs
 
-def cmd_list(ns, devices=None, __all=False):
-    """
-    Implementation of 'fs list' command.
-    """
-    for fmt in fs.get_formats(ns, devices, fs.FORMAT_ALL, __all):
-        device = fmt.first_associator(AssocClass="CIM_ResidesOnExtent")
-        if device:
-            devname = device.DeviceID
-        else:
-            devname = "(none)"
-        name = fmt.Name
-        label = fmt.ElementName
-        if "FileSystemType" in fmt.properties():
-            # it's CIM_LocalFileSystem
-            # TODO: add filesystem size and free space
-            fstype = fmt.FileSystemType
-        else:
-            # it must be LMI_DataFormat
-            fstype = fmt.FormatTypeDescription
-        yield (devname, name, label, fstype)
-
-def cmd_list_supported(ns):
-    """
-    Implementation of 'fs list-supported' command.
-    """
-    caps = ns.LMI_FileSystemConfigurationCapabilities.first_instance()
-    cls = ns.LMI_FileSystemConfigurationCapabilities
-    for fstype in caps.SupportedActualFileSystemTypes:
-        yield [cls.SupportedActualFileSystemTypesValues.value_name(fstype)]
-
-def cmd_create(ns, devices, fstype, __label=None):
-    """
-    Implementation of 'fs create' command.
-    """
-    fs.create_fs(ns, devices, fstype, __label)
-
-def cmd_delete(ns, devices):
-    """
-    Implementation of 'fs delete' command.
-    """
-    for dev in devices:
-        fs.delete_format(ns, dev)
-
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_list'
     COLUMNS = ('Device', 'Name', "ElementName", "Type")
 
     def transform_options(self, options):
@@ -119,13 +75,44 @@ class Lister(command.LmiLister):
         """
         options['<devices>'] = options.pop('<device>')
 
+    def execute(self, ns, devices=None, _all=False):
+        """
+        Implementation of 'fs list' command.
+        """
+        for fmt in fs.get_formats(ns, devices, fs.FORMAT_ALL, _all):
+            device = fmt.first_associator(AssocClass="CIM_ResidesOnExtent")
+            if device:
+                devname = device.DeviceID
+            else:
+                devname = "(none)"
+            name = fmt.Name
+            label = fmt.ElementName
+            if "FileSystemType" in fmt.properties():
+                # it's CIM_LocalFileSystem
+                # TODO: add filesystem size and free space
+                fstype = fmt.FileSystemType
+            else:
+                # it must be LMI_DataFormat
+                fstype = fmt.FormatTypeDescription
+            # TODO: add free space when OpenLMI provides it
+            yield (devname, name, label, fstype)
+
+
 class ListSupported(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_list_supported'
     COLUMNS = ('Filesystem',)
 
+    def execute(self, ns):
+        """
+        Implementation of 'fs list-supported' command.
+        """
+        caps = ns.LMI_FileSystemConfigurationCapabilities.first_instance()
+        cls = ns.LMI_FileSystemConfigurationCapabilities
+        for fstype in caps.SupportedActualFileSystemTypes:
+            yield [cls.SupportedActualFileSystemTypesValues.value_name(fstype)]
+
+
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_create'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -133,10 +120,16 @@ class Create(command.LmiCheckResult):
         readability.
         """
         options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, devices, fstype, _label=None):
+        """
+        Implementation of 'fs create' command.
+        """
+        fs.create_fs(ns, devices, fstype, _label)
+
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.fs_cmd:cmd_delete'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -144,6 +137,14 @@ class Delete(command.LmiCheckResult):
         readability.
         """
         options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, devices):
+        """
+        Implementation of 'fs delete' command.
+        """
+        for dev in devices:
+            fs.delete_format(ns, dev)
+
 
 Fs = command.register_subcommands(
         'fs', __doc__,

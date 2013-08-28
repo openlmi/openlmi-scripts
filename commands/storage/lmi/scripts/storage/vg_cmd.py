@@ -54,51 +54,30 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
 from lmi.scripts.storage.common import str2size, size2str
 
-def cmd_list(ns):
-    """
-    Implementation of 'vg list' command.
-    """
-    for vg in lvm.get_vgs(ns):
-        yield (vg.InstanceID,
-                vg.ElementName,
-                size2str(vg.ExtentSize),
-                size2str(vg.RemainingManagedSpace))
-
-def cmd_show(ns, vgs=None):
-    """
-    Implementation of 'vg show' command.
-    """
-    if not vgs:
-        vgs = lvm.get_vgs(ns)
-    for vg in vgs:
-        show.vg_show(ns, vg)
-        print ""
-    return 0
-
-def cmd_create(ns, name, devices, __extent_size=None):
-    """
-    Implementation of 'vg create' command.
-    """
-    if __extent_size:
-        __extent_size = str2size(__extent_size)
-    lvm.create_vg(ns, devices, name, __extent_size)
-    return 0
-
-def cmd_delete(ns, vgs):
-    """
-    Implementation of 'vg delete' command.
-    """
-    for vg in vgs:
-        lvm.delete_vg(ns, vg)
-    return 0
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_list'
-    COLUMNS = ('InstanceID', 'ElementName', "ExtentSize", "Free space")
+    COLUMNS = ('InstanceID', 'ElementName', "ExtentSize", "Total space",
+            "Free space")
+
+    def execute(self, ns):
+        """
+        Implementation of 'vg list' command.
+        """
+        for vg in lvm.get_vgs(ns):
+            extent_size = size2str(vg.ExtentSize, self.app.human_friendly)
+            total_space = size2str(vg.TotalManagedSpace,
+                    self.app.human_friendly)
+            remaining_space = size2str(vg.RemainingManagedSpace,
+                    self.app.human_friendly)
+            yield (vg.InstanceID,
+                    vg.ElementName,
+                    extent_size,
+                    total_space,
+                    remaining_space)
+
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_create'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -107,9 +86,17 @@ class Create(command.LmiCheckResult):
         """
         options['<devices>'] = options.pop('<device>')
 
+    def execute(self, ns, name, devices, _extent_size=None):
+        """
+        Implementation of 'vg create' command.
+        """
+        if _extent_size:
+            _extent_size = str2size(_extent_size)
+        lvm.create_vg(ns, devices, name, _extent_size)
+
+
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_delete'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -117,10 +104,17 @@ class Delete(command.LmiCheckResult):
         readability.
         """
         options['<vgs>'] = options.pop('<vg>')
+
+    def execute(self, ns, vgs):
+        """
+        Implementation of 'vg delete' command.
+        """
+        for vg in vgs:
+            lvm.delete_vg(ns, vg)
+
 
 class Show(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.vg_cmd:cmd_show'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -128,6 +122,17 @@ class Show(command.LmiCheckResult):
         readability.
         """
         options['<vgs>'] = options.pop('<vg>')
+
+    def execute(self, ns, vgs=None):
+        """
+        Implementation of 'vg show' command.
+        """
+        if not vgs:
+            vgs = lvm.get_vgs(ns)
+        for vg in vgs:
+            show.vg_show(ns, vg, self.app.human_friendly)
+            print ""
+
 
 Vg = command.register_subcommands(
         'vg', __doc__,

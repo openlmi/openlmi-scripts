@@ -216,14 +216,20 @@ def str2size(size, additional_unit_size=None, additional_unit_suffix=None):
                     % (size, ",".join([unit[0] for unit in units])))
     return int(s) * m
 
-def size2str(size):
+def size2str(size, human_friendly):
     """
-    Convert size (in bytes) to human-friendly string converted to KB, MB, ...
+    Convert size (in bytes) to string.
 
     :type size: int
     :param size: Size of something in bytes.
+    :type human_friendly: bool
+    :param human_friendly: If True, the returned string is returned in
+        human-friendly units (KB, MB, ...).
     :rtype: string
     """
+    if not human_friendly:
+        return str(size)
+
     # find the highest multiplier, where the size/multiplier > 1
     mul = 1
     suffix = ''
