@@ -43,7 +43,6 @@ Code base is written for `python 2.7`.
 There are following python dependencies:
 
  * openlmi-tools
- * python-cliff
  * python-docopt
 
 Installation
@@ -79,3 +78,74 @@ To start the app in interactive mode:
     > service start svnserve.service
     ...
     > quit
+
+Developing lmi scripts.
+-----------------------
+
+This documents how to quickly develop lmi scripts without the need to
+reinstall python eggs, when anything is changed. This presumes, that the
+development process takes place in a git repotory checked out from [git][].
+It can be located anywhere on system.
+
+Before we start with setting up an environment, please double check, that you
+don't have installed anything from openlmi-scripts in system path
+(`/usr/lib/python2.7/site-packages/lmi/scripts` should not exist). And make
+sure, that user path is also cleared:
+
+    $ rm -rf $HOME/.local/lib/python2.7/site-packages/lmi*
+    $ rm -rf $HOME/.local/lib/python2.7/site-packages/openlmi*
+
+Install all dependencies:
+
+  * python-docopt
+  * openlmi-python-base
+  * openlmi-tools
+
+Either via rpms or from respective git repositories. For openlmi-python-base
+package contained in [openlmi-providers][] repository the setup script is
+located at `src/python/setup.py`. In future these will be available from PyPi.
+
+Let's setup an environment:
+
+  1. create a workspace directory for current `$USER` (`WSP`)
+
+     * let's call it a `WSP`
+     * this is a place, where our eggs and binaries will be "installed"
+     * it can be located anywhere, for example:
+
+         $ WSP=~/.python_workspace
+         $ mkdir $WSP
+
+  2. add workspace to your python path to make all modules installed there
+     importable:
+
+       $ export PYTHONPATH=$WSP:$PYTHONPATH
+
+     you can add this to your ~/.bashrc
+
+  3. add workspace to your PATH, so the installed binaries can be run:
+
+       $ export PATH=$WSP:$PATH
+
+  4. now let's "install" to our workspace:
+
+     * change to checked out openlmi-scripts repository
+
+       $ cd openlmi-scripts
+
+     * install them and any commands you want -- possibly your own
+
+       $ python setup.py develop --install-dir=$WSP
+       $ for cmd in service storage; do
+             pushd commands/$cmd
+             python setup.py develop --install-dir=$WSP
+             popd
+         done
+
+Now any change made to openlmi-scripts is immediately reflected in lmi
+meta-command.
+
+#### References:
+   
+   [git]: https://github.com/openlmi/openlmi-scripts   "openlmi-scripts"
+   [providers-git]: ssh://git.fedorahosted.org/git/openlmi-providers.git/ "openlmi-providers"
