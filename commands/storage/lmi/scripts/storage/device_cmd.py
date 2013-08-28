@@ -79,6 +79,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
         get_parents, str2device)
 from lmi.scripts.storage.lvm import get_vgs
 from lmi.shell.LMIUtil import lmi_isinstance
+from lmi.scripts.common import formatter
 
 def get_device_info(ns, device):
     """
@@ -95,6 +96,7 @@ def get_pool_info(_ns, pool):
     Return detailed information of the Volume Group to show.
     """
     return (pool.InstanceID,
+            pool.ElementName,
             pool.ElementName,
             size2str(pool.TotalManagedSpace),
             "volume group (LVM)")
@@ -133,7 +135,6 @@ def cmd_show(ns, devices=None):
         devices = get_devices(ns)
     for dev in devices:
         show.device_show(ns, dev)
-        print ""
     return 0
 
 def prepare_tree_line(level, name, subsequent):
@@ -230,7 +231,8 @@ def cmd_depends(ns, devices=None, __deep=None):
     """
     for device in devices:
         # TODO: do a better output
-        print "%s:" % (device,)
+        command = formatter.NewTableCommand(title=device)
+        yield command
         for parent in  get_parents(ns, device, __deep):
             yield get_obj_info(ns, parent)
 
@@ -290,7 +292,7 @@ class Provides(command.LmiLister):
 
 class Tree(command.LmiLister):
     CALLABLE = 'lmi.scripts.storage.device_cmd:cmd_tree'
-    COLUMNS = ('Level', "Name", "ElementName", "Size", "Format")
+    COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
 
 Device = command.register_subcommands(
         'device', __doc__,

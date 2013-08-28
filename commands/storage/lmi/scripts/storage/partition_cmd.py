@@ -147,6 +147,13 @@ class Lister(command.LmiLister):
 class Create(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_create'
     EXPECT = 0
+    def transform_options(self, options):
+        """
+        There is only one <device> option, but docopt passes it as array
+        (because in other commands it is used with '...'). So let's
+        transform it to scalar.
+        """
+        options['<device>'] = options.pop('<device>')[0]
 
 class Delete(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.storage.partition_cmd:cmd_delete'
