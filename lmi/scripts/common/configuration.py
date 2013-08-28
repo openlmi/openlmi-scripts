@@ -67,6 +67,7 @@ class Configuration(BaseConfiguration):
         self._verbosity = self.OUTPUT_WARNING
         self._trace = False
         self._verify_certificate = None
+        self._cim_namespace = None
 
     @classmethod
     def provider_prefix(cls):
@@ -91,6 +92,17 @@ class Configuration(BaseConfiguration):
         sects.add('Main')
         sects.add('SSL')
         return list(sects)
+
+    @property
+    def namespace(self):
+        if self._cim_namespace is None:
+            return BaseConfiguration.namespace.fget(self)
+        return self._cim_namespace
+    @namespace.setter
+    def namespace(self, namespace):
+        if not isinstance(namespace, basestring) and namespace is not None:
+            raise TypeError("namespace must be a string")
+        self._cim_namespace = namespace
 
     @property
     def verbosity(self):

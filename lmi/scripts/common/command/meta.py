@@ -105,25 +105,24 @@ def _make_execute_method(bases, dcl, func, namespace=None):
     :param func: A callable wrapped by this new command. It's usually
         referred as *associated function*. If ``None``, no function will be
         created -- ``dcl`` won't be modified.
-    :param namespace: (``str``) CIM Namespace to nest the connection object
-        into.
     """
     if func is not None and util.is_abstract_method(
             bases, 'execute', missing_is_abstract=True):
         del dcl['CALLABLE']
-        if namespace is not None:
-            def _execute(__self__, __connection__, *args, **kwargs):
-                """ Invokes associated function with given arguments. """
-                ns = LMIUtil.lmi_wrap_cim_namespace(__connection__, namespace)
-                return func(ns, *args, **kwargs)
-        else:
-            def _execute(__self__, __connection__, *args, **kwargs):
-                """ Invokes associated function with given arguments. """
-                return func(__connection__, *args, **kwargs)
+        def _execute(__self__, __connection__, *args, **kwargs):
+            """ Invokes associated function with given arguments. """
+            return func(__connection__, *args, **kwargs)
         _execute.dest = func
         dcl['execute'] = _execute
 
-def _handle_callable(name, bases, dcl, namespace=None):
+def _handle_namespace(name, dcl):
+    if 'NAMESPACE' in dcl:
+        namespace = dcl.pop('NAMESPACE')
+        def _new_default_cim_namespace(_cls):
+            return namespace
+        dcl['default_cim_namespace'] = classmethod(_new_default_cim_namespace)
+
+def _handle_callable(name, bases, dcl):
     """
     Process the ``CALLABLE`` property of end-point command. Create the
     ``execute()`` method based on it.
@@ -131,8 +130,6 @@ def _handle_callable(name, bases, dcl, namespace=None):
     :param name: (``str``) Name of command class to create.
     :param bases: (``tuple``) Base classes of new command.
     :param dcl: (``dict``) Class dictionary being modified by this method.
-    :param namespace: (``str``) CIM Namespace to nest the connection object
-        into.
     """
     try:
         func = dcl.get('CALLABLE')
@@ -158,7 +155,7 @@ def _handle_callable(name, bases, dcl, namespace=None):
             '"%s" is not a callable object or function.' % (
                 func.__module__ + '.' + func.__name__))
 
-    _make_execute_method(bases, dcl, func, namespace)
+    _make_execute_method(bases, dcl, func)
 
 def _make_render_all_properties(bases):
     """
@@ -412,10 +409,8 @@ class SessionCommandMetaClass(EndPointCommandMetaClass):
     """
     def __new__(mcs, name, bases, dcl):
         _handle_usage(name, dcl)
-        namespace = dcl.pop('NAMESPACE', "root/cimv2")
-        if not namespace:
-            namespace = None
-        _handle_callable(name, bases, dcl, namespace)
+        _handle_namespace(name, dcl)
+        _handle_callable(name, bases, dcl)
 
         return EndPointCommandMetaClass.__new__(mcs, name, bases, dcl)
 

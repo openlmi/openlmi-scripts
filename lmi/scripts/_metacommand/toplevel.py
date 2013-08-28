@@ -52,6 +52,7 @@ Options:
     -q --quiet                Supress output except for errors.
     -n --noverify             Do not verify cimom's ssl certificate.
     --same-credentials        Use the first credentials given for all hosts.
+    --namespace <namespace>   Default CIM namespace to use.               
 """
 
 import docopt

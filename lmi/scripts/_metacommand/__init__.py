@@ -198,6 +198,7 @@ class MetaCommand(object):
         del options['--quiet']
         del options['-v']
         del options['--noverify']
+        self.config.namespace = options.pop('--namespace', None)
         self._options = options
 
     def run(self, argv):

@@ -387,6 +387,22 @@ class LmiSessionCommand(LmiEndPointCommand):
     __metaclass__ = meta.SessionCommandMetaClass
 
     @classmethod
+    def cim_namespace(cls):
+        """
+        This returns default cim namespace, the connection object will be
+        nested into before being passed to associated function.
+        It can be overriden in few ways:
+
+            1. by setting ``[CIM] Namespace`` option in configuration
+            2. by giving ``--namespace`` argument on command line to the
+               ``lmi`` meta-command
+            3. by setting ``NAMESPACE`` property in declaration of command
+
+        Higher number means higher priority.
+        """
+        return Configuration.get_instance().namespace
+
+    @classmethod
     def dest_pos_args_count(cls):
         """
         There is a namespace/connection object passed as the first positional
@@ -410,6 +426,13 @@ class LmiSessionCommand(LmiEndPointCommand):
         """
         raise NotImplementedError("process_session must be overriden"
                 " in subclass")
+
+    def execute_on_connection(self, connection, *args, **kwargs):
+        namespace = self.cim_namespace()
+        if namespace is not None:
+            connection = LMIUtil.lmi_wrap_cim_namespace(
+                    __connection__, namespace)
+        return self.execute(self, connection, *args, **kwargs)
 
     def run_with_args(self, args, kwargs):
         self.process_session(self.app.session, args, kwargs)
@@ -484,7 +507,7 @@ class LmiLister(LmiBaseListerCommand):
         :param kwargs: (``dict``) Keyword arguments for associated function.
         :rtype: (``tuple``) Column names and item list as a pair.
         """
-        res = self.execute(connection, *args, **kwargs)
+        res = self.execute_on_connection(connection, *args, **kwargs)
         columns = self.get_columns()
         if columns is None:
             # let's get columns from the first row
@@ -517,9 +540,10 @@ class LmiInstanceLister(LmiBaseListerCommand):
         """
         cols = self.get_columns()
         if cols is None:
-            cols, data = self.execute(connection, *args, **kwargs)
+            cols, data = self.execute_on_connection(
+                    connection, *args, **kwargs)
         else:
-            data = self.execute(connection, *args, **kwargs)
+            data = self.execute_on_connection(connection, *args, **kwargs)
         return (cols, (self.render(inst) for inst in data))
 
 class LmiShowInstance(LmiSessionCommand):
@@ -579,7 +603,7 @@ class LmiShowInstance(LmiSessionCommand):
         :rtype: (``list``) List of pairs, where the first item is a label and
             second a value to render.
         """
-        res = self.execute(connection, *args, **kwargs)
+        res = self.execute_on_connection(connection, *args, **kwargs)
         return self.render(res)
 
     def process_session(self, session, args, kwargs):
@@ -658,7 +682,7 @@ class LmiCheckResult(LmiSessionCommand):
             instance of exception if any occured.
         """
         try:
-            res = self.execute(connection, *args, **kwargs)
+            res = self.execute_on_connection(connection, *args, **kwargs)
             self.results[connection.hostname] = res
             return (self.check_result(args, res), None)
         except Exception as exc:
