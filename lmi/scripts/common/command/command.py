@@ -55,7 +55,7 @@ def opt_name_sanitize(opt_name):
     :param opt_name: (``str``) Option name.
     :rtype: (``str``) Modified option name.
     """
-    return re.sub(r'[^a-zA-Z]', '_', opt_name).lower()
+    return re.sub(r'[^a-zA-Z]+', '_', opt_name).lower()
 
 def options_dict2kwargs(options):
     """
