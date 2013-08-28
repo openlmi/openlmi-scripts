@@ -2,12 +2,12 @@ openlmi-scripts
 ===============
 Client-side python modules and command line utilities.
 
-It comprise of one binary called `lmi` and a common library. `lmi`
+It comprises of one binary called `lmi` and a common library. `lmi`
 meta-command allows to run commands on a set of OpenLMI providers. These
-commands can be installed separatelly in a modular way.
+commands can be installed separately in a modular way.
 
 `lmi` is a command line application allowing to run single command on a set
-of hosts with just a one statement from `shell` or it can run in an
+of hosts with just one statement from `shell` or it can run in an
 interactive way.
 
 Structure
@@ -39,7 +39,7 @@ with its name under `lmi` meta-command.
 
 Dependencies
 ------------
-Code base is written for `pythopn 2.7`.
+Code base is written for `python 2.7`.
 There are following python dependencies:
 
  * openlmi-tools
@@ -79,4 +79,3 @@ To start the app in interactive mode:
     > service start svnserve.service
     ...
     > quit
-
