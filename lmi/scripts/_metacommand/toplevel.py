@@ -43,6 +43,7 @@ Options:
     -c --config-file <config> Path to a user configuration file. Options
                               specified here override any settings of global
                               configuration file.
+    -N --no-headings          Don't print table headings.
     -H --human-friendly       Print large values in human friendly units (i.e.
                               MB, GB, TB etc.)
     -h --host <host>          Hostname of target system.
@@ -131,6 +132,8 @@ class TopLevelCommand(base.LmiBaseCommand):
             return 0
         if options.pop('--human-friendly', False):
             self.app.human_friendly = True
+        if options.pop('--no-headings', False):
+            self.app.no_headings = True
         self.app.setup(options)
         if options['<command>'] is None:
             return self.start_interactive_mode()

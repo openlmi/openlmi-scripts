@@ -48,15 +48,17 @@ class Formatter(object):
 
     :param stream: (``file``) Output stream.
     :param padding: (``int``) Number of leading spaces to print at each line.
+    :param no_headings: (``bool``) If table headings should be omitted.
     """
 
-    def __init__(self, stream, padding=0):
+    def __init__(self, stream, padding=0, no_headings=False):
         if not isinstance(padding, (int, long)):
             raise TypeError("padding must be an integer")
         if padding < 0:
             padding = 0
         self.out = stream
         self.padding = padding
+        self.no_headings = no_headings
 
     def render_value(self, val):
         """
@@ -126,8 +128,8 @@ class ListFormatter(Formatter):
 
     This class should be subclassed to provide nice output.
     """
-    def __init__(self, stream, padding=0):
-        super(ListFormatter, self).__init__(stream, padding)
+    def __init__(self, stream, padding=0, no_headings=False):
+        super(ListFormatter, self).__init__(stream, padding, no_headings)
         self.want_header = True
         self.column_names = None
 
@@ -168,6 +170,8 @@ class ListFormatter(Formatter):
 
         :param columns: (``tuple of strings``) Column headers.
         """
+        if self.no_headings:
+            return
         if self.column_names:
             self.print_text_row(self.column_names)
         self.want_header = False
@@ -206,8 +210,8 @@ class TableFormatter(ListFormatter):
     The command must be provided as content of one row. This row is then not
     printed and the command is executed.
     """
-    def __init__(self, stream, padding=0):
-        super(ListFormatter, self).__init__(stream, padding)
+    def __init__(self, stream, padding=0, no_headings=False):
+        super(TableFormatter, self).__init__(stream, padding, no_headings)
         self.stash = []
 
     def print_text_row(self, row, column_size):
@@ -233,7 +237,8 @@ class TableFormatter(ListFormatter):
                     column_sizes[i] = l
 
         # print headers
-        self.print_text_row(self.column_names, column_sizes)
+        if not self.no_headings:
+            self.print_text_row(self.column_names, column_sizes)
         # print stashed rows
         for row in self.stash:
             self.print_text_row(row, column_sizes)

@@ -104,6 +104,8 @@ class MetaCommand(object):
         self._options = None
         # be ugly by default
         self._human_friendly = False
+        # show table headings by default
+        self._no_headings = False
 
     def _configure_logging(self):
         """
@@ -136,6 +138,14 @@ class MetaCommand(object):
     @human_friendly.setter
     def human_friendly(self, value):
         self._human_friendly = value
+
+    @property
+    def no_headings(self):
+        return self._no_headings
+
+    @no_headings.setter
+    def no_headings(self, value):
+        self._no_headings = value
 
     @property
     def command_manager(self):

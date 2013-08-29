@@ -249,7 +249,8 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         Return instance of default formatter.
         """
         if self._formatter is None:
-            self._formatter = self.formatter_factory()(self.app.stdout)
+            self._formatter = self.formatter_factory()(
+                    self.app.stdout, no_headings=self.app.no_headings)
         return self._formatter
 
     def _make_end_point_args(self, options):
@@ -391,7 +392,8 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         :param errors: (``array of tuples (hostname, error_text)``) Errors to 
             print.
         """
-        fmt = formatter.TableFormatter(self.app.stderr)
+        fmt = formatter.TableFormatter(self.app.stderr,
+                no_headings=self.app.no_headings)
         command1 = formatter.NewTableCommand(
                 "There were %d errors" % len(errors))
         command2 = formatter.NewTableHeaderCommand(("Host", "Error"))
