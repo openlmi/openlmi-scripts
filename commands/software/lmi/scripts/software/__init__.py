@@ -39,65 +39,87 @@ from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
 
-def list_pkgs(ns, **kwargs):
-    if not kwargs['__available'] and not kwargs['__all']:
-        yield ("NEVRA", "Summary")
-        cs = ns.Linux_ComputerSystem.first_instance()
-        for identity in cs.associators(
-                Role="System",
-                ResultRole="InstalledSoftware",
-                ResultClass="LMI_SoftwareIdentity"):
-            yield (identity.ElementName, identity.Caption)
+def list_installed_packages(ns):
+    """
+    Yields instances of LMI_SoftwareIdentity representing installed packages.
+    """
+    for identity in ns.Linux_ComputerSystem.first_instance().associators(
+            Role="System",
+            ResultRole="InstalledSoftware",
+            ResultClass="LMI_SoftwareIdentity"):
+        yield identity
 
-    if kwargs['__available'] or kwargs['__all']:
-        if kwargs['repo']:
-            inst = ns.LMI_SoftwareIdentityResource.first_instance(
-                    key='Name', value=kwargs['repo'])
-            if inst is None:
-                raise LmiFailed('no such repository "%s"' % kwargs['repo'])
-            repos = [inst]
-        else:
-            repos = ns.LMI_SoftwareIdentityResource.instances()
-        yield ("NEVRA", "Repository", "Summary")
-        pkg_names = []
-        data = defaultdict(list)    # (pkg_name, [(nevra, repo, summary)])
-        for repo in repos:
-            if repo.EnabledState != \
-                    ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled:
-                continue                  # skip disabled repositories
-            for iname in repo.associator_names(
-                    Role="AvailableSAP", ResultRole="ManagedElement",
-                    ResultClass="LMI_SoftwareIdentity"):
-                identity = iname.to_instance()
-                if not kwargs['__all'] and identity.InstallDate is None:
-                    continue
-                heapq.push(pkg_names, identity.Name)
-                info = ( identity.path["InstanceID"]
-                            [len("LMI:LMI_SoftwareIdentity:"):]
-                       , repo.Name, identity.Caption)
-                infolist = data[identity.Name]
-                if kwargs['__allow_duplicates']:
-                    infolist.append(out, info)
-                else:
-                    infolist[:] = [info]
-        for pkg_name in pkg_names:
-            for info in data[pkg_name]:
-                yield info
+def list_available_packages(ns,
+        allow_installed=False,
+        allow_duplicates=False,
+        repoid=None):
+    """
+    Yields instances of LMI_SoftwareIdentity representing available packages.
 
-def list_repos(ns, __disabled, __all):
-    if __all:
-        yield ('Repo id', 'Name', 'Enabled')
+    :param allow_installed: (``bool``) Whether to include available packages
+        that are installed.
+    :param allow_duplicates: (``bool``) Whether to include duplicates packages
+        (those having same name and architecture). Otherwise only the newest
+        packages available for each (name, architecture) pair will be contained
+        in result.
+    :param repoid: (``str``) Repository identification string. This will filter
+        available packages just for those provided by this repository.
+    """
+    if repoid is not None:
+        inst = ns.LMI_SoftwareIdentityResource.first_instance(
+                key='Name', value=repoid)
+        if inst is None:
+            raise LmiFailed('no such repository "%s"' % kwargs['repo'])
+        repos = [inst]
     else:
-        yield ('Repo id', 'Name')
+        repos = ns.LMI_SoftwareIdentityResource.instances()
+
+    pkg_names = []
+    data = defaultdict(list)    # (pkg_name, [instance, ...])
+    for repo in repos:
+        if repo.EnabledState != \
+                ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled:
+            continue                  # skip disabled repositories
+        for iname in repo.associator_names(
+                Role="AvailableSAP", ResultRole="ManagedElement",
+                ResultClass="LMI_SoftwareIdentity"):
+            identity = iname.to_instance()
+            if not allow_installed and identity.InstallDate:
+                continue
+            heapq.heappush(pkg_names, identity)
+            identities = data[identity.Name]
+            if allow_duplicates:
+                identities.append(identity)
+            else:
+                identities[:] = [identity]
+
+    for pkg_name in pkg_names:
+        for identity in data[pkg_name]:
+            yield identity
+
+def list_repos(ns, enabled=True):
+    """
+    Yields instances of LMI_SoftwareIdentityResource representing
+    software repositories.
+
+    :param enabled: (``bool`` or ``None``) Whether to list only enabled
+        repositories. If ``False`` only disabled repositories shall be listed.
+        If ``None``, all repositories shall be listed.
+    """
+    if not isinstance(enabled, bool) and enabled is not None:
+        raise TypeError("kind must be a boolean or None")
+
     for repo in ns.LMI_SoftwareIdentityResource.instances():
-        if not __disabled and not __all and repo.EnabledState != \
+        if enabled and repo.EnabledState != \
                 ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled:
             continue
-        if __disabled and repo.EnabledState != \
+        if enabled is False and repo.EnabledState != \
                 ns.LMI_SoftwareIdentityResource.EnabledStateValues.Disabled:
             continue
-        if __all:
-            yield (repo.Name, repo.Caption, repo.EnabledState == \
-                    ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled)
-        else:
-            yield (repo.Name, repo.Caption)
+        yield repo
+
+def show_pkg(ns, pkg_array, repo=None):
+    """
+    TODO
+    """
+    pass

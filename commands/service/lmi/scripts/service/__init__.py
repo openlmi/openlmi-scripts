@@ -36,6 +36,8 @@ from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
 
+SERVICE_KINDS = {'all', 'enabled', 'disabled', 'oneshot'}
+
 def _invoke_on_service(ns, method, service, description):
     """
     Invoke parameter-less method on given service.
@@ -54,22 +56,29 @@ def _invoke_on_service(ns, method, service, description):
                 description, service, ns.hostname)
     return res
 
-def list(ns, all, disabled, oneshot):
+def list(ns, kind='enabled'):
     """
-    List services. Only enabled ones are listed at default.
+    List services. Yields service instances.
 
-    :param all: (``bool``) List all services available.
-    :param disabled: (``bool``) List only disabled services.
-    :param oneshot: (``bool``) List only oneshot services.
+    :param kind: (``str``) What kind of services to list. Possible options
+        are:
+            * 'enabled'  - list only enabled services
+            * 'disabled' - list only disabled services
+            * 'oneshot'  - list only oneshot services
+            * 'all'      - list all services
     """
+    if not isinstance(kind, basestring):
+        raise TypeError("kind must be a string")
+    if not kind in SERVICE_KINDS:
+        raise ValueError("kind must be one of %s" % SERVICE_KINDS)
     for s in sorted(ns.LMI_Service.instances(), key=lambda i: i.Name):
-        if disabled and s.EnabledDefault != \
+        if kind == 'disabled' and s.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.Disabled:
             continue
-        if oneshot and s.EnabledDefault != \
+        if kind == 'oneshot' and s.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.NotApplicable:
             continue
-        if not any((disabled, all, oneshot)) and s.EnabledDefault != \
+        if kind == 'enabled' and s.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.Enabled:
             # list only enabled
             continue

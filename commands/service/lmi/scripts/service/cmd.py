@@ -51,16 +51,22 @@ Options:
     --oneshot   List only oneshot services.
 """
 
+from lmi.scripts import service 
 from lmi.scripts.common import command
 
 class Lister(command.LmiInstanceLister):
-    CALLABLE = 'lmi.scripts.service:list'
     PROPERTIES = ('Name', "Started", 'Status')
 
-    def transform_options(self, options):
-        for opt in ('all', 'disabled', 'oneshot'):
-            # let's remove underscores to make the interface pretty
-            options[opt] = options.pop('--'+opt)
+    def execute(self, ns, _all, _disabled, _oneshot):
+        kind = 'enabled'
+        if _all:
+            kind = 'all'
+        elif _disabled:
+            kind = 'disabled'
+        elif _oneshot:
+            kind = 'oneshot'
+        for service_inst in service.list(ns, kind):
+            yield service_inst
 
 class Start(command.LmiCheckResult):
     CALLABLE = 'lmi.scripts.service:start'
@@ -80,8 +86,8 @@ class Show(command.LmiShowInstance):
             'Name',
             'Caption',
             ('Enabled', lambda i: i.EnabledDefault == 2),
-            ('Active', lambda i: i.Started),
-            ('Status', lambda i: i.Status))
+            ('Active', 'Started'),
+            'Status')
 
 Service = command.register_subcommands(
         'Service', __doc__,

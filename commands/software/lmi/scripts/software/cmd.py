@@ -31,18 +31,20 @@
 System software management.
 
 Usage:
-    %(cmd)s list pkgs [(--available [--repo <repo>] | --all)] [--allow-duplicates]
+    %(cmd)s list pkgs
+        [--available [--repoid <repository>] | --all]
+        [--allow-duplicates]
     %(cmd)s list repos [--disabled | --all]
-    %(cmd)s list files <pkg>
-    %(cmd)s show pkg [--repo <repo>] <pkg> ...
-    %(cmd)s show repo <repo> ...
-    %(cmd)s install [--force] <pkg> ...
+    %(cmd)s list files <package>
+    %(cmd)s show pkg [--repoid <repository>] <package> ...
+    %(cmd)s show repo <repository> ...
+    %(cmd)s install [--force] <package> ...
     %(cmd)s install --uri <uri>
-    %(cmd)s remove <pkg> ...
-    %(cmd)s verify <pkg> ...
-    %(cmd)s update <pkg> ...
-    %(cmd)s enable <repo> ...
-    %(cmd)s disable <repo> ...
+    %(cmd)s remove <package> ...
+    %(cmd)s verify <package> ...
+    %(cmd)s update <package> ...
+    %(cmd)s enable <repository> ...
+    %(cmd)s disable <repository> ...
 
 Commands:
     list        List various information about packages, repositories or
@@ -61,28 +63,73 @@ Commands:
 
 Options:
     --force        Force installation
-    --repo <repo>  Select a repository, where the given package will be
-                   searched.
+    --repoid <repository>  Select a repository, where the given package will
+                   be searched for.
     --uri <uri>    Operate upon an rpm package available on remote system
                    through http or ftp service.
 """
 
+from lmi.scripts import software
 from lmi.scripts.common import command
 
-CALLABLE = 'lmi.scripts.software:list'
-COLUMNS = ('Name', "Started", 'Status')
+class PkgLister(command.LmiInstanceLister):
+    DYNAMIC_PROPERTIES = True
 
-class PkgLister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.software:list_pkgs'
+    def execute(self, ns,
+            _available=False,
+            _all=False,
+            _repoid=None,
+            _allow_duplicates=False):
+        properties = (
+                ('NEVRA', 'ElementName'),
+                ('Summary', 'Caption'))
+        if _all or _available:
+            instances = software.list_available_packages(ns,
+                    allow_installed=_all,
+                    allow_duplicates=_allow_duplicates,
+                    repoid=_repoid)
 
-class RepoLister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.software:list_repos'
+        else:
+            instances = software.list_installed_packages(ns)
+
+        return (properties, instances)
+
+class RepoLister(command.LmiInstanceLister):
+    DYNAMIC_PROPERTIES = True
+
+    def execute(self, ns, _all, _disabled):
+        if _all:
+            properties = (
+                    ('Repo id', 'Name'),
+                    ('Name', 'Description'),
+                    ('Enabled', lambda i: i.EnabledState == 2))
+            enabled = None
+        else:
+            properties = (
+                    ('Repo id', 'Name'),
+                    ('Name', 'Description'))
+            enabled = not _disabled
+
+        return (properties, software.list_repos(ns, enabled))
 
 class Lister(command.LmiCommandMultiplexer):
     """ List information about packages, repositories or files. """
     COMMANDS = { 'pkgs' : PkgLister, 'repos' : RepoLister }
 
+class PkgInfo(command.LmiShowInstance):
+    CALLABLE = 'lmi.scripts.software:show_pkg'
+    ARG_ARRAY_SUFFIX = '_array'
+
+    def transform_options(self, options):
+        options['repo'] = options.pop('--repo')
+
+class Show(command.LmiCommandMultiplexer):
+    """ Show information about packages or repositories. """
+    COMMANDS = { 'package' : PkgInfo }
+
 Software = command.register_subcommands(
         'Software', __doc__,
-        { 'list'    : Lister },
+        { 'list'    : Lister
+        , 'show'    : Show
+        }
     )
