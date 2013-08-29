@@ -46,6 +46,7 @@ Options:
     -N --no-headings          Don't print table headings.
     -H --human-friendly       Print large values in human friendly units (i.e.
                               MB, GB, TB etc.)
+    -C --csv                  Print output in CSV format for machine processing.
     -h --host <host>          Hostname of target system.
     --hosts-file <hosts>      Path to a file containing target hostnames.
                               Each hostname must be listed on a single line.
@@ -134,6 +135,8 @@ class TopLevelCommand(base.LmiBaseCommand):
             self.app.human_friendly = True
         if options.pop('--no-headings', False):
             self.app.no_headings = True
+        if options.pop('--csv', False):
+            self.app.csv = True
         self.app.setup(options)
         if options['<command>'] is None:
             return self.start_interactive_mode()

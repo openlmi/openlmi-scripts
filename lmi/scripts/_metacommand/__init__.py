@@ -106,6 +106,7 @@ class MetaCommand(object):
         self._human_friendly = False
         # show table headings by default
         self._no_headings = False
+        self._csv = False
 
     def _configure_logging(self):
         """
@@ -146,6 +147,14 @@ class MetaCommand(object):
     @no_headings.setter
     def no_headings(self, value):
         self._no_headings = value
+
+    @property
+    def csv(self):
+        return self._csv
+
+    @csv.setter
+    def csv(self, value):
+        self._csv = value
 
     @property
     def command_manager(self):

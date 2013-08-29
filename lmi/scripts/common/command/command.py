@@ -475,7 +475,10 @@ class LmiBaseListerCommand(LmiSessionCommand):
         return None
 
     def formatter_factory(self):
-        return formatter.TableFormatter
+        if self.app.csv:
+            return formatter.CsvFormatter
+        else:
+            return formatter.TableFormatter
 
     @abc.abstractmethod
     def take_action(self, connection, args, kwargs):
