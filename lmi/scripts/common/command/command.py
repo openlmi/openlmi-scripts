@@ -206,8 +206,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         raise NotImplementedError("execute method must be overriden"
                 " in subclass")
 
-    @classmethod
-    def default_formatter(cls):
+    def formatter_factory(self):
         """
         Subclasses shall override this method to provide default formatter
         factory for printing output.
@@ -250,7 +249,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         Return instance of default formatter.
         """
         if self._formatter is None:
-            self._formatter = self.default_formatter()(self.app.stdout)
+            self._formatter = self.formatter_factory()(self.app.stdout)
         return self._formatter
 
     def _make_end_point_args(self, options):
@@ -384,6 +383,21 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         args, kwargs = self._make_end_point_args(options)
         return self.run_with_args(args, kwargs)
 
+    def _print_errors(self, errors):
+        """
+        Print list of errors.
+        Each error is tuple (hostname, error_text).
+
+        :param errors: (``array of tuples (hostname, error_text)``) Errors to 
+            print.
+        """
+        fmt = formatter.TableFormatter(self.app.stderr)
+        command1 = formatter.NewTableCommand(
+                "There were %d errors" % len(errors))
+        command2 = formatter.NewTableHeaderCommand(("Host", "Error"))
+        fmt.produce_output((command1, command2))
+        fmt.produce_output(errors)
+
 class LmiSessionCommand(LmiEndPointCommand):
     """
     Base class for end-point commands operating upon a session object.
@@ -458,9 +472,8 @@ class LmiBaseListerCommand(LmiSessionCommand):
         """
         return None
 
-    @classmethod
-    def default_formatter(cls):
-        return formatter.CsvFormatter
+    def formatter_factory(self):
+        return formatter.TableFormatter
 
     @abc.abstractmethod
     def take_action(self, connection, args, kwargs):
@@ -481,11 +494,10 @@ class LmiBaseListerCommand(LmiSessionCommand):
                     % repr(session))
         for connection in session:
             if len(session) > 1:
-                self.app.stdout.write("="*79 + "\n")
-                self.app.stdout.write("Host: %s\n" % connection.hostname)
-                self.app.stdout.write("="*79 + "\n")
-            column_names, data = self.take_action(connection, args, kwargs)
-            self.produce_output((column_names, data))
+                command = formatter.NewHostCommand(connection.hostname)
+                self.produce_output((command,))
+            data = self.take_action(connection, args, kwargs)
+            self.produce_output(data)
             if len(session) > 1:
                 self.app.stdout.write("\n")
         return 0
@@ -519,10 +531,10 @@ class LmiLister(LmiBaseListerCommand):
         """
         res = self.execute_on_connection(connection, *args, **kwargs)
         columns = self.get_columns()
-        if columns is None:
-            # let's get columns from the first row
-            columns = next(res)
-        return (columns, res)
+        if columns is not None:
+            command = formatter.NewTableHeaderCommand(columns)
+            self.formatter.produce_output((command,))
+        return res
 
 class LmiInstanceLister(LmiBaseListerCommand):
     """
@@ -559,15 +571,18 @@ class LmiInstanceLister(LmiBaseListerCommand):
             if not isinstance(cols, (tuple, list)):
                 raise errors.LmiUnexpectedResult(
                         self.__class__, "(tuple, ...)", (cols, '...'))
-            return ( [c if isinstance(c, basestring) else c[0] for c in cols]
-                   , (self.render((cols, inst)) for inst in data))
+            header = [c if isinstance(c, basestring) else c[0] for c in cols]
+            cmd = formatter.NewTableHeaderCommand(columns=header)
+            self.produce_output((cmd,))
+            return [self.render((cols, inst)) for inst in data]
         else:
             data = self.execute_on_connection(connection, *args, **kwargs)
             if not hasattr(data, '__iter__'):
                 raise errors.LmiUnexpectedResult(
                         self.__class__, 'list or generator', data)
-            return ( [c if isinstance(c, basestring) else c[0] for c in cols]
-                   , (self.render(inst) for inst in data))
+            cmd = formatter.NewTableHeaderCommand(columns=cols)
+            self.produce_output((cmd,))
+            return [self.render(inst) for inst in data]
 
 class LmiShowInstance(LmiSessionCommand):
     """
@@ -599,8 +614,7 @@ class LmiShowInstance(LmiSessionCommand):
     """
     __metaclass__ = meta.ShowInstanceMetaClass
 
-    @classmethod
-    def default_formatter(cls):
+    def formatter_factory(self):
         return formatter.SingleFormatter
 
     @abc.abstractmethod
@@ -633,9 +647,8 @@ class LmiShowInstance(LmiSessionCommand):
         failures = []
         for connection in session:
             if len(session) > 1:
-                self.app.stdout.write("="*79 + "\n")
-                self.app.stdout.write("Host: %s\n" % connection.hostname)
-                self.app.stdout.write("="*79 + "\n")
+                command = formatter.NewHostCommand(connection.hostname)
+                self.produce_output(command)
             try:
                 self.produce_output(self.take_action(connection, args, kwargs))
             except Exception as exc:
@@ -649,10 +662,7 @@ class LmiShowInstance(LmiSessionCommand):
             if len(session) > 1:
                 self.app.stdout.write("\n")
         if len(failures) > 0:
-            self.app.stdout.write('There were %d unsuccessful runs on hosts:\n'
-                    % len(failures))
-            fmt = formatter.CsvFormatter(self.app.stdout)
-            fmt.produce_output((('Host', 'Error'), failures))
+            self._print_errors(failures)
         return 0
 
 class LmiCheckResult(LmiSessionCommand):
@@ -677,9 +687,8 @@ class LmiCheckResult(LmiSessionCommand):
         # dictionary of hosts with associated results
         self.results = {}
 
-    @classmethod
-    def default_formatter(cls):
-        return formatter.CsvFormatter
+    def formatter_factory(self):
+        return formatter.TableFormatter
 
     @abc.abstractmethod
     def check_result(self, options, result):
@@ -731,8 +740,6 @@ class LmiCheckResult(LmiSessionCommand):
             self.app.stdout.write('Successful runs: %d\n' % len(results[0]))
         failed_runs = len(results[1]) + len(session.get_unconnected())
         if failed_runs:
-            self.app.stdout.write('There were %d unsuccessful runs on hosts:\n'
-                    % failed_runs)
             data = []
             for hostname in session.get_unconnected():
                 data.append((hostname, 'failed to connect'))
@@ -745,5 +752,4 @@ class LmiCheckResult(LmiSessionCommand):
                             self.check_result.expected,
                             self.results[hostname]))
                 data.append((hostname, error))
-            self.produce_output((('Name', 'Error'), data))
-
+            self._print_errors(data)
