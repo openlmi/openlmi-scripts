@@ -47,6 +47,7 @@ from lmi.scripts.common import errors
 from lmi.scripts.common.command import base
 from lmi.scripts.common.command import util
 from lmi.shell import LMIUtil
+from lmi.shell import LMIInstance
 from lmi.shell.LMIReturnValue import LMIReturnValue
 
 RE_CALLABLE = re.compile(
@@ -204,9 +205,15 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
             else:
                 value = getattr(inst, prop)
         else:
+            if not isinstance(prop, (tuple, list)):
+                raise TypeError("prop must be a string or tuple, not %s" %
+                        repr(prop))
             prop_name = prop[0]
             try:
-                value = prop[1](inst)
+                if callable(prop[1]):
+                    value = prop[1](inst)
+                else:
+                    value = getattr(inst, prop[1])
             except Exception as exc:
                 if Configuration.get_instance().trace:
                     LOG().exception('failed to render property "%s"',
@@ -223,14 +230,20 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
             Renders a limited set of properties and returns a row for instance
             table composed of property values.
             """
+            if not isinstance(inst, LMIInstance):
+                raise errors.LmiUnexpectedResult(
+                        self.__class__, 'LMIInstance object', inst)
             return tuple(_process_property(p, inst)[1] for p in properties)
-    
+
     else:
         def _render(self, inst):
             """
             Renders a limited set of properties and returns a pair of
             column names and values.
             """
+            if not isinstance(inst, LMIInstance):
+                raise errors.LmiUnexpectedResult(
+                        self.__class__, 'LMIInstance object', inst)
             column_names, values = [], []
             for prop in properties:
                 prop_name, value = _process_property(prop, inst)
@@ -258,10 +271,12 @@ def _check_render_properties(name, dcl, props):
             if isinstance(prop, (tuple, list)):
                 if (  len(prop) != 2
                    or not isinstance(prop[0], basestring)
-                   or not callable(prop[1])):
+                   or (   not callable(prop[1])
+                      and not isinstance(prop[1], basestring))):
                     raise errors.LmiCommandInvalidProperty(
                             dcl['__module__'], name,
-                        'tuples in PROPERTIES must be: ("name", callable)')
+                        'tuples in PROPERTIES must be: ("name",'
+                        ' callable or property_name)')
 
 def _handle_render_properties(name, bases, dcl, target_formatter_lister=False):
     """

@@ -36,10 +36,13 @@ import inspect
 import re
 from docopt import docopt
 
+from lmi.shell import LMIUtil
+from lmi.shell import LMIConnection
 from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common import formatter
+from lmi.scripts.common.session import Session
 from lmi.scripts.common.command import base
 from lmi.scripts.common.command import meta
 from lmi.scripts.common.command import util
@@ -128,9 +131,10 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         :param args: (``list``) List of arguments for particular subcommand.
         """
         if not isinstance(cmd_name, basestring):
-            raise TypeError("cmd_name must be a string")
+            raise TypeError("cmd_name must be a string, not %s" %
+                    repr(cmd_name))
         if not isinstance(args, (list, tuple)):
-            raise TypeError("args must be a list")
+            raise TypeError("args must be a list, not %s" % repr(args))
         try:
             cmd_cls = self.child_commands()[cmd_name]
             cmd = cmd_cls(self.app, cmd_name, self)
@@ -428,11 +432,14 @@ class LmiSessionCommand(LmiEndPointCommand):
                 " in subclass")
 
     def execute_on_connection(self, connection, *args, **kwargs):
+        if not isinstance(connection, LMIConnection):
+            raise TypeError("expected an instance of LMIConnection for"
+                    " connection argument, not %s" % repr(connection))
         namespace = self.cim_namespace()
         if namespace is not None:
             connection = LMIUtil.lmi_wrap_cim_namespace(
-                    __connection__, namespace)
-        return self.execute(self, connection, *args, **kwargs)
+                    connection, namespace)
+        return self.execute(connection, *args, **kwargs)
 
     def run_with_args(self, args, kwargs):
         self.process_session(self.app.session, args, kwargs)
@@ -469,6 +476,9 @@ class LmiBaseListerCommand(LmiSessionCommand):
         raise NotImplementedError("take_action must be implemented in subclass")
 
     def process_session(self, session, args, kwargs):
+        if not isinstance(session, Session):
+            raise TypeError("session must be an object of Session, not %s"
+                    % repr(session))
         for connection in session:
             if len(session) > 1:
                 self.app.stdout.write("="*79 + "\n")
@@ -540,11 +550,24 @@ class LmiInstanceLister(LmiBaseListerCommand):
         """
         cols = self.get_columns()
         if cols is None:
-            cols, data = self.execute_on_connection(
+            result = self.execute_on_connection(
                     connection, *args, **kwargs)
+            if not isinstance(result, tuple) or len(result) != 2:
+                raise errors.LmiUnexpectedResult(
+                        self.__class__, "(properties, instances)", result)
+            cols, data = result
+            if not isinstance(cols, (tuple, list)):
+                raise errors.LmiUnexpectedResult(
+                        self.__class__, "(tuple, ...)", (cols, '...'))
+            return ( [c if isinstance(c, basestring) else c[0] for c in cols]
+                   , (self.render((cols, inst)) for inst in data))
         else:
             data = self.execute_on_connection(connection, *args, **kwargs)
-        return (cols, (self.render(inst) for inst in data))
+            if not hasattr(data, '__iter__'):
+                raise errors.LmiUnexpectedResult(
+                        self.__class__, 'list or generator', data)
+            return ( [c if isinstance(c, basestring) else c[0] for c in cols]
+                   , (self.render(inst) for inst in data))
 
 class LmiShowInstance(LmiSessionCommand):
     """

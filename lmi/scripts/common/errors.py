@@ -45,6 +45,17 @@ class LmiFailed(LmiError):
     """
     pass
 
+class LmiUnexpectedResult(LmiError):
+    """
+    Raised, when command's associated function returns something unexpected.
+    """
+    def __init__(self, command_class, expected, result):
+        LmiError.__init__(self,
+                'got unexpected result from associated function of'
+                ' "%s.%s", expected "%s", got: %s' %
+                (command_class.__module__, command_class.__name__,
+                    expected, repr(result)))
+
 class LmiInvalidOptions(LmiError):
     """
     Raised in end point command's ``verify_options()`` method if the options
