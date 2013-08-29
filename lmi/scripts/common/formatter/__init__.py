@@ -112,7 +112,7 @@ class Formatter(object):
             requirements for this argument. It can be also am instance of
             FormatterCommand.
         """
-        print_line(data)
+        self.print_line(str(data))
 
 class ListFormatter(Formatter):
     """
