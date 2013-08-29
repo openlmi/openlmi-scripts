@@ -102,6 +102,11 @@ class MetaCommand(object):
         self.config = None
         # dictionary of not yet processed options, it's created in setup()
         self._options = None
+        # be ugly by default
+        self._human_friendly = False
+        # show table headings by default
+        self._no_headings = False
+        self._csv = False
 
     def _configure_logging(self):
         """
@@ -128,6 +133,30 @@ class MetaCommand(object):
             self.stdout = NullFile()
 
     @property
+    def human_friendly(self):
+        return self._human_friendly
+
+    @human_friendly.setter
+    def human_friendly(self, value):
+        self._human_friendly = value
+
+    @property
+    def no_headings(self):
+        return self._no_headings
+
+    @no_headings.setter
+    def no_headings(self, value):
+        self._no_headings = value
+
+    @property
+    def csv(self):
+        return self._csv
+
+    @csv.setter
+    def csv(self, value):
+        self._csv = value
+
+    @property
     def command_manager(self):
         """
         Return instance of ``CommandManager``. It's initialized when first
@@ -148,7 +177,7 @@ class MetaCommand(object):
         :rtype: (``Session``)
         """
         if self._session is None:
-            if (   not self._options['--host']
+            if (not self._options['--host']
                and not self._options['--hosts-file']):
                 LOG().critical(
                         "missing one of (--host | --hosts-file) arguments")

@@ -66,8 +66,10 @@ def create_raid(ns, devices, level, name=None):
     if name:
         args['ElementName'] = name
     service = ns.LMI_StorageConfigurationService.first_instance()
-    (ret, outparams, _err) = service.SyncCreateOrModifyMDRAID(**args)
+    (ret, outparams, err) = service.SyncCreateOrModifyMDRAID(**args)
     if ret != 0:
+        if err:
+            raise LmiFailed("Cannot create the partition: %s." % err)
         values = service.CreateOrModifyMDRAID.CreateOrModifyMDRAIDValues
         raise LmiFailed("Cannot create the partition: %s."
                 % (values.value_name(ret),))
@@ -83,8 +85,10 @@ def delete_raid(ns, raid):
     """
     raid = common.str2device(ns, raid)
     service = ns.LMI_StorageConfigurationService.first_instance()
-    (ret, _outparams, _err) = service.SyncDeleteMDRAID(TheElement=raid)
+    (ret, _outparams, err) = service.SyncDeleteMDRAID(TheElement=raid)
     if ret != 0:
+        if err:
+            raise LmiFailed("Cannot create the partition: %s." % err)
         raise LmiFailed("Cannot delete the raid: %s."
                 % (service.DeleteMDRAID.DeleteMDRAIDValues.value_name(ret),))
 

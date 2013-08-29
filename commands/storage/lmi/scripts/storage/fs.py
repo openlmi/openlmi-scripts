@@ -191,8 +191,11 @@ def create_fs(ns, devices, fs, label=None):
     }
     if label:
         args['ElementName'] = label
-    (ret, outparams, _err) = service.LMI_CreateFileSystem(**args)
+    (ret, outparams, err) = service.LMI_CreateFileSystem(**args)
     if ret != 0:
+        if err:
+            raise LmiFailed("Cannot format the device %s: %s."
+                    % (devs[0].Name, err))
         values = service.LMI_CreateFileSystem.LMI_CreateFileSystemValues
         raise LmiFailed("Cannot format the device %s: %s."
                 % (devs[0].Name, values.value_name(ret)))
@@ -211,8 +214,10 @@ def delete_format(ns, fmt):
         return
 
     service = ns.LMI_FileSystemConfigurationService.first_instance()
-    (ret, _outparams, _err) = service.DeleteFileSystem(TheFileSystem=fmt)
+    (ret, _outparams, err) = service.DeleteFileSystem(TheFileSystem=fmt)
     if ret != 0:
+        if err:
+            raise LmiFailed("Cannot delete the format: %s." % err)
         values = service.DeleteFileSystem.DeleteFileSystemValues
         raise LmiFailed("Cannot delete the format: %s."
                 % (values.value_name(ret)))

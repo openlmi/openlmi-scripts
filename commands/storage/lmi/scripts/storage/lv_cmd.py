@@ -57,46 +57,11 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
-from lmi.scripts.storage.common import str2size, size2str
+from lmi.scripts.storage.common import str2size, size2str, str2device
+from lmi.scripts.common import formatter
 
-def cmd_list(ns, vgs=None):
-    """
-    Implementation of 'lv list' command.
-    """
-    for lv in lvm.get_lvs(ns, vgs):
-        yield (lv.DeviceID,
-                lv.Name,
-                lv.ElementName,
-                size2str(lv.NumberOfBlocks * lv.BlockSize))
-
-def cmd_show(ns, lvs=None):
-    """
-    Implementation of 'lv show' command.
-    """
-    if not lvs:
-        lvs = lvm.get_lvs(ns)
-    for lv in lvs:
-        show.lv_show(ns, lv)
-        print ""
-    return 0
-
-def cmd_create(ns, vg, name, size):
-    """
-    Implementation of 'lv create' command.
-    """
-    lvm.create_lv(ns, vg, name, str2size(size, vg.ExtentSize, 'E'))
-    return 0
-
-def cmd_delete(ns, lvs):
-    """
-    Implementation of 'lv delete' command.
-    """
-    for lv in lvs:
-        lvm.delete_lv(ns, lv)
-    return 0
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_list'
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size")
 
     def transform_options(self, options):
@@ -106,13 +71,32 @@ class Lister(command.LmiLister):
         """
         options['<vgs>'] = options.pop('<vg>')
 
+    def execute(self, ns, vgs=None):
+        """
+        Implementation of 'lv list' command.
+        """
+        for lv in lvm.get_lvs(ns, vgs):
+            size = size2str(lv.NumberOfBlocks * lv.BlockSize,
+                    self.app.human_friendly)
+            yield (lv.DeviceID,
+                    lv.Name,
+                    lv.ElementName,
+                    size)
+
+
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_create'
-    EXPECT = 0
+    EXPECT = None
+
+    def execute(self, ns, vg, name, size):
+        """
+        Implementation of 'lv create' command.
+        """
+        lvm.create_lv(ns, vg, name, str2size(size, vg.ExtentSize, 'E'))
+        return 0
+
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_delete'
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
@@ -121,10 +105,16 @@ class Delete(command.LmiCheckResult):
         """
         options['<lvs>'] = options.pop('<lv>')
 
+    def execute(self, ns, lvs):
+        """
+        Implementation of 'lv delete' command.
+        """
+        for lv in lvs:
+            lvm.delete_lv(ns, lv)
 
-class Show(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.lv_cmd:cmd_show'
-    EXPECT = 0
+
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
         """
@@ -132,6 +122,19 @@ class Show(command.LmiCheckResult):
         readability.
         """
         options['<lvs>'] = options.pop('<lv>')
+
+    def execute(self, ns, lvs=None):
+        """
+        Implementation of 'lv show' command.
+        """
+        if not lvs:
+            lvs = lvm.get_lvs(ns)
+        for lv in lvs:
+            lv = str2device(ns, lv)
+            cmd = formatter.NewTableCommand(title=lv.DeviceID)
+            yield cmd
+            for line in show.lv_show(ns, lv, self.app.human_friendly):
+                yield line
 
 
 Lv = command.register_subcommands(

@@ -52,41 +52,10 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
-
-def cmd_list(ns, devices=None):
-    """
-    Implementation of 'partition-table list' command.
-    """
-    for (device, _table) in partition.get_partition_tables(ns, devices):
-        yield (device.DeviceID,
-                device.Name,
-                device.ElementName,
-                partition.get_largest_partition_size(ns, device))
-
-def cmd_show(ns, devices=None):
-    """
-    Implementation of 'partition-table show' command.
-    """
-    if not devices:
-        devices = partition.get_partition_tables(ns)
-    for device in devices:
-        show.partition_table_show(ns, device)
-        print ""
-    return 0
-
-def cmd_create(ns, devices, __gpt, __msdos):
-    """
-    Implementation of 'partition-table create' command.
-    """
-    if __msdos:
-        ptype = partition.PARTITION_TABLE_TYPE_MSDOS
-    else:
-        ptype = partition.PARTITION_TABLE_TYPE_GPT
-    for device in devices:
-        partition.create_partition_table(ns, device, ptype)
+from lmi.scripts.storage.common import size2str, str2device
+from lmi.scripts.common import formatter
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:cmd_list'
     COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Largest free region')
 
     def transform_options(self, options):
@@ -96,8 +65,22 @@ class Lister(command.LmiLister):
         """
         options['<devices>'] = options.pop('<device>')
 
+    def execute(self, ns, devices=None):
+        """
+        Implementation of 'partition-table list' command.
+        """
+        for (device, _table) in partition.get_partition_tables(ns, devices):
+            largest_size = partition.get_largest_partition_size(ns, device)
+            largest_size = size2str(largest_size, self.app.human_friendly)
+
+            yield (device.DeviceID,
+                    device.Name,
+                    device.ElementName,
+                    largest_size
+                    )
+
+
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:cmd_create'
     EXPECT = None
 
     def transform_options(self, options):
@@ -107,9 +90,20 @@ class Create(command.LmiCheckResult):
         """
         options['<devices>'] = options.pop('<device>')
 
-class Show(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.partitiontable_cmd:cmd_show'
-    EXPECT = None
+    def execute(self, ns, devices, _gpt, _msdos):
+        """
+        Implementation of 'partition-table create' command.
+        """
+        if _msdos:
+            ptype = partition.PARTITION_TABLE_TYPE_MSDOS
+        else:
+            ptype = partition.PARTITION_TABLE_TYPE_GPT
+        for device in devices:
+            partition.create_partition_table(ns, device, ptype)
+
+
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
         """
@@ -117,6 +111,21 @@ class Show(command.LmiCheckResult):
         readability.
         """
         options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, devices=None):
+        """
+        Implementation of 'partition-table show' command.
+        """
+        if not devices:
+            ret = partition.get_partition_tables(ns)
+            devices = [i[0] for i in ret]
+        for device in devices:
+            device = str2device(ns, device)
+            cmd = formatter.NewTableCommand(title=device.DeviceID)
+            yield cmd
+            for line in show.partition_table_show(
+                    ns, device, self.app.human_friendly):
+                yield line
 
 PartitionTable = command.register_subcommands(
         'PartitionTable', __doc__,
