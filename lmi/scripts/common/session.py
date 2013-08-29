@@ -122,6 +122,8 @@ class Session(object):
             LOG().debug('connection to host "%s" successfully created',
                     hostname)
             tp = connection._client._cliconn.creds
+            if tp is None:
+                tp = ('', '')
             self._credentials[hostname] = (tp[0], tp[1], True)
         else:
             LOG().error('failed to connect to host "%s"', hostname)
