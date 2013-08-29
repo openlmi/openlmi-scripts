@@ -53,6 +53,7 @@ RE_CALLABLE = re.compile(
         r'^(?P<module>[a-z_]+(?:\.[a-z_]+)*):(?P<func>[a-z_]+)$',
         re.IGNORECASE)
 RE_ARRAY_SUFFIX = re.compile(r'^(?:[a-z_]+[a-z0-9_]*)?$', re.IGNORECASE)
+RE_OPTION = re.compile(r'^-+(?P<name>[^-+].*)$')
 
 LOG = get_logger(__name__)
 
@@ -327,6 +328,10 @@ def _handle_opt_preprocess(name, dcl):
     overriden, where all of desired name modifications will be made.
     Currently handled properties are:
 
+        * ``OPT_NO_UNDERSCORES`` - When making a function's parameter name
+            out of (long) option, the leading dashes are replaced with
+            underscores. If this property is True, dashes will be removed
+            with no replacement.
         * ``ARG_ARRAY_SUFFIX`` - Add given suffix to all arguments resulting
             in list objects.
 
@@ -344,22 +349,31 @@ def _handle_opt_preprocess(name, dcl):
         raise errors.LmiCommandInvalidProperty(dcl['__module__'], name,
                 'ARG_ARRAY_SUFFIX must be a string matching regular'
                 ' expression "%s"' % RE_ARRAY_SUFFIX.pattern)
-    if arr_suffix:
+    opt_no_underscores = dcl.pop('OPT_NO_UNDERSCORES', False)
+    if arr_suffix or opt_no_underscores:
         def _new_preprocess_options(self, options):
             """ Modify (in-place) given options dictionary by renaming keys. """
-            to_rename = [name for name, val in options.items()
-                    if isinstance(val, list)]
-            for name in to_rename:
-                match = util.RE_OPT_BRACKET_ARGUMENT.match(name)
-                if match:
-                    newname = '<' + match.group('name') + arr_suffix + '>'
-                else:
-                    match = util.RE_OPT_UPPER_ARGUMENT.match(name)
-                    if match:
-                        newname = name + arr_suffix.upper()
-                    else:
-                        newname = name + arr_suffix
-                options[newname] = options.pop(name)
+            for do_it, cond, transform in (
+                    ( arr_suffix
+                    , lambda _, v: isinstance(val, list)
+                    , lambda n   : n + arr_suffix)
+                  , ( opt_no_underscores
+                    , lambda n, _: RE_OPTION.match(n)
+                    , lambda n   : RE_OPTION.match(n).group('name'))
+                  ):
+                if not do_it:
+                    continue
+                to_rename = (  name for name, value in options.items()
+                            if cond(name, value))
+                for name in to_rename:
+                    new_name = transform(name)
+                    LOG().debug('renaming option "%s" to "%s"', name, new_name)
+                    if new_name in options:
+                        LOG().warn(
+                                'existing option named "%s" replaced with "%s"',
+                                new_name, name)
+                    options[new_name] = options.pop(name)
+
         dcl['_preprocess_options'] = _new_preprocess_options
 
 class EndPointCommandMetaClass(abc.ABCMeta):

@@ -1,3 +1,7 @@
+* allow to override default namespace from config and command line
+* added OPT_NO_UNDERSCORES property
+* commands api change: replace any sequence of characters matching [^a-z_]
+with a single underscore, when renaming options to function arguments
 * added LmiInstanceLister base command class
 * fixed exit command
 * added ARG_ARRAY_SUFFIX
