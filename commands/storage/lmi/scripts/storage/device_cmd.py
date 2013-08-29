@@ -141,9 +141,8 @@ class Lister(command.LmiLister):
             yield get_device_info(ns, dev, self.app.human_friendly)
 
 
-class Show(command.LmiCheckResult):
-    EXPECT = None
-
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
     def transform_options(self, options):
         """
         Rename 'device' option to 'devices' parameter name for better
@@ -158,8 +157,12 @@ class Show(command.LmiCheckResult):
         if not devices:
             devices = get_devices(ns)
         for dev in devices:
-            show.device_show(ns, dev, self.app.human_friendly)
-            print ""
+            dev = str2device(ns, dev)
+            cmd = formatter.NewTableCommand(title=dev.DeviceID)
+            yield cmd
+            for line in show.device_show(ns, dev, self.app.human_friendly):
+                yield line
+
 
 
 class Depends(command.LmiLister):

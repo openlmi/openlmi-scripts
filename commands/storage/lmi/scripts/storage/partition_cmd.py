@@ -78,6 +78,7 @@ Options:
 from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
+from lmi.scripts.common import formatter
 
 class Lister(command.LmiLister):
     COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
@@ -157,8 +158,8 @@ class Delete(command.LmiCheckResult):
             partition.delete_partition(ns, part)
 
 
-class Show(command.LmiCheckResult):
-    EXPECT = 0
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
         """
@@ -174,9 +175,11 @@ class Show(command.LmiCheckResult):
         if not partitions:
             partitions = partition.get_partitions(ns)
         for part in partitions:
-            show.partition_show(ns, part, self.app.human_friendly)
-            print ""
-        return 0
+            part = str2device(ns, part)
+            cmd = formatter.NewTableCommand(title=part.DeviceID)
+            yield cmd
+            for line in show.partition_show(ns, part, self.app.human_friendly):
+                yield line
 
 
 Partition = command.register_subcommands(

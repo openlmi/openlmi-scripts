@@ -52,7 +52,8 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
-from lmi.scripts.storage.common import size2str
+from lmi.scripts.storage.common import size2str, str2device
+from lmi.scripts.common import formatter
 
 class Lister(command.LmiLister):
     COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Largest free region')
@@ -101,8 +102,8 @@ class Create(command.LmiCheckResult):
             partition.create_partition_table(ns, device, ptype)
 
 
-class Show(command.LmiCheckResult):
-    EXPECT = None
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
         """
@@ -116,10 +117,15 @@ class Show(command.LmiCheckResult):
         Implementation of 'partition-table show' command.
         """
         if not devices:
-            devices = partition.get_partition_tables(ns)
+            ret = partition.get_partition_tables(ns)
+            devices = [i[0] for i in ret]
         for device in devices:
-            show.partition_table_show(ns, device, self.app.human_friendly)
-            print ""
+            device = str2device(ns, device)
+            cmd = formatter.NewTableCommand(title=device.DeviceID)
+            yield cmd
+            for line in show.partition_table_show(
+                    ns, device, self.app.human_friendly):
+                yield line
 
 PartitionTable = command.register_subcommands(
         'PartitionTable', __doc__,

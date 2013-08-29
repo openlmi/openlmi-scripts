@@ -52,6 +52,8 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import raid, show
+from lmi.scripts.storage.common import str2device
+from lmi.scripts.common import formatter
 
 class Lister(command.LmiLister):
     COLUMNS = ('DeviceID', 'Name', "Level", "Nr. of members")
@@ -100,8 +102,8 @@ class Delete(command.LmiCheckResult):
             raid.delete_raid(ns, dev)
 
 
-class Show(command.LmiCheckResult):
-    EXPECT = None
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
         """
@@ -117,8 +119,11 @@ class Show(command.LmiCheckResult):
         if not devices:
             devices = raid.get_raids(ns)
         for r in devices:
-            show.raid_show(ns, r, self.app.human_friendly)
-            print ""
+            r = str2device(ns, r)
+            cmd = formatter.NewTableCommand(title=r.DeviceID)
+            yield cmd
+            for line in show.raid_show(ns, r, self.app.human_friendly):
+                yield line
 
 
 Raid = command.register_subcommands(

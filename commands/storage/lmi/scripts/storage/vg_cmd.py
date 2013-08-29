@@ -52,7 +52,8 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
-from lmi.scripts.storage.common import str2size, size2str
+from lmi.scripts.storage.common import str2size, size2str, str2vg
+from lmi.scripts.common import formatter
 
 
 class Lister(command.LmiLister):
@@ -113,8 +114,8 @@ class Delete(command.LmiCheckResult):
             lvm.delete_vg(ns, vg)
 
 
-class Show(command.LmiCheckResult):
-    EXPECT = None
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
         """
@@ -130,8 +131,11 @@ class Show(command.LmiCheckResult):
         if not vgs:
             vgs = lvm.get_vgs(ns)
         for vg in vgs:
-            show.vg_show(ns, vg, self.app.human_friendly)
-            print ""
+            vg = str2vg(ns, vg)
+            cmd = formatter.NewTableCommand(title=vg.InstanceID)
+            yield cmd
+            for line in show.vg_show(ns, vg, self.app.human_friendly):
+                yield line
 
 
 Vg = command.register_subcommands(

@@ -57,7 +57,8 @@ Commands:
 
 from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
-from lmi.scripts.storage.common import str2size, size2str
+from lmi.scripts.storage.common import str2size, size2str, str2device
+from lmi.scripts.common import formatter
 
 
 class Lister(command.LmiLister):
@@ -112,8 +113,8 @@ class Delete(command.LmiCheckResult):
             lvm.delete_lv(ns, lv)
 
 
-class Show(command.LmiCheckResult):
-    EXPECT = None
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
         """
@@ -129,9 +130,11 @@ class Show(command.LmiCheckResult):
         if not lvs:
             lvs = lvm.get_lvs(ns)
         for lv in lvs:
-            show.lv_show(ns, lv, self.app.human_friendly)
-            print ""
-        return 0
+            lv = str2device(ns, lv)
+            cmd = formatter.NewTableCommand(title=lv.DeviceID)
+            yield cmd
+            for line in show.lv_show(ns, lv, self.app.human_friendly):
+                yield line
 
 
 Lv = command.register_subcommands(

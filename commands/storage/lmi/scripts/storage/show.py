@@ -37,6 +37,7 @@ Functions to display information about block devices.
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common, partition, raid, lvm, fs
+from lmi.scripts.common import formatter
 
 def device_show(ns, device, human_friendly):
     """
@@ -50,17 +51,23 @@ def device_show(ns, device, human_friendly):
     """
     device = common.str2device(ns, device)
     if device.classname == "LMI_MDRAIDStorageExtent":
-        raid_show(ns, device, human_friendly)
+        for line in raid_show(ns, device, human_friendly):
+            yield line
     elif device.classname == "LMI_LVStorageExtent":
-        lv_show(ns, device, human_friendly)
+        for line in lv_show(ns, device, human_friendly):
+            yield line
     elif device.classname == "LMI_GenericDiskPartition":
-        partition_show(ns, device, human_friendly)
+        for line in partition_show(ns, device, human_friendly):
+            yield line
     elif device.classname == "LMI_DiskPartition":
-        partition_show(ns, device, human_friendly)
+        for line in partition_show(ns, device, human_friendly):
+            yield line
     else:
-        print "Generic Device", device.DeviceID
-        device_show_device(ns, device, human_friendly)
-        device_show_data(ns, device, human_friendly)
+        yield("Type", "Generic block device")
+        for line in device_show_device(ns, device, human_friendly):
+            yield line
+        for line in device_show_data(ns, device, human_friendly):
+            yield line
 
 def partition_show(ns, part, human_friendly):
     """
@@ -70,8 +77,9 @@ def partition_show(ns, part, human_friendly):
     :param part: Partition to show.
     """
     part = common.str2device(ns, part)
-    print "Partition", part.DeviceID
-    device_show_device(ns, part, human_friendly)
+    yield("Type", "Partition")
+    for line in device_show_device(ns, part, human_friendly):
+        yield line
 
     if "PartitionType" in part.properties():
         cls = ns.LMI_DiskPartition
@@ -85,16 +93,17 @@ def partition_show(ns, part, human_friendly):
             ptype = "unknown"
     else:
         ptype = "N/A"
-    print "Partition Type:", ptype
+    yield("Partition Type", ptype)
 
     basedon = part.first_reference(ResultClass="CIM_BasedOn", Role="Dependent")
-    print "Starting sector:", basedon.StartingAddress
-    print "Ending sector:", basedon.EndingAddress
+    yield("Starting sector", basedon.StartingAddress)
+    yield("Ending sector", basedon.EndingAddress)
 
     disk = partition.get_partition_disk(ns, part)
-    print "Sector Size:", common.size2str(disk.BlockSize, human_friendly)
-    print "Disk:", disk.Name
-    device_show_data(ns, part, human_friendly)
+    yield("Sector Size", common.size2str(disk.BlockSize, human_friendly))
+    yield("Disk", disk.Name)
+    for line in device_show_data(ns, part, human_friendly):
+        yield line
 
 def partition_table_show(ns, disk, human_friendly):
     """
@@ -104,22 +113,22 @@ def partition_table_show(ns, disk, human_friendly):
     :param disk: Device with partition table to show.
     """
     disk = common.str2device(ns, disk)
-    print "Partition Table", disk.DeviceID
+    yield("Data Type", "Partition Table")
 
     table = disk.first_associator(AssocClass="CIM_InstalledPartitionTable")
     cls = ns.LMI_DiskPartitionConfigurationCapabilities
     if table.PartitionStyle == cls.PartitionStyleValues.MBR:
-        print "Partition Table Type:", "MS-DOS"
+        yield("Partition Table Type", "MS-DOS")
     else:
-        print "Partition Table Type:", cls.PartitionStyleValues.value_name(
-                table.PartitionStyle)
-    print "Partition Table Size (in blocks):", table.PartitionTableSize
-    print "Largest Free Space:", common.size2str(
-            partition.get_largest_partition_size(ns, disk), human_friendly)
+       yield("Partition Table Type", cls.PartitionStyleValues.value_name(
+                table.PartitionStyle))
+    yield("Partition Table Size (in blocks)", table.PartitionTableSize)
+    yield("Largest Free Space", common.size2str(
+            partition.get_largest_partition_size(ns, disk), human_friendly))
 
     parts = partition.get_disk_partitions(ns, disk)
     partnames = [part.Name for part in parts]
-    print "Partitions:", " ".join(partnames)
+    yield("Partitions", " ".join(partnames))
 
 def raid_show(ns, r, human_friendly):
     """
@@ -129,14 +138,17 @@ def raid_show(ns, r, human_friendly):
     :param r: RAID to show.
     """
     r = common.str2device(ns, r)
-    print "MD RAID Array", r.DeviceID
-    device_show_device(ns, r, human_friendly)
+    yield("Type", "MD RAID")
+    for line in device_show_device(ns, r, human_friendly):
+        yield line
 
-    print "RAID Level:", r.Level
+    yield("RAID Level", r.Level)
     members = raid.get_raid_members(ns, r)
     mnames = [r.Name for r in members]
-    print "RAID Members:", " ".join(mnames)
-    device_show_data(ns, r, human_friendly)
+    yield("RAID Members", " ".join(mnames))
+
+    for line in device_show_data(ns, r, human_friendly):
+        yield line
 
 def vg_show(ns, vg, human_friendly):
     """
@@ -145,23 +157,24 @@ def vg_show(ns, vg, human_friendly):
     :type vg: LMIInstance/LMI_VGStoragePool or string
     :param vg: Volume Group to show.
     """
+    yield("Type", "Volume Group")
     vg = common.str2vg(ns, vg)
-    print "InstanceID:", vg.InstanceID
-    print "ElementName", vg.ElementName
-    print "Extent Size:", common.size2str(vg.ExtentSize, human_friendly)
-    print "Total Size:", common.size2str(vg.TotalManagedSpace, human_friendly)
-    print "Total Extents:", vg.TotalExtents
-    print "Free Space:", common.size2str(vg.RemainingManagedSpace,
-            human_friendly)
-    print "Free Extents:", vg.RemainingExtents
+    yield("InstanceID", vg.InstanceID)
+    yield("ElementName", vg.ElementName)
+    yield("Extent Size", common.size2str(vg.ExtentSize, human_friendly))
+    yield("Total Size", common.size2str(vg.TotalManagedSpace, human_friendly))
+    yield("Total Extents", vg.TotalExtents)
+    yield("Free Space", common.size2str(vg.RemainingManagedSpace,
+            human_friendly))
+    yield("Free Extents", vg.RemainingExtents)
 
     pvs = lvm.get_vg_pvs(ns, vg)
     pvnames = [pv.Name for pv in pvs]
-    print "Physical Volumes:", " ".join(pvnames)
+    yield("Physical Volumes", " ".join(pvnames))
 
     lvs = lvm.get_vg_lvs(ns, vg)
     lvnames = [lv.Name for lv in lvs]
-    print "Logical Volumes:", " ".join(lvnames)
+    yield("Logical Volumes", " ".join(lvnames))
 
 def lv_show(ns, lv, human_friendly):
     """
@@ -171,15 +184,18 @@ def lv_show(ns, lv, human_friendly):
     :param lv: Logical Volume to show.
     """
     lv = common.str2device(ns, lv)
-    print "Logical Volume", lv.DeviceID
-    device_show_device(ns, lv, human_friendly)
+    yield("Type", "Logical Volume")
+    for line in device_show_device(ns, lv, human_friendly):
+        yield line
 
     vg = lvm.get_lv_vg(ns, lv)
-    print "Volume Group:", vg.ElementName
-    print "Extent Size:", common.size2str(vg.ExtentSize, human_friendly)
-    print "Number of Occupied Extents:", \
-            lv.BlockSize * lv.NumberOfBlocks / vg.ExtentSize
-    device_show_data(ns, lv, human_friendly)
+    yield("Volume Group", vg.ElementName)
+    yield("Extent Size", common.size2str(vg.ExtentSize, human_friendly))
+    yield("Number of Occupied Extents", \
+            lv.BlockSize * lv.NumberOfBlocks / vg.ExtentSize)
+
+    for line in device_show_data(ns, lv, human_friendly):
+        yield line
 
 def device_show_device(ns, device, human_friendly):
     """
@@ -190,11 +206,12 @@ def device_show_device(ns, device, human_friendly):
     """
     device = common.str2device(ns, device)
 
-    print "Name:", device.Name
-    print "ElementName:", device.ElementName
-    print "Total Size:", common.size2str(
-            device.NumberOfBlocks * device.BlockSize, human_friendly)
-    print "Block Size:", common.size2str(device.BlockSize, human_friendly)
+    yield("DeviceID", device.DeviceID)
+    yield("Name", device.Name)
+    yield("ElementName", device.ElementName)
+    yield("Total Size", common.size2str(
+            device.NumberOfBlocks * device.BlockSize, human_friendly))
+    yield("Block Size", common.size2str(device.BlockSize, human_friendly))
 
 def device_show_data(ns, device, human_friendly):
     """
@@ -207,15 +224,20 @@ def device_show_data(ns, device, human_friendly):
     fmt = fs.get_format_on_device(ns, device)
     if fmt:
         if "FormatType" in fmt.properties():
-            format_show(ns, fmt, human_friendly)
+            for line in format_show(ns, fmt, human_friendly):
+                yield line
         elif "FileSystemType" in fmt.properties():
-            fs_show(ns, fmt, human_friendly)
+            for line in fs_show(ns, fmt, human_friendly):
+                yield line
         else:
-            print "Data Format:", "Unknown"
+            yield("Data Format", "Unknown")
     else:
         part_table = partition.get_disk_partition_table(ns, device)
         if part_table:
-            partition_table_show(ns, device, human_friendly)
+            for line in partition_table_show(ns, device, human_friendly):
+                yield line
+        else:
+            yield("Data Format", "Unknown")
 
 def format_show(ns, fmt, human_friendly):
     """
@@ -225,9 +247,9 @@ def format_show(ns, fmt, human_friendly):
     :param fmt: Format to show.
     """
     fmt = fs.str2format(ns, fmt)
-    print "Data Format:", fmt.FormatTypeDescription
+    yield("Data Format", fmt.FormatTypeDescription)
     if "UUID" in fmt.properties() and fmt.UUID:
-        print "UUID:", fmt.UUID
+        yield("UUID", fmt.UUID)
 
 def fs_show(ns, fmt, human_friendly):
     """
@@ -236,11 +258,11 @@ def fs_show(ns, fmt, human_friendly):
     :type fmt: LMIInstance/CIM_LocalFileSystem or string
     :param fmt: Filesystem to show.
     """
-    print "Filesystem:", fmt.FileSystemType
+    yield("Filesystem", fmt.FileSystemType)
     if "UUID" in fmt.properties() and fmt.UUID:
-        print "UUID:", fmt.UUID
+        yield("UUID", fmt.UUID)
     cls = ns.LMI_LocalFileSystem
-    print "Persistence:", cls.PersistenceTypeValues.value_name(
-            fmt.PersistenceType)
+    yield("Persistence", cls.PersistenceTypeValues.value_name(
+            fmt.PersistenceType))
 
     # TODO: add mount points
