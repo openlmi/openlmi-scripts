@@ -378,7 +378,7 @@ def _handle_opt_preprocess(name, dcl):
             """ Modify (in-place) given options dictionary by renaming keys. """
             for do_it, cond, transform in (
                     ( arr_suffix
-                    , lambda _, v: isinstance(val, list)
+                    , lambda _, v: isinstance(v, list)
                     , lambda n   : n + arr_suffix)
                   , ( opt_no_underscores
                     , lambda n, _: RE_OPTION.match(n)
