@@ -105,21 +105,25 @@ class CommandManager(object):
 
     def _load_commands(self):
         """ Loads commands from entry points under provided namespace. """
-        def _add_entry_point(ep):
-            if not base.RE_COMMAND_NAME.match(ep.name):
-                LOG().error('invalid command name: %s, ignoring', ep.name)
+        def _add_entry_point(epoint):
+            """
+            Convenience function taking an entry point, making some name
+            checks and adding it to registered commands.
+            """
+            if not base.RE_COMMAND_NAME.match(epoint.name):
+                LOG().error('invalid command name: %s, ignoring', epoint.name)
                 return
-            if ep.name in self._commands:
+            if epoint.name in self._commands:
                 LOG().warn('command "%s" already registered, ignoring',
-                        ep.name)
+                        epoint.name)
             else:
-                LOG().debug('found command "%s"', ep.name)
-                self._commands[ep.name] = ep
+                LOG().debug('found command "%s"', epoint.name)
+                self._commands[epoint.name] = epoint
 
         for entry_point in pkg_resources.iter_entry_points(self._namespace):
             if isinstance(entry_point, dict):
-                for ep in entry_point.values():
-                    _add_entry_point(ep)
+                for epoint in entry_point.values():
+                    _add_entry_point(epoint)
             else:
                 _add_entry_point(entry_point)
 

@@ -44,8 +44,8 @@ def _invoke_on_service(ns, method, service, description):
 
     :param method: (``str``) Name of method of LMI_Service to invoke.
     :param service: (``str``) Name of service to operate on.
-    :param description: (``str``) Description of what has been done with service.
-        This is used just for logging.
+    :param description: (``str``) Description of what has been done with
+        service. This is used just for logging.
     """
     inst = ns.LMI_Service.first_instance(key="Name", value=service)
     if inst is None:
@@ -56,7 +56,7 @@ def _invoke_on_service(ns, method, service, description):
                 description, service, ns.hostname)
     return res
 
-def list(ns, kind='enabled'):
+def list_services(ns, kind='enabled'):
     """
     List services. Yields service instances.
 
@@ -71,18 +71,18 @@ def list(ns, kind='enabled'):
         raise TypeError("kind must be a string")
     if not kind in SERVICE_KINDS:
         raise ValueError("kind must be one of %s" % SERVICE_KINDS)
-    for s in sorted(ns.LMI_Service.instances(), key=lambda i: i.Name):
-        if kind == 'disabled' and s.EnabledDefault != \
+    for service in sorted(ns.LMI_Service.instances(), key=lambda i: i.Name):
+        if kind == 'disabled' and service.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.Disabled:
             continue
-        if kind == 'oneshot' and s.EnabledDefault != \
+        if kind == 'oneshot' and service.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.NotApplicable:
             continue
-        if kind == 'enabled' and s.EnabledDefault != \
+        if kind == 'enabled' and service.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.Enabled:
             # list only enabled
             continue
-        yield s
+        yield service
 
 def start(ns, service):
     """

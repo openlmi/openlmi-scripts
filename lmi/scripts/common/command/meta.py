@@ -204,6 +204,11 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
         argument.
     """
     def _process_property(prop, inst):
+        """
+        Takes a single property and instance. Returns computed value.
+
+        :rtype: ``(str, any)`` A pair of property name and value.
+        """
         if isinstance(prop, basestring):
             prop_name = prop
             if not prop in inst.properties():
@@ -374,7 +379,7 @@ def _handle_opt_preprocess(name, dcl):
                 ' expression "%s"' % RE_ARRAY_SUFFIX.pattern)
     opt_no_underscores = dcl.pop('OPT_NO_UNDERSCORES', False)
     if arr_suffix or opt_no_underscores:
-        def _new_preprocess_options(self, options):
+        def _new_preprocess_options(_self, options):
             """ Modify (in-place) given options dictionary by renaming keys. """
             for do_it, cond, transform in (
                     ( arr_suffix

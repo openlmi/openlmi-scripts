@@ -99,7 +99,7 @@ class Interactive(cmd.Cmd):
             self.stdout.write(str(err))
             self.stdout.write("\n")
 
-    def empty_line(self):
+    def empty_line(self):   #pylint: disable=R0201
         """ Do nothing for empty line. """
         return 0
 
@@ -148,7 +148,7 @@ class Interactive(cmd.Cmd):
                     cmd_names, 15, 80)
         return
 
-    def do_EOF(self, _arg):
+    def do_EOF(self, _arg):     #pylint: disable=C0103,R0201
         """
         Exit on End-Of-File.
         """

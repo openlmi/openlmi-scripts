@@ -134,11 +134,16 @@ class ListFormatter(Formatter):
         self.column_names = None
 
     def print_text_row(self, row):
+        """
+        Print data row without any header.
+
+        :param row: (``tuple``) Data to print.
+        """
         self.out.write(self.render_value(row))
 
     def print_row(self, data):
         """
-        Print data row.
+        Print data row. Optionaly print header, if requested.
 
         :param data: (``tuple``) Data to print.
         """
@@ -232,9 +237,9 @@ class TableFormatter(ListFormatter):
             column_sizes.append(len(self.column_names[i]))
         for row in self.stash:
             for i in xrange(len(row)):
-                l = len(unicode(row[i]))
-                if column_sizes[i] < l:
-                    column_sizes[i] = l
+                row_length = len(unicode(row[i]))
+                if column_sizes[i] < row_length:
+                    column_sizes[i] = row_length
 
         # print headers
         if not self.no_headings:

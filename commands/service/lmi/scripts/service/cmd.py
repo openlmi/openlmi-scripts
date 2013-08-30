@@ -51,7 +51,7 @@ Options:
     --oneshot   List only oneshot services.
 """
 
-from lmi.scripts import service 
+from lmi.scripts import service
 from lmi.scripts.common import command
 
 class Lister(command.LmiInstanceLister):
@@ -65,7 +65,7 @@ class Lister(command.LmiInstanceLister):
             kind = 'disabled'
         elif _oneshot:
             kind = 'oneshot'
-        for service_inst in service.list(ns, kind):
+        for service_inst in service.list_services(ns, kind):
             yield service_inst
 
 class Start(command.LmiCheckResult):
