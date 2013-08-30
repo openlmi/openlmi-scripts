@@ -102,11 +102,6 @@ class MetaCommand(object):
         self.config = None
         # dictionary of not yet processed options, it's created in setup()
         self._options = None
-        # be ugly by default
-        self._human_friendly = False
-        # show table headings by default
-        self._no_headings = False
-        self._csv = False
 
     def _configure_logging(self):
         """
@@ -131,30 +126,6 @@ class MetaCommand(object):
         util.setup_logging(self.config, self.stderr)
         if self.config.silent:
             self.stdout = NullFile()
-
-    @property
-    def human_friendly(self):
-        return self._human_friendly
-
-    @human_friendly.setter
-    def human_friendly(self, value):
-        self._human_friendly = value
-
-    @property
-    def no_headings(self):
-        return self._no_headings
-
-    @no_headings.setter
-    def no_headings(self, value):
-        self._no_headings = value
-
-    @property
-    def csv(self):
-        return self._csv
-
-    @csv.setter
-    def csv(self, value):
-        self._csv = value
 
     @property
     def command_manager(self):
@@ -186,7 +157,7 @@ class MetaCommand(object):
             if self._options['--hosts-file']:
                 hosts_file = self._options['--hosts-file']
                 try:
-                    with open(self._options['--hosts-file'], 'rt') as hosts_file:
+                    with open(self._options['--hosts-file'], 'r') as hosts_file:
                         hosts.extend(parse_hosts_file(hosts_file))
                 except (OSError, IOError) as err:
                     LOG().critical('could not read hosts file "%s": %s',
@@ -228,6 +199,11 @@ class MetaCommand(object):
         del options['-v']
         del options['--noverify']
         self.config.namespace = options.pop('--namespace', None)
+        self.config.human_friendly = options.pop('--human-friendly', None)
+        self.config.no_headings = options.pop('--no-headings', None)
+        self.config.lister_format = options.pop('--lister-format', None)
+        # unhandled options may be used later (for session creation),
+        # so let's save them
         self._options = options
 
     def run(self, argv):

@@ -130,7 +130,7 @@ class Lister(command.LmiLister):
         """
         devices = get_devices(ns, devices)
         for dev in devices:
-            yield get_device_info(ns, dev, self.app.human_friendly)
+            yield get_device_info(ns, dev, self.app.config.human_friendly)
 
     def execute(self, ns, devices=None):
         """
@@ -138,7 +138,7 @@ class Lister(command.LmiLister):
         """
         devices = get_devices(ns, devices)
         for dev in devices:
-            yield get_device_info(ns, dev, self.app.human_friendly)
+            yield get_device_info(ns, dev, self.app.config.human_friendly)
 
 
 class Show(command.LmiLister):
@@ -160,7 +160,8 @@ class Show(command.LmiLister):
             dev = str2device(ns, dev)
             cmd = formatter.NewTableCommand(title=dev.DeviceID)
             yield cmd
-            for line in show.device_show(ns, dev, self.app.human_friendly):
+            for line in show.device_show(ns, dev,
+                    self.app.config.human_friendly):
                 yield line
 
 
@@ -182,7 +183,7 @@ class Depends(command.LmiLister):
         for device in devices:
             yield formatter.NewTableCommand(title=device)
             for parent in  get_parents(ns, device, _deep):
-                yield get_obj_info(ns, parent, self.app.human_friendly)
+                yield get_obj_info(ns, parent, self.app.config.human_friendly)
 
 
 class Provides(command.LmiLister):
@@ -202,7 +203,7 @@ class Provides(command.LmiLister):
         for device in devices:
             yield formatter.NewTableCommand(title=device)
             for child in  get_children(ns, device, _deep):
-                yield get_obj_info(ns, child, self.app.human_friendly)
+                yield get_obj_info(ns, child, self.app.config.human_friendly)
 
 
 class Tree(command.LmiLister):
@@ -285,7 +286,7 @@ class Tree(command.LmiLister):
             (devid, level) = queue.pop()
 
             device = devices[devid]
-            info = get_obj_info(ns, device, self.app.human_friendly)
+            info = get_obj_info(ns, device, self.app.config.human_friendly)
             if devid in shown:
                 # If the device was already displayed, just show reference to it
                 yield (self.prepare_tree_line(level, info[0], queue), "***")

@@ -71,7 +71,8 @@ class Lister(command.LmiLister):
         """
         for (device, _table) in partition.get_partition_tables(ns, devices):
             largest_size = partition.get_largest_partition_size(ns, device)
-            largest_size = size2str(largest_size, self.app.human_friendly)
+            largest_size = size2str(largest_size,
+                    self.app.config.human_friendly)
 
             yield (device.DeviceID,
                     device.Name,
@@ -124,7 +125,7 @@ class Show(command.LmiLister):
             cmd = formatter.NewTableCommand(title=device.DeviceID)
             yield cmd
             for line in show.partition_table_show(
-                    ns, device, self.app.human_friendly):
+                    ns, device, self.app.config.human_friendly):
                 yield line
 
 PartitionTable = command.register_subcommands(

@@ -77,7 +77,7 @@ class Lister(command.LmiLister):
         """
         for lv in lvm.get_lvs(ns, vgs):
             size = size2str(lv.NumberOfBlocks * lv.BlockSize,
-                    self.app.human_friendly)
+                    self.app.config.human_friendly)
             yield (lv.DeviceID,
                     lv.Name,
                     lv.ElementName,
@@ -133,7 +133,7 @@ class Show(command.LmiLister):
             lv = str2device(ns, lv)
             cmd = formatter.NewTableCommand(title=lv.DeviceID)
             yield cmd
-            for line in show.lv_show(ns, lv, self.app.human_friendly):
+            for line in show.lv_show(ns, lv, self.app.config.human_friendly):
                 yield line
 
 

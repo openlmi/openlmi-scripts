@@ -122,7 +122,7 @@ class Show(command.LmiLister):
             r = str2device(ns, r)
             cmd = formatter.NewTableCommand(title=r.DeviceID)
             yield cmd
-            for line in show.raid_show(ns, r, self.app.human_friendly):
+            for line in show.raid_show(ns, r, self.app.config.human_friendly):
                 yield line
 
 

@@ -65,11 +65,12 @@ class Lister(command.LmiLister):
         Implementation of 'vg list' command.
         """
         for vg in lvm.get_vgs(ns):
-            extent_size = size2str(vg.ExtentSize, self.app.human_friendly)
+            extent_size = size2str(vg.ExtentSize,
+                    self.app.config.human_friendly)
             total_space = size2str(vg.TotalManagedSpace,
-                    self.app.human_friendly)
+                    self.app.config.human_friendly)
             remaining_space = size2str(vg.RemainingManagedSpace,
-                    self.app.human_friendly)
+                    self.app.config.human_friendly)
             yield (vg.InstanceID,
                     vg.ElementName,
                     extent_size,
@@ -134,7 +135,7 @@ class Show(command.LmiLister):
             vg = str2vg(ns, vg)
             cmd = formatter.NewTableCommand(title=vg.InstanceID)
             yield cmd
-            for line in show.vg_show(ns, vg, self.app.human_friendly):
+            for line in show.vg_show(ns, vg, self.app.config.human_friendly):
                 yield line
 
 

@@ -107,7 +107,7 @@ class Lister(command.LmiLister):
                 else:
                     ptype = "unknown"
             size = size2str(part.NumberOfBlocks * part.BlockSize,
-                    self.app.human_friendly)
+                    self.app.config.human_friendly)
             yield (part.DeviceID,
                     part.Name,
                     part.ElementName,
@@ -178,7 +178,8 @@ class Show(command.LmiLister):
             part = str2device(ns, part)
             cmd = formatter.NewTableCommand(title=part.DeviceID)
             yield cmd
-            for line in show.partition_show(ns, part, self.app.human_friendly):
+            for line in show.partition_show(ns, part,
+                    self.app.config.human_friendly):
                 yield line
 
 
