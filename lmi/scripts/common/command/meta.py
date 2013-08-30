@@ -357,9 +357,9 @@ def _handle_opt_preprocess(name, dcl):
     Currently handled properties are:
 
         * ``OPT_NO_UNDERSCORES`` - When making a function's parameter name
-            out of (long) option, the leading dashes are replaced with
-            underscores. If this property is True, dashes will be removed
-            with no replacement.
+            out of option, the leading dashes are replaced with underscore.
+            If this property is True, dashes will be removed completely with
+            no replacement.
         * ``ARG_ARRAY_SUFFIX`` - Add given suffix to all arguments resulting
             in list objects.
 
