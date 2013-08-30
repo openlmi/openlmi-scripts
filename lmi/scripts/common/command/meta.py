@@ -98,7 +98,7 @@ def _handle_usage(name, dcl):
         if not 'has_own_usage' in dcl:
             dcl['has_own_usage'] = classmethod(lambda _cls: True)
 
-def _make_execute_method(bases, dcl, func, namespace=None):
+def _make_execute_method(bases, dcl, func):
     """
     Creates ``execute()`` method of a new end point command.
 
@@ -117,12 +117,20 @@ def _make_execute_method(bases, dcl, func, namespace=None):
         _execute.dest = func
         dcl['execute'] = _execute
 
-def _handle_namespace(name, dcl):
+def _handle_namespace(dcl):
+    """
+    Overrides ``cim_namespace()`` class method if ``NAMESPACE`` property
+    is given.
+
+    :param name: (``str``) Name o command class.
+    :param dcl: (``dict``) Class dictionary being modified by this method.
+    """
     if 'NAMESPACE' in dcl:
         namespace = dcl.pop('NAMESPACE')
-        def _new_default_cim_namespace(_cls):
+        def _new_cim_namespace(_cls):
+            """ Returns cim namespace used to modify connection object. """
             return namespace
-        dcl['default_cim_namespace'] = classmethod(_new_default_cim_namespace)
+        dcl['cim_namespace'] = classmethod(_new_cim_namespace)
 
 def _handle_callable(name, bases, dcl):
     """
@@ -438,7 +446,7 @@ class SessionCommandMetaClass(EndPointCommandMetaClass):
     """
     def __new__(mcs, name, bases, dcl):
         _handle_usage(name, dcl)
-        _handle_namespace(name, dcl)
+        _handle_namespace(dcl)
         _handle_callable(name, bases, dcl)
 
         return EndPointCommandMetaClass.__new__(mcs, name, bases, dcl)
