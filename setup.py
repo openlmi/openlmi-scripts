@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 PROJECT = 'openlmi-scripts'
-VERSION = '0.1.1'
+VERSION = '0.2.0'
 
 # Bootstrap installation of Distribute
 from setuptools import setup, find_packages
