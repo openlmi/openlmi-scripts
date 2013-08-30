@@ -34,12 +34,17 @@ Meta-command utility module.
 import logging
 import logging.config
 import pkg_resources
+import re
 import sys
+import urlparse
 
 from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
 
 PYTHON_EGG_NAME = "openlmi-scripts"
+
+RE_NETLOC = re.compile(r'^((?P<username>[^:@]+)(:(?P<password>[^@]+))?@)?'
+        r'(?P<hostname>[^:]+)(:(?P<port>\d+))?$')
 
 DEFAULT_LOGGING_CONFIG = {
     'version' : 1,
@@ -125,3 +130,57 @@ def get_version(egg_name=PYTHON_EGG_NAME):
     application.
     """
     return pkg_resources.get_distribution(egg_name).version
+
+def get_hosts_credentials(hostnames):
+    """
+    Parse list of hostnames, get credentials out of them and return
+    ``(hostnames, creds)``, where ``hostnames`` is a list of ``hostnames``
+    with credentials removed and ``creds`` is a dictionary with a pair
+    ``(username, password)`` for every hostname, that supplied it.
+
+    :param hostnames: (``list``) List of hostnames with optional credentials.
+        For example: ``http://root:password@hostname:5988``.
+    """
+    if not hasattr(hostnames, '__iter__'):
+        raise TypeError("hostnames must be a list of hosts")
+    new_hostnames = []
+    credentials = {}
+    for hostname in hostnames:
+        parsed = urlparse.urlparse(hostname)
+        if not parsed.netloc and parsed.path:
+            # got something like [user[:pass]@]hostname[:port] (no scheme)
+            match = RE_NETLOC.match(hostname)
+            if match:
+                hostname = match.group('hostname')
+                if match.group('port'):
+                    hostname += ':' + match.group('port')
+                if match.group('username') or match.group('password'):
+                    credentials[hostname] = (
+                        match.group('username'), match.group('password'))
+        elif parsed.username or parsed.password:
+            hostname = parsed.scheme
+            if parsed.scheme:
+                hostname += "://"
+            hostname += parsed.hostname
+            if parsed.port:
+                hostname += ":" + str(parsed.port)
+            hostname += parsed.path
+            credentials[hostname] = (parsed.username, parsed.password)
+        new_hostnames.append(hostname)
+    return (new_hostnames, credentials)
+
+def parse_hosts_file(hosts_file):
+    """
+    Parse file with hostnames to connect to. Return list of parsed hostnames.
+
+    :param hosts_file: (``file``) File object openned for read.
+        It containes hostnames. Each hostname occupies single line.
+    :rtype: (``tuple``) A pair of ``(hosts, creds)``, where ``hosts`` is a list
+        of string with hostnames and ``creds`` is a dictionary mapping
+        ``(username, password)`` to each hostname if supplied.
+    """
+    hostnames = []
+    for line in hosts_file.readlines():
+        hostnames.append(line.strip())
+    return get_hosts_credentials(hostnames)
+

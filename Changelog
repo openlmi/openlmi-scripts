@@ -1,3 +1,4 @@
+* allow embedded credentials in urls of hosts
 * allow to override default namespace from config and command line
 * added OPT_NO_UNDERSCORES property
 * commands api change: replace any sequence of characters matching [^a-z_]

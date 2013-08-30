@@ -52,20 +52,6 @@ LOG = common.get_logger(__name__)
 # write errors to stderr until logging is configured
 logging.getLogger('').addHandler(logging.StreamHandler())
 
-def parse_hosts_file(hosts_file):
-    """
-    Parse file with hostnames to connect to. Return list of parsed hostnames.
-
-    :param hosts_file: (``file``) File object openned for read.
-        It containes hostnames. Each hostname occupies single line.
-    :rtype: (``list``)
-    """
-    res = []
-    for line in hosts_file.readlines():
-        hostname = line.strip()
-        res.append(hostname)
-    return res
-
 class NullFile(object):
     """
     Mock class implementing toilette for any message passed to it. It mocks
@@ -148,27 +134,35 @@ class MetaCommand(object):
         :rtype: (``Session``)
         """
         if self._session is None:
-            if (not self._options['--host']
+            if (   not self._options['--host']
                and not self._options['--hosts-file']):
                 LOG().critical(
                         "missing one of (--host | --hosts-file) arguments")
                 sys.exit(1)
-            hosts = []
+            hostnames = []
+            # credentials loaded from file
+            credentials = {}
+            def add_hosts(hosts, creds):
+                """ Update hostnames and credentials for new data. """
+                hostnames.extend(hosts)
+                credentials.update(creds)
             if self._options['--hosts-file']:
-                hosts_file = self._options['--hosts-file']
+                hosts_path = self._options['--hosts-file']
                 try:
-                    with open(self._options['--hosts-file'], 'r') as hosts_file:
-                        hosts.extend(parse_hosts_file(hosts_file))
+                    with open(hosts_path, 'r') as hosts_file:
+                        add_hosts(*util.parse_hosts_file(hosts_file))
                 except (OSError, IOError) as err:
                     LOG().critical('could not read hosts file "%s": %s',
-                            hosts_file, err)
+                            hosts_path, err)
                     sys.exit(1)
-            hosts.extend(self._options['--host'])
+            add_hosts(*util.get_hosts_credentials(self._options['--host']))
             if self._options['--user']:
-                credentials = {h: (self._options['--user'], '') for h in hosts}
-            else:
-                credentials = None
-            self._session = Session(self, hosts, credentials,
+                credentials.update({
+                        # credentials in file has precedence over --user option
+                        h : credentials.get(h, (self._options['--user'], ''))
+                    for h in hostnames if h not in credentials
+                })
+            self._session = Session(self, hostnames, credentials,
                     same_credentials=self._options['--same-credentials'])
         return self._session
 
