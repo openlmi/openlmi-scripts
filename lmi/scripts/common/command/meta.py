@@ -384,7 +384,11 @@ def _handle_opt_preprocess(name, dcl):
             for do_it, cond, transform in (
                     ( arr_suffix
                     , lambda _, v: isinstance(v, list)
-                    , lambda n   : n + arr_suffix)
+                    , lambda n   :
+                              ('<' + util.RE_OPT_BRACKET_ARGUMENT.match(n)
+                                    .group(1) + arr_suffix + '>')
+                        if   util.RE_OPT_BRACKET_ARGUMENT.match(n)
+                        else (n + arr_suffix))
                   , ( opt_no_underscores
                     , lambda n, _: RE_OPTION.match(n)
                     , lambda n   : RE_OPTION.match(n).group('name'))
