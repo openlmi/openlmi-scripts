@@ -33,9 +33,31 @@ LMI software provider client library.
 
 from collections import defaultdict
 import heapq
+import re
 
+from lmi.shell import LMIInstance, LMIInstanceName
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
+
+# matches <name>.<arch>
+RE_NA  = re.compile(r'^(?P<name>.+)\.(?P<arch>[^.]+)$')
+# matches both nevra and nvra
+RE_NEVRA = re.compile(
+    r'^(?P<name>.+)-(?P<evra>((?P<epoch>\d+):)?(?P<version>[0-9.]+)'
+    r'-(?P<release>.+)\.(?P<arch>[^.]+))$')
+RE_ENVRA = re.compile(
+    r'^(?P<epoch>\d+):(?P<name>.+)-(?P<evra>(?P<version>[0-9.]+)'
+    r'-(?P<release>.+)\.(?P<arch>[^.]+))$')
+
+FILE_TYPES = (
+    'Unknown',
+    'File',
+    'Directory',
+    'Symlink',
+    'FIFO',
+    'Character Device',
+    'Block Device'
+)
 
 LOG = get_logger(__name__)
 
@@ -80,13 +102,13 @@ def list_available_packages(ns,
         if repo.EnabledState != \
                 ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled:
             continue                  # skip disabled repositories
-        for iname in repo.associator_names(
+        for identity in repo.associators(
                 Role="AvailableSAP", ResultRole="ManagedElement",
                 ResultClass="LMI_SoftwareIdentity"):
-            identity = iname.to_instance()
             if not allow_installed and identity.InstallDate:
                 continue
-            heapq.heappush(pkg_names, identity)
+            if not identity.Name in data:
+                heapq.heappush(pkg_names, identity.Name)
             identities = data[identity.Name]
             if allow_duplicates:
                 identities.append(identity)
@@ -97,7 +119,94 @@ def list_available_packages(ns,
         for identity in data[pkg_name]:
             yield identity
 
-def list_repos(ns, enabled=True):
+def pkg_spec_to_filter(pkg_spec):
+    """
+    Converts package specification to a set of keys, that can be used to
+    query package properties.
+
+    :param pkg_spec: (``str``) Package specification (see usage). Only keys
+        given in this string will appear in resulting dictionary.
+    :rtype: (``dict``) Dictionary with possible keys being a subset of
+        following: ``{'name', 'epoch', 'version', 'release', 'arch'}``.
+    """
+    if not isinstance(pkg_spec, basestring):
+        raise TypeError("pkg_spec must be a string")
+    result = {}
+    for notation in ('envra', 'nevra'):
+        match = globals()['RE_' + notation.upper()].match(pkg_spec)
+        if match:
+            for key in ('name', 'version', 'release', 'arch'):
+                result[key] = match.group(key)
+            if match.group('epoch'):
+                result['epoch'] = match.group('epoch')
+            return result
+    match = RE_NA.match(pkg_spec)
+    if match:
+        for key in ('name', 'arch'):
+            result[key] = match.group(key)
+        return result
+    result['name'] = pkg_spec
+    return result
+
+def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
+    """
+    Yields just a limited set of packages matching particular filter.
+    Keyword arguments are used to specify this filter, which can contain
+    following keys:
+
+        * name - package name
+        * epoch - package's epoch
+        * version - version of package
+        * release - release of package
+        * arch - requested architecture of package
+        * nevra - string containing all previous keys in following notation:
+            <name>-<epoch>:<version>-<release>.<arch>   
+        * envra - similar to nevra, the notation is different:
+            <epoch>:<name>-<version>-<release>.<arch>   # envra
+        * repoid - repository identification string, where package must be
+            available
+        * pkg_spec - one of:
+            * <name>
+            * <name>.<arch>
+            * <name>-<version>-<release>.<arch>           # nvra
+            * <name>-<epoch>:<version>-<release>.<arch>   # nevra
+            * <epoch>:<name>-<version>-<release>.<arch>   # envra
+
+    :rtype: (``LmiInstanceName``) Generator over instance names of
+        ``LMI_SoftwareIdentity``.
+    """
+    opts = {}
+    for key in ('name', 'epoch', 'version', 'release', 'arch'):
+        if key in kwargs:
+            opts[key] = kwargs.pop(key)
+    repoid = kwargs.pop('repoid', None)
+    if repoid:
+        repo_iname = ns.LMI_SoftwareIdentityResource.first_instance_name(
+                {'Name' : repoid})
+        opts['repository'] = repo_iname.path
+    if 'envra' in kwargs:   # takes precedence over pkg_spec and nevra
+        if not RE_ENVRA.match(kwargs['envra']):
+            raise ValueError('invalid envra string "%s"' % kwargs['envra'])
+        kwargs['pkg_spec'] = kwargs.pop("envra")
+    elif 'nevra' in kwargs: # takes precedence over pkg_spec
+        if not RE_NEVRA.match(kwargs['nevra']):
+            raise ValueError('invalid nevra string "%s"' % kwargs['nevra'])
+        kwargs['pkg_spec'] = kwargs.pop("nevra")
+    if 'pkg_spec' in kwargs:
+        pkg_spec = kwargs.pop('pkg_spec')
+        opts.update(pkg_spec_to_filter(pkg_spec))
+    if not opts:
+        raise LmiFailed("no supported package query key given")
+    if 'arch' in opts:
+        opts['architecture'] = opts.pop('arch')
+    ret = ns.LMI_SoftwareInstallationService.first_instance() \
+            .FindIdentity(
+                    AllowDuplicates=allow_duplicates,
+                    ExactMatch=exact_match, **opts)
+    for identity in ret.rparams['Matches']:
+        yield identity
+
+def list_repositories(ns, enabled=True):
     """
     Yields instances of LMI_SoftwareIdentityResource representing
     software repositories.
@@ -118,8 +227,49 @@ def list_repos(ns, enabled=True):
             continue
         yield repo
 
-def show_pkg(ns, pkg_array, repo=None):
+def list_package_files(ns, package, file_type=None):
     """
-    TODO
+    Get a list of files belonging to package. Yields instances of
+        LMI_SoftwareIdentityFileCheck.
+
+    :param package: (``LMIInstance``) Instance or instance name of
+        ``LMI_SoftwareIdentity``.
+    :param file_type: Either an index to ``FILE_TYPES`` array or one of:
+        ``{ "all", "file", "directory", "symlink", "fifo", "device" }``.
     """
-    pass
+    if not isinstance(package, (LMIInstance, LMIInstanceName)):
+        raise TypeError("package must be an LMIInstance")
+    file_types = ['file', 'directory', 'symlink', 'fifo', 'device']
+    if file_type is not None:
+        if isinstance(file_type, (int, long)):
+            if file_type < 1 or file_type >= len(FILE_TYPES):
+                raise ValueError('invalid file_type value "%d"' % file_type)
+        elif isinstance(file_type, basestring):
+            if file_type.lower() == 'all':
+                file_type = None
+            elif not file_type.lower() in file_types:
+                raise ValueError('file_type must be one of "%s", not "%s"' %
+                        (set(file_types), file_type))
+            else:
+                file_type = file_types.index(file_type.lower()) + 1
+    if isinstance(package, LMIInstanceName):
+        package = package.to_instance()
+    if package.InstallDate is None:
+        raise LmiFailed('can not list files of not installed package "%s"' %
+                package.ElementName)
+    for file_inst in package.associators(
+            Role="Element",
+            ResultRole="Check",
+            ResultClass="LMI_SoftwareIdentityFileCheck"):
+        if file_type is not None and file_inst.FileType != file_type:
+            continue
+        yield file_inst
+
+def get_repository(ns, repoid):
+    """
+    Return an instance of repository identified by its identification string.
+
+    :rtype: (``LMIInstance``) Instance of ``LMI_SoftwareIdentityResource``.
+    """
+    return ns.LMI_SoftwareIdentityResource.first_instance({'Name' : repoid})
+
