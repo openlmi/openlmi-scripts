@@ -32,7 +32,7 @@ System software management.
 
 Usage:
     %(cmd)s list pkgs
-        [(--available | --all) [--repoid <repository>]] 
+        [(--available | --all) [--repoid <repository>]]
         [--allow-duplicates] [<package> ...]
     %(cmd)s list repos [--disabled | --all]
     %(cmd)s list files [-t <file_type>] <package>
@@ -84,6 +84,9 @@ import itertools
 from lmi.scripts import software
 from lmi.scripts.common import command
 from lmi.scripts.common import errors
+from lmi.scripts.common import get_logger
+
+LOG = get_logger(__name__)
 
 class PkgLister(command.LmiInstanceLister):
     DYNAMIC_PROPERTIES = True
@@ -154,7 +157,8 @@ class FileLister(command.LmiInstanceLister):
 
     def verify_options(self, options):
         file_types = { 'all', 'file', 'directory', 'symlink', 'fifo', 'device'}
-        if options['--type'] is not None and options['--type'] not in file_types:
+        if (   options['--type'] is not None
+           and options['--type'] not in file_types):
             raise errors.LmiInvalidOptions(
                     'invalid file type given, must be one of %s' % file_types)
 
@@ -169,12 +173,14 @@ class FileLister(command.LmiInstanceLister):
 
         pkgs = list(software.find_package(ns, pkg_spec=package[0]))
         if len(pkgs) < 1:
-            raise errors.LmiFailed('no package matching "%s" found' % package[0])
+            raise errors.LmiFailed(
+                    'no package matching "%s" found' % package[0])
         if len(pkgs) > 1:
             LOG().warn('more than one package found for "%s": %s',
                     package[0], {p.ElementName for p in pkgs})
 
-        return (properties, software.list_package_files(ns, pkgs[-1], file_type=_type))
+        return ( properties
+               , software.list_package_files(ns, pkgs[-1], file_type=_type))
 
 class Lister(command.LmiCommandMultiplexer):
     """ List information about packages, repositories or files. """
@@ -224,9 +230,95 @@ class Show(command.LmiCommandMultiplexer):
     """ Show information about packages or repositories. """
     COMMANDS = { 'pkg' : PkgInfo, 'repo' : RepoInfo }
 
+class Install(command.LmiCheckResult):
+    ARG_ARRAY_SUFFIX = '_array'
+
+    def check_result(self, options, result):
+        """
+        :param result: (``list``) List of packages installed. For ``--uri``
+            option, this should contain 1 argument equal to --uri. Otherwise we
+            expect the same list as ``<package_array>``.
+        """
+        if options['--uri']:
+            return result == 1
+        if options['<package_array>'] != result:
+            return (False, ('failed to install packages: %s' %
+                    ", ".join(set(options['<package_array>']) - set(result))))
+        return True
+
+    def execute(self, ns,
+            package_array=None,
+            _uri=None,
+            _force=False,
+            _repoid=None):
+        installed = []
+        if _uri is not None:
+            package_array = []
+            try:
+                software.install_from_uri(ns, _uri, force=_force)
+                installed.append(_uri)
+            except errors.LmiFailed:
+                pass
+
+        for pkg_spec in package_array:
+            identities = list(software.find_package(ns,
+                pkg_spec=pkg_spec,
+                repoid=_repoid))
+            if len(identities) < 1:
+                LOG().warn('failed to find any matching package for "%s",'
+                    ' skipping', pkg_spec)
+                continue
+            if len(identities) > 1:
+                LOG().warn('more than one package found for "%s": %s',
+                        pkg_spec,
+                        {software.get_package_nevra(i) for i in identities})
+            try:
+                software.install_package(ns, identities[-1], force=_force)
+                installed.append(pkg_spec)
+            except errors.LmiFailed:
+                pass
+
+        return installed
+
+class Remove(command.LmiCheckResult):
+    ARG_ARRAY_SUFFIX = '_array'
+
+    def check_result(self, options, result):
+        if options['<package_array>'] != result:
+            return (False, ('failed to remove packages: %s' %
+                    ", ".join(set(options['<package_array>']) - set(result))))
+        return True
+
+    def execute(self, ns, package_array=None):
+        """
+        :rtype: (``list``) Packages from ``package_array``, that were
+            successfuly removed.
+        """
+        removed = []
+        for pkg_spec in package_array:
+            identities = list(software.find_package(ns,
+                pkg_spec=pkg_spec))
+            if len(identities) < 1:
+                LOG().warn('failed to find any matching package for "%s",'
+                    ' skipping', pkg_spec)
+                continue
+            if len(identities) > 1:
+                LOG().warn('more than one package found for "%s": %s',
+                        pkg_spec,
+                        {software.get_package_nevra(i) for i in identities})
+            for identity in identities:
+                try:
+                    software.remove_package(ns, identity)
+                    removed.append(pkg_spec)
+                except errors.LmiFailed:
+                    pass
+        return removed
+
 Software = command.register_subcommands(
         'Software', __doc__,
         { 'list'    : Lister
         , 'show'    : Show
+        , 'install' : Install
+        , 'remove'  : Remove
         }
     )

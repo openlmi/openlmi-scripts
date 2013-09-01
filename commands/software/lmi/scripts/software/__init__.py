@@ -61,6 +61,20 @@ FILE_TYPES = (
 
 LOG = get_logger(__name__)
 
+def get_package_nevra(package):
+    """
+    Get a nevra from an instance of ``LMI_SoftwareIdentity``.
+
+    :param package: (``LMIInstance``) Instance or instance name of
+        ``LMI_SoftwareIdentity`` representing package to install.
+    :rtype: (``str``) Nevra string of particular package.
+    """
+    if not isinstance(package, (LMIInstanceName, LMIInstance)):
+        raise TypeError("package must be an instance or instance name")
+    return (    package.path['InstanceId']
+           if   isinstance(package, LMIInstanceName)
+           else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
+
 def list_installed_packages(ns):
     """
     Yields instances of LMI_SoftwareIdentity representing installed packages.
@@ -91,7 +105,7 @@ def list_available_packages(ns,
         inst = ns.LMI_SoftwareIdentityResource.first_instance(
                 key='Name', value=repoid)
         if inst is None:
-            raise LmiFailed('no such repository "%s"' % kwargs['repo'])
+            raise LmiFailed('no such repository "%s"' % repoid)
         repos = [inst]
     else:
         repos = ns.LMI_SoftwareIdentityResource.instances()
@@ -172,6 +186,11 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
             * <name>-<epoch>:<version>-<release>.<arch>   # nevra
             * <epoch>:<name>-<version>-<release>.<arch>   # envra
 
+    :param allow_duplicates: (``bool``) Whether the output shall contain
+        multiple versions of the same packages identified with
+        ``<name>.<architecture>``.
+    :param exact_match: (``bool``) Whether the ``name`` key shall be tested for
+        exact match. If ``False`` it will be tested for inclusion.
     :rtype: (``LmiInstanceName``) Generator over instance names of
         ``LMI_SoftwareIdentity``.
     """
@@ -269,7 +288,125 @@ def get_repository(ns, repoid):
     """
     Return an instance of repository identified by its identification string.
 
+    :param repoid: (``str``) Identification string of repository.
     :rtype: (``LMIInstance``) Instance of ``LMI_SoftwareIdentityResource``.
     """
+    if not isinstance(repoid, basestring):
+        raise TypeError("repoid must be a string")
     return ns.LMI_SoftwareIdentityResource.first_instance({'Name' : repoid})
+
+def install_package(ns, package, force=False, update=False):
+    """
+    Install package on system.
+
+    :param package: (``LMIInstance``) Instance or instance name of
+        ``LMI_SoftwareIdentity`` representing package to install.
+    :param force: (``bool``) Whether the installation shall be done even if
+        installing the same (re-installation) or older version, than already
+        installed.
+    :param update: (``bool``) Whether this is an update. Update fails, if
+        package is not already installed on system.
+    :rtype: (``LMIInstance``) Software identity installed on remote system.
+    """
+    if not isinstance(package, (LMIInstance, LMIInstanceName)):
+        raise TypeError("package must be an LMIInstance or LMIInstanceName")
+    service = ns.LMI_SoftwareInstallationService.first_instance()
+    options = [4 if not update else 5]  # Install (4) or Update (5)
+    if force:
+        options.append(3) # Force Installation
+    results = service.SyncInstallFromSoftwareIdentity(
+            Source=package.path,
+            Collection=ns.LMI_SystemSoftwareCollection.first_instance().path,
+            InstallOptions=options)
+    nevra = (    package.path['InstanceId']
+            if   isinstance(package, LMIInstanceName)
+            else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
+    if results.rval != 0:
+        msg = 'failed to %s package "%s"' % (
+                'update' if update else 'install', nevra)
+        if results.errorstr:
+            msg += ': ' + results.errorstr
+        raise LmiFailed(msg)
+    else:
+        LOG().info('installed package "%s" on remote host "%s"',
+                nevra, ns.connection.hostname)
+
+    installed = results.rparams['Job'].to_instance().associators(
+            Role='AffectingElement',
+            ResultRole='AffectedElement',
+            ResultClass='LMI_SoftwareIdentity')
+    if len(installed) < 1:
+        raise LmiFailed('failed to find installed package "%s"' % nevra)
+    if len(installed) > 1:
+        LOG().warn('expected just one affected software identity, got: %s',
+                {get_package_nevra(p) for p in installed})
+
+    return installed[-1]
+
+def install_from_uri(ns, uri, force=False, update=False):
+    """
+    Install package from URI on remote system.
+
+    :param uri: (``str``) Identifier of RPM package available via http, https,
+        or ftp service.
+    :param force: (``bool``) Whether the installation shall be done even if
+        installing the same (re-installation) or older version, than already
+        installed.
+    :param update: (``bool``) Whether this is an update. Update fails, if
+        package is not already installed on system.
+    :rtype: (``LMIInstance``) Software identity installed on remote system.
+    """
+    if not isinstance(uri, basestring):
+        raise TypeError("uri must be a string")
+    service = ns.LMI_SoftwareInstallationService.first_instance()
+    options = [4 if not update else 5]  # Install (4) or Update (5)
+    if force:
+        options.append(3) # Force Installation
+    results = service.SyncInstallFromURI(
+            URI=uri,
+            Collection=ns.LMI_SystemSoftwareCollection.first_instance().path,
+            InstallOptions=options)
+    if results.rval != 0:
+        msg = 'failed to %s package from uri' % (
+                'update' if update else 'install')
+        if results.errorstr:
+            msg += ': ' + results.errorstr
+        raise LmiFailed(msg)
+    else:
+        LOG().info('installed package from uri')
+
+    installed = results.rparams['Job'].to_instance().associators(
+            Role='AffectingElement',
+            ResultRole='AffectedElement',
+            ResultClass='LMI_SoftwareIdentity')
+    if len(installed) < 1:
+        raise LmiFailed('failed to find installed package')
+    if len(installed) > 1:
+        LOG().warn('expected just one affected software identity, got: %s',
+                ", ".join(get_package_nevra(p) for p in installed))
+
+    return installed[-1]
+
+
+def remove_package(ns, package):
+    """
+    Uninstall given pacakge from system. ``LmiFailed`` will be raised on
+    failure.
+
+    :param package: (``LMIInstance``) Instance or instance name of
+        ``LMI_SoftwareIdentity`` representing package to install.
+    """
+    if not isinstance(package, (LMIInstance, LMIInstanceName)):
+        raise TypeError("package must be an LMIInstance or LMIInstanceName")
+    if isinstance(package, LMIInstanceName):
+        package = package.to_instance()
+    installed_assocs = package.reference_names(
+            Role="InstalledSoftware",
+            ResultClass="LMI_InstalledSoftwareIdentity")
+    if len(installed_assocs) > 0:
+        for assoc in installed_assocs:
+            assoc.to_instance().delete()
+    else:
+        raise LmiFailed('given package "%s" is not installed!' %
+                get_package_nevra(package))
 
