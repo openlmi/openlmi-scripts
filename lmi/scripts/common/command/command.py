@@ -707,7 +707,9 @@ class LmiCheckResult(LmiSessionCommand):
             after running ``transform_options()``.
         :param result: Any return value that will be compared against what is
             expected.
-        :rtype: (``bool``) Whether the result is expected value or not.
+        :rtype: (``bool`` or ``tuple``) Whether the result is expected value or
+            not. If ``tuple`` is returned, it contains
+            ``(passed_flag, error_description)``.
         """
         raise NotImplementedError("check_result must be overriden in subclass")
 
@@ -720,12 +722,18 @@ class LmiCheckResult(LmiSessionCommand):
         :param kwargs: (``dict``) Keyword arguments to pass to the associated
             function.
         :rtype: (``tuple``) A pair of ``(passed, error)``, where `error`` is an
-            instance of exception if any occured.
+            instance of exception if any occured, an error string or ``None``.
         """
         try:
             res = self.execute_on_connection(connection, *args, **kwargs)
             self.results[connection.hostname] = res
-            return (self.check_result(self._options, res), None)
+            res = self.check_result(self._options, res)
+            if isinstance(res, tuple):
+                if len(res) != 2:
+                    raise ValueError('check_result() must return either boolean'
+                        ' or (passed_flag, error_description), not "%s"', repr(res))
+                return res
+            return (res, None)
         except Exception as exc:
             if self.app.config.trace:
                 LOG().exception("failed to execute wrapped function")
