@@ -1,3 +1,5 @@
+* fixed check_result() method invocation
+* fixed handling of verbosity parameter
 * fixed handling of ARG_ARRAY_SUFFIX
 
 0.2.0

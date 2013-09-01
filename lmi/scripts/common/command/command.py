@@ -195,6 +195,8 @@ class LmiEndPointCommand(base.LmiBaseCommand):
     def __init__(self, *args, **kwargs):
         super(LmiEndPointCommand, self).__init__(*args, **kwargs)
         self._formatter = None
+        # saved options dictionary after call to transform_options()
+        self._options = None
 
     @abc.abstractmethod
     def execute(self, *args, **kwargs):
@@ -381,6 +383,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         options = self._parse_args(args)
         self.verify_options(options)
         self.transform_options(options)
+        self._options = options.copy()
         args, kwargs = self._make_end_point_args(options)
         return self.run_with_args(args, kwargs)
 
@@ -700,7 +703,8 @@ class LmiCheckResult(LmiSessionCommand):
         """
         Check the returned value of associated function.
 
-        :param options: (``dict``) Dictionary as returned by ``docopt`` parser.
+        :param options: (``dict``) Dictionary as returned by ``docopt`` parser
+            after running ``transform_options()``.
         :param result: Any return value that will be compared against what is
             expected.
         :rtype: (``bool``) Whether the result is expected value or not.
@@ -721,7 +725,7 @@ class LmiCheckResult(LmiSessionCommand):
         try:
             res = self.execute_on_connection(connection, *args, **kwargs)
             self.results[connection.hostname] = res
-            return (self.check_result(args, res), None)
+            return (self.check_result(self._options, res), None)
         except Exception as exc:
             if self.app.config.trace:
                 LOG().exception("failed to execute wrapped function")
