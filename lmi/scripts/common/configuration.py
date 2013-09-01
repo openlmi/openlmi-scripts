@@ -166,7 +166,7 @@ class Configuration(BaseConfiguration):
     @verbosity.setter
     def verbosity(self, level):
         """ Allow to set verbosity without modifying configuration values. """
-        if not isinstance(level, (long, int) and level is not None):
+        if not isinstance(level, (long, int)) and level is not None:
             raise TypeError("level must be integer")
         if level is not None:
             if level < self.OUTPUT_SILENT:
