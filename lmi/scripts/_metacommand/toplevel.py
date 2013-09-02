@@ -49,13 +49,10 @@ Options:
     --user <user>             Username used in connection to any target host.
     --same-credentials        Use the first credentials given for all hosts.
     -n --noverify             Do not verify cimom's ssl certificate.
-
     -v                        Increase verbosity of output.
     --trace                   Show tracebacks on errors.
     -q --quiet                Supress output except for errors.
-
     --namespace <namespace>   Default CIM namespace to use.
-
     -N --no-headings          Don't print table headings.
     -H --human-friendly       Print large values in human friendly units (i.e.
                               MB, GB, TB etc.)
