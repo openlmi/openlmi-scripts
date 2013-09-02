@@ -32,7 +32,7 @@
 #
 
 """
-Basic device information.
+Basic storage device information.
 
 Usage:
     %(cmd)s list [ <device> ...]
@@ -343,8 +343,8 @@ class Tree(command.LmiLister):
             return obj.InstanceID
 
 
-Device = command.register_subcommands(
-        'device', __doc__,
+Storage = command.register_subcommands(
+        'storage', __doc__,
         { 'list'    : Lister,
           'show'    : Show,
           'tree'    : Tree,
