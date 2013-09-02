@@ -535,13 +535,19 @@ class CheckResultMetaClass(SessionCommandMetaClass):
                     if isinstance(result, LMIReturnValue):
                         result = result.rval
                     passed = expect(options, result)
+                    if not passed:
+                        LOG().info('got unexpected result "%s"')
                     return passed
             else:
                 def _new_expect(_self, _options, result):
                     """ Comparison function testing by equivalence. """
                     if isinstance(result, LMIReturnValue):
                         result = result.rval
-                    return expect == result
+                    passed = expect == result
+                    if not passed:
+                        LOG().info('expected "%s", got "%s"', expected, result)
+                        return (False, '%s != %s' % (expected, result))
+                    return passed
                 _new_expect.expected = expect
             del dcl['EXPECT']
             dcl['check_result'] = _new_expect

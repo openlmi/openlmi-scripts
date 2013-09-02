@@ -257,8 +257,8 @@ class Install(command.LmiCheckResult):
             try:
                 software.install_from_uri(ns, _uri, force=_force)
                 installed.append(_uri)
-            except errors.LmiFailed:
-                pass
+            except errors.LmiFailed as err:
+                LOG().warn('failed to install "%s": %s', _uri, err)
 
         for pkg_spec in package_array:
             identities = list(software.find_package(ns,
@@ -275,8 +275,8 @@ class Install(command.LmiCheckResult):
             try:
                 software.install_package(ns, identities[-1], force=_force)
                 installed.append(pkg_spec)
-            except errors.LmiFailed:
-                pass
+            except errors.LmiFailed as err:
+                LOG().warn('failed to install "%s": %s', pkg_spec, err)
 
         return installed
 
@@ -310,8 +310,8 @@ class Remove(command.LmiCheckResult):
                 try:
                     software.remove_package(ns, identity)
                     removed.append(pkg_spec)
-                except errors.LmiFailed:
-                    pass
+                except errors.LmiFailed as err:
+                    LOG().warn('failed to remove "%s": %s', pkg_spec, err)
         return removed
 
 Software = command.register_subcommands(
