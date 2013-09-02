@@ -110,6 +110,7 @@ def get_vgs(ns):
 
     :rtype: list of LMIInstance/LMI_VGStoragePool
     """
+    LOG().debug("get_vgs: Loading list of all volume groups.")
     for vg in ns.LMI_VGStoragePool.instances():
         yield vg
 

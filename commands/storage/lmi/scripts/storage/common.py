@@ -274,9 +274,11 @@ def get_devices(ns, devices=None):
     :rtype: list of LMIInstance/CIM_StorageExtent.
     """
     if devices:
+        LOG().debug("get_devices: Loading list of selected devices.")
         for dev in devices:
             yield str2device(ns, dev)
     else:
+        LOG().debug("get_devices: Loading list of all devices.")
         for dev in ns.CIM_StorageExtent.instances():
             yield dev
 
@@ -330,7 +332,21 @@ def get_parents(ns, obj, deep=False):
         # Try usual BasedOn next
         parents = obj.associators(AssocClass="CIM_BasedOn", Role="Dependent")
         for parent in parents:
-            yield parent
+            # Be careful with logical partitions - they are BasedOn extended
+            # partition, but we want to return appropriate disk instead.
+            logical = ns.LMI_DiskPartition.PartitionTypeValues.Logical
+            extended = ns.LMI_DiskPartition.PartitionTypeValues.Extended
+            if (lmi_isinstance(parent, ns.CIM_DiskPartition)
+                    and lmi_isinstance(obj, ns.CIM_DiskPartition)
+                    and obj.PartitionType == logical
+                    and parent.PartitionType == extended):
+                LOG().debug("Looking for disk instead of extended partition %s"
+                        % (parent.DeviceID))
+                for p in get_parents(ns, parent, False):
+                    yield p
+            else:
+                # It is not logical partition
+                yield parent
 
     elif lmi_isinstance(obj, ns.CIM_StoragePool):
         # find physical volumes of the VG
@@ -395,10 +411,26 @@ def get_children(ns, obj, deep=False):
                 yield child
             return
 
+        # Extended partition don't have children
+        extended = ns.LMI_DiskPartition.PartitionTypeValues.Extended
+        if (lmi_isinstance(obj, ns.CIM_DiskPartition)
+                    and obj.PartitionType == extended):
+            return
+
         # try usual BasedOn next
         children = obj.associators(AssocClass="CIM_BasedOn", Role="Antecedent")
         for child in children:
             yield child
+            # Be careful with logical partitions - they are BasedOn extended
+            # partition, but we want to have them as children of appropriate
+            # disk instead.
+            if (lmi_isinstance(child, ns.CIM_DiskPartition)
+                    and child.PartitionType == extended):
+                LOG().debug("Looking for logical partitions on  %s"
+                        % (child.DeviceID))
+                for c in child.associators(AssocClass="CIM_BasedOn",
+                        Role="Antecedent"):
+                    yield c
 
     elif lmi_isinstance(obj, ns.CIM_StoragePool):
         # find LVs allocated from the VG

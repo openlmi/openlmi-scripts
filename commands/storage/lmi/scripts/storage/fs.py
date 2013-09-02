@@ -247,6 +247,8 @@ def get_device_format_label(ns, device):
 
     :rtype: string
     """
+    LOG().debug("get_device_format_label: Loading filesystem information for %s"
+            % (device.DeviceID))
     fmt = get_format_on_device(ns, device)
     if fmt:
         return get_format_label(ns, fmt)
