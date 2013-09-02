@@ -85,7 +85,10 @@ def get_device_info(ns, device, human_friendly):
     """
     Return detailed information of the device to show.
     """
-    size = size2str(device.NumberOfBlocks * device.BlockSize, human_friendly)
+    if device.NumberOfBlocks and device.BlockSize:
+        size = size2str(device.NumberOfBlocks * device.BlockSize, human_friendly)
+    else:
+        size = 'N/A'
 
     return (device.DeviceID,
             device.Name,
