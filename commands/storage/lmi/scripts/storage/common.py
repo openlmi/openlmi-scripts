@@ -280,6 +280,11 @@ def get_devices(ns, devices=None):
     else:
         LOG().debug("get_devices: Loading list of all devices.")
         for dev in ns.CIM_StorageExtent.instances():
+            if lmi_isinstance(dev, ns.CIM_Memory):
+                # Skip memory devices, they inherit from CIM_StorageExtent too
+                LOG().debug("get_devices: Skipping memory device %s"
+                        % dev.DeviceID)
+                continue
             yield dev
 
 def get_parents(ns, obj, deep=False):
