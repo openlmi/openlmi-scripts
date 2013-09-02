@@ -135,3 +135,64 @@ def get_mounts(ns):
     :rtype: list of LMI_MountedFileSystem
     """
     return ns.LMI_MountedFileSystem.instances()
+
+def mount_create(ns, device, mountpoint, fs_type=None, options=None, other_options=None):
+    """
+    Create a mounted filesystem.
+
+    :type device: string
+    :param device: device path
+    :type mountpoint: string
+    :param mountpoint: path where device should be mounted
+    :type fs_type: string
+    :param fs_type: filesystem type
+    :type options: string
+    :param options: comma-separated string of mount options
+    :type other_options: string
+    :param other_options: comma-separated string of filesystem specific mount options
+    """
+    fs_setting = ns.LMI_FileSystemSetting.first_instance({'InstanceID':'LMI:LMI_FileSystemSetting:'+device})
+    if fs_setting is None:
+        raise LmiFailed('Wrong device: %s' % device)
+    filesystem = fs_setting.associators()[0]
+    if fs_type is None:
+        fs_type = filesystem.FileSystemType
+    service = ns.LMI_MountConfigurationService.first_instance()
+
+    setting = get_setting_from_opts(ns, options, other_options)
+    setting.push()
+
+    # TODO for now
+    # Mode 32768 == only mount (don't create any persistent info)
+    (ret, _outparams, _err) = service.SyncCreateMount(Goal=setting.path,
+                                                      FileSystemType=fs_type,
+                                                      Mode=32768,
+                                                      FileSystem=filesystem.path,
+                                                      MountPoint=mountpoint,
+                                                      FileSystemSpec=device)
+    msg = '%s on %s (%s, %s)' % (device, mountpoint, options, other_options)
+    if ret != 0:
+        raise LmiFailed('Cannot create mount: %s.' % msg)
+
+    LOG().info('Successfully created mount: %s', msg)
+
+def mount_delete(ns, target):
+    """
+    Unmount filesystem.
+
+    :type target: string
+    :param target: device path or mountpoint
+    """
+    mnt = ns.LMI_MountedFileSystem.first_instance({'FileSystemSpec':target}) or \
+          ns.LMI_MountedFileSystem.first_instance({'MountPointPath':target})
+    if mnt is None:
+        raise LmiFailed('Target is not mounted: %s.' % target)
+
+    service = ns.LMI_MountConfigurationService.first_instance()
+    # TODO for now
+    # Mode 32769 == only unmount (don't remove any persistent info)
+    (ret, _outparams, _err) = service.SyncDeleteMount(Mount=mnt, Mode=32769)
+    if ret != 0:
+        raise LmiFailed('Cannot delete mount: %s.' % target)
+
+    LOG().info('Successfully deleted mount: %s', target)

@@ -47,6 +47,7 @@ setup(
             'lv = lmi.scripts.storage.lv_cmd:Lv',
             'vg = lmi.scripts.storage.vg_cmd:Vg',
             'device = lmi.scripts.storage.device_cmd:Device',
+            'mount = lmi.scripts.storage.mount_cmd:Mount',
             ],
         },
     )

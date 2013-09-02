@@ -81,135 +81,91 @@ Commands:
              attached to them. Optionally, show all mounted filesystems.
 """
 
-from lmi.scripts.common import command, get_logger
-LOG = get_logger(__name__)
+from lmi.scripts.common import command, get_logger, formatter
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.storage import mount
 
-def cmd_list(ns, all=None):
-    """
-    Implementation of 'mount list' command.
-    """
-    if all is False:
-        transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
-
-    for mnt in mount.get_mounts(ns):
-        # treat root specially (can be mounted twice - as a rootfs and with
-        # a device)
-        if mnt.FileSystemSpec == 'rootfs':
-            continue
-
-        if all is False and mnt.MountPointPath != '/':
-            # do not list nodevice filesystems
-            name = 'PATH=' + mnt.MountPointPath
-            if name in transients:
-                continue
-
-        opts_str = mount.build_opts_str(mnt)
-
-        yield(mnt.FileSystemSpec,
-              mnt.FileSystemType,
-              mnt.MountPointPath,
-              opts_str[0],
-              opts_str[1])
-
-def cmd_show(ns, all=None):
-    """
-    Implementation of 'mount show' command.
-    """
-    if all is False:
-        transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
-
-    for mnt in mount.get_mounts(ns):
-        # treat root specially (can be mounted twice - as a rootfs and with
-        # a device)
-        if mnt.FileSystemSpec == 'rootfs':
-            continue
-
-        if all is False and mnt.MountPointPath != '/':
-            # do not list nodevice filesystems
-            name = 'PATH=' + mnt.MountPointPath
-            if name in transients:
-                continue
-
-        opts_str = mount.build_opts_str(mnt)
-        print "Filesystem:   %s (%s)" % (mnt.FileSystemSpec, mnt.FileSystemType)
-        print "Mountpoint:  ", mnt.MountPointPath
-        print "Options:     ", opts_str[0]
-        print "OtherOptions:", opts_str[1]
-        print ""
-    return 0
-
-def cmd_create(ns, device, mountpoint, fs_type=None, options=None, other_options=None):
-    """
-    Implementation of 'mount create' command.
-    """
-    fs_setting = ns.LMI_FileSystemSetting.first_instance({'InstanceID':'LMI:LMI_FileSystemSetting:'+device})
-    if fs_setting is None:
-        raise LmiFailed('Wrong device: %s' % device)
-    filesystem = fs_setting.associators()[0]
-    if fs_type is None:
-        fs_type = filesystem.FileSystemType
-    service = ns.LMI_MountConfigurationService.first_instance()
-
-    setting = mount.get_setting_from_opts(ns, options, other_options)
-    setting.push()
-
-    # TODO for now
-    # Mode 32768 == only mount (don't create any persistent info)
-    (ret, _outparams, _err) = service.SyncCreateMount(Goal=setting.path,
-                                                      FileSystemType=fs_type,
-                                                      Mode=32768,
-                                                      FileSystem=filesystem.path,
-                                                      MountPoint=mountpoint,
-                                                      FileSystemSpec=device)
-    if ret != 0:
-        raise LmiFailed('Cannot create mount: %s on %s (%s).' % (device, mountpoint, 'TBI'))
-
-
-    LOG().info('Successfully created mount: %s on %s (%s)' % (device, mountpoint, 'TBI'))
-    return 0
-
-def cmd_delete(ns, target):
-    """
-    Implementation of 'mount delete' command.
-    """
-    mnt = ns.LMI_MountedFileSystem.first_instance({'FileSystemSpec':target}) or \
-          ns.LMI_MountedFileSystem.first_instance({'MountPointPath':target})
-    if mnt is None:
-        raise LmiFailed('Target is not mounted: %s.' % target)
-
-    service = ns.LMI_MountConfigurationService.first_instance()
-    # TODO for now
-    # Mode 32769 == only unmount (don't remove any persistent info)
-    (ret, _outparams, _err) = service.SyncDeleteMount(Mount=mnt, Mode=32769)
-    if ret != 0:
-        raise LmiFailed('Cannot delete mount: %s.' % target)
-
-    LOG().info('Successfully deleted mount: %s' % target)
-    return 0
 
 class Lister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.storage.mount_cmd:cmd_list'
     COLUMNS = ('FileSystemSpec', 'FileSystemType', 'MountPointPath', 'Options', 'OtherOptions')
+    OPT_NO_UNDERSCORES = True
 
-    def transform_options(self, options):
-        options['all'] = options.pop('--all')
+    def execute(self, ns, all=None):
+        """
+        Implementation of 'mount list' command.
+        """
+        if all is False:
+            transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
 
-class Show(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.mount_cmd:cmd_show'
-    EXPECT = 0
+        for mnt in mount.get_mounts(ns):
+            # treat root specially (can be mounted twice - as a rootfs and with
+            # a device)
+            if mnt.FileSystemSpec == 'rootfs':
+                continue
 
-    def transform_options(self, options):
-        options['all'] = options.pop('--all')
+            if all is False and mnt.MountPointPath != '/':
+                # do not list nodevice filesystems
+                name = 'PATH=' + mnt.MountPointPath
+                if name in transients:
+                    continue
+
+            opts_str = mount.build_opts_str(mnt)
+
+            yield(mnt.FileSystemSpec,
+                  mnt.FileSystemType,
+                  mnt.MountPointPath,
+                  opts_str[0],
+                  opts_str[1])
+
+class Show(command.LmiLister):
+    COLUMNS = ('Name', 'Value')
+    OPT_NO_UNDERSCORES = True
+
+    def execute(self, ns, all=None):
+        """
+        Implementation of 'mount show' command.
+        """
+        if all is False:
+            transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
+
+        yield formatter.NewTableCommand('Mounted filesystems')
+        for mnt in mount.get_mounts(ns):
+            # treat root specially (can be mounted twice - as a rootfs and with
+            # a device)
+            if mnt.FileSystemSpec == 'rootfs':
+                continue
+
+            if all is False and mnt.MountPointPath != '/':
+                # do not list nodevice filesystems
+                name = 'PATH=' + mnt.MountPointPath
+                if name in transients:
+                    continue
+
+            opts_str = mount.build_opts_str(mnt)
+
+            yield('Filesystem', '%s (%s)' % (mnt.FileSystemSpec, mnt.FileSystemType))
+            yield('Mountpoint', mnt.MountPointPath)
+            yield('Options', opts_str[0])
+            yield('OtherOptions', opts_str[1])
+            yield ''
 
 class Create(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.mount_cmd:cmd_create'
-    EXPECT = 0
+    EXPECT = None
+
+    def execute(self, ns, device, mountpoint, fs_type=None, options=None, other_options=None):
+        """
+        Implementation of 'mount create' command.
+        """
+        return mount.mount_create(ns, device, mountpoint, fs_type, options, other_options)
 
 class Delete(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.storage.mount_cmd:cmd_delete'
-    EXPECT = 0
+    EXPECT = None
+
+    def execute(self, ns, target):
+        """
+        Implementation of 'mount delete' command.
+        """
+        return mount.mount_delete(ns, target)
 
 Mount = command.register_subcommands(
         'Mount', __doc__,
