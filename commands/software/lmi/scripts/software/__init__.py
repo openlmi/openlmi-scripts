@@ -364,7 +364,7 @@ def install_from_uri(ns, uri, force=False, update=False):
         options.append(3) # Force Installation
     results = service.SyncInstallFromURI(
             URI=uri,
-            Collection=ns.LMI_SystemSoftwareCollection.first_instance().path,
+            Target=ns.Linux_ComputerSystem.first_instance().path,
             InstallOptions=options)
     if results.rval != 0:
         msg = 'failed to %s package from uri' % (
