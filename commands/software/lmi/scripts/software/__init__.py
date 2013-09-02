@@ -34,8 +34,11 @@ LMI software provider client library.
 from collections import defaultdict
 import heapq
 import re
+import time
 
 from lmi.shell import LMIInstance, LMIInstanceName
+from lmi.shell import LMIJob
+from lmi.shell import LMIMethod
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 
@@ -60,6 +63,25 @@ FILE_TYPES = (
 )
 
 LOG = get_logger(__name__)
+
+def _wait_for_job_finished(job):
+    """
+    This function waits for asynchronous job to be finished.
+
+    :param job: (``LMIInstance``) Instance of ``LMI_SoftwareJob``.
+    """
+    if not isinstance(job, LMIInstance):
+        raise TypeError("job must be an LMIInstance")
+    LOG().debug('waiting for a job "%s" to finish', job.InstanceId)
+    sleep_time = 0.5
+    while not LMIJob.lmi_is_job_finished(job):
+        # Sleep, a bit longer in every iteration
+        time.sleep(sleep_time)
+        if sleep_time < LMIMethod._POLLING_ADAPT_MAX_WAITING_TIME:
+            sleep_time *= 1.5
+        (refreshed, _, errorstr) = job.refresh()
+        if not refreshed:
+            raise LMISynchroMethodCallError(errorstr)
 
 def get_package_nevra(package):
     """
@@ -174,7 +196,7 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
         * release - release of package
         * arch - requested architecture of package
         * nevra - string containing all previous keys in following notation:
-            <name>-<epoch>:<version>-<release>.<arch>   
+            <name>-<epoch>:<version>-<release>.<arch>
         * envra - similar to nevra, the notation is different:
             <epoch>:<name>-<version>-<release>.<arch>   # envra
         * repoid - repository identification string, where package must be
@@ -314,24 +336,35 @@ def install_package(ns, package, force=False, update=False):
     options = [4 if not update else 5]  # Install (4) or Update (5)
     if force:
         options.append(3) # Force Installation
-    results = service.SyncInstallFromSoftwareIdentity(
+    # we can not use synchronous invocation because the reference to a job is
+    # needed
+    results = service.InstallFromSoftwareIdentity(
             Source=package.path,
             Collection=ns.LMI_SystemSoftwareCollection.first_instance().path,
             InstallOptions=options)
     nevra = (    package.path['InstanceId']
             if   isinstance(package, LMIInstanceName)
             else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
-    if results.rval != 0:
+    if results.rval != 4096:
         msg = 'failed to %s package "%s"' % (
                 'update' if update else 'install', nevra)
         if results.errorstr:
             msg += ': ' + results.errorstr
         raise LmiFailed(msg)
+
+    job = results.rparams['Job'].to_instance()
+    _wait_for_job_finished(job)
+    if not LMIJob.lmi_is_job_completed(job):
+        msg = 'failed to %s package "%s"' % (
+                'update' if update else 'install', nevra)
+        if job.ErrorDescription:
+            msg += ': ' + job.ErrorDescription
+        raise LmiFailed(msg)
     else:
         LOG().info('installed package "%s" on remote host "%s"',
                 nevra, ns.connection.hostname)
 
-    installed = results.rparams['Job'].to_instance().associators(
+    installed = job.associators(
             Role='AffectingElement',
             ResultRole='AffectedElement',
             ResultClass='LMI_SoftwareIdentity')
@@ -354,7 +387,6 @@ def install_from_uri(ns, uri, force=False, update=False):
         installed.
     :param update: (``bool``) Whether this is an update. Update fails, if
         package is not already installed on system.
-    :rtype: (``LMIInstance``) Software identity installed on remote system.
     """
     if not isinstance(uri, basestring):
         raise TypeError("uri must be a string")
@@ -374,19 +406,6 @@ def install_from_uri(ns, uri, force=False, update=False):
         raise LmiFailed(msg)
     else:
         LOG().info('installed package from uri')
-
-    installed = results.rparams['Job'].to_instance().associators(
-            Role='AffectingElement',
-            ResultRole='AffectedElement',
-            ResultClass='LMI_SoftwareIdentity')
-    if len(installed) < 1:
-        raise LmiFailed('failed to find installed package')
-    if len(installed) > 1:
-        LOG().warn('expected just one affected software identity, got: %s',
-                ", ".join(get_package_nevra(p) for p in installed))
-
-    return installed[-1]
-
 
 def remove_package(ns, package):
     """

@@ -240,7 +240,7 @@ class Install(command.LmiCheckResult):
             expect the same list as ``<package_array>``.
         """
         if options['--uri']:
-            return result == 1
+            return [options['--uri']] == result
         if options['<package_array>'] != result:
             return (False, ('failed to install packages: %s' %
                     ", ".join(set(options['<package_array>']) - set(result))))
