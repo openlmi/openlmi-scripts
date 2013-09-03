@@ -40,9 +40,9 @@ Usage:
     %(cmd)s show repo <repository>
     %(cmd)s install [--force] [--repoid <repository>] <package> ...
     %(cmd)s install --uri <uri>
+    %(cmd)s update [--force] [--repoid <repository>] <package> ...
     %(cmd)s remove <package> ...
     %(cmd)s verify <package> ...
-    %(cmd)s update <package> ...
     %(cmd)s enable <repository> ...
     %(cmd)s disable <repository> ...
 
@@ -53,10 +53,22 @@ Commands:
     install     Install packages on system. See below, how package can be
                 specified. Installation from URI is also supported, it must
                 be prefixed with --uri option.
-    remove      Remove installed package.
-    verify      Verify package.
     update      Update package.
+    remove      Remove installed package.
+    verify      Verify package. Files that did not pass the verification are
+                listed prefixed with a sequence of characters, each
+                representing particular attribute, that failed. Those are:
+                   S file Size differs
+                   M Mode differs (includes permissions and file type)
+                   5 digest (formerly MD5 sum) differs
+                   D Device major/minor number mismatch
+                   L readLink(2) path mismatch
+                   U User ownership differs
+                   G Group ownership differs
+                   T mTime differs
+                   P caPabilities differ
     enable      Enable one or more repositories.
+    disable     Disable one or more repositories.
 
 Options:
     --force        Force installation
@@ -79,11 +91,13 @@ Specifying <package>:
     Bottom most notations allow to precisely identify particular package.
 """
 
+import docopt
 import itertools
 
 from lmi.scripts import software
 from lmi.scripts.common import command
 from lmi.scripts.common import errors
+from lmi.scripts.common import formatter
 from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
@@ -177,7 +191,7 @@ class FileLister(command.LmiInstanceLister):
                     'no package matching "%s" found' % package[0])
         if len(pkgs) > 1:
             LOG().warn('more than one package found for "%s": %s',
-                    package[0], {p.ElementName for p in pkgs})
+                    package[0], ', '.join(p.ElementName for p in pkgs))
 
         return ( properties
                , software.list_package_files(ns, pkgs[-1], file_type=_type))
@@ -210,7 +224,7 @@ class PkgInfo(command.LmiShowInstance):
             raise errors.LmiFailed('no such package "%s" found' % package[0])
         if len(pkgs) > 1:
             LOG().warn('more than one package found for "%s" : %s',
-                    package[0], {p.ElementName for p in pkgs})
+                    package[0], ', '.join(p.ElementName for p in pkgs))
 
         return (properties, pkgs[-1])
 
@@ -271,7 +285,8 @@ class Install(command.LmiCheckResult):
             if len(identities) > 1:
                 LOG().warn('more than one package found for "%s": %s',
                         pkg_spec,
-                        {software.get_package_nevra(i) for i in identities})
+                        ', '.join(software.get_package_nevra(i)
+                            for i in identities))
             try:
                 software.install_package(ns, identities[-1], force=_force)
                 installed.append(pkg_spec)
@@ -305,7 +320,8 @@ class Remove(command.LmiCheckResult):
             if len(identities) > 1:
                 LOG().warn('more than one package found for "%s": %s',
                         pkg_spec,
-                        {software.get_package_nevra(i) for i in identities})
+                        ', '.join(software.get_package_nevra(i)
+                            for i in identities))
             for identity in identities:
                 try:
                     software.remove_package(ns, identity)
@@ -314,11 +330,40 @@ class Remove(command.LmiCheckResult):
                     LOG().warn('failed to remove "%s": %s', pkg_spec, err)
         return removed
 
+class Verify(command.LmiLister):
+    ARG_ARRAY_SUFFIX = '_array'
+    COLUMNS = ('Result', 'Failed file path')
+
+    def execute(self, ns, package_array=None):
+        for pkg_spec in package_array:
+            identities = list(
+                        p.to_instance()
+                    for p in software.find_package(ns, pkg_spec=pkg_spec))
+            # filter out installed
+            identities = [p for p in identities if p.InstallDate is not None]
+            if len(identities) < 1:
+                LOG().warn('failed to find any matching package for "%s",'
+                    ' skipping', pkg_spec)
+                continue
+            if len(identities) > 1:
+                LOG().warn('more than one package found for "%s": %s', pkg_spec,
+                        ", ".join(software.get_package_nevra(i)
+                            for i in identities))
+            failed_checks = list(software.verify_package(ns, identities[-1]))
+            if len(failed_checks):
+                yield formatter.NewTableCommand(title=pkg_spec)
+                for file_check in failed_checks:
+                    yield ( software.render_failed_flags(file_check.FailedFlags)
+                          , file_check.Name)
+            else:
+                LOG().debug('package "%s" passed', pkg_spec)
+
 Software = command.register_subcommands(
         'Software', __doc__,
         { 'list'    : Lister
         , 'show'    : Show
         , 'install' : Install
         , 'remove'  : Remove
+        , 'verify'  : Verify
         }
     )

@@ -346,8 +346,8 @@ def install_package(ns, package, force=False, update=False):
             if   isinstance(package, LMIInstanceName)
             else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
     if results.rval != 4096:
-        msg = 'failed to %s package "%s"' % (
-                'update' if update else 'install', nevra)
+        msg = 'failed to %s package "%s" (rval=%d)' % (
+                'update' if update else 'install', nevra, results.rval)
         if results.errorstr:
             msg += ': ' + results.errorstr
         raise LmiFailed(msg)
@@ -399,8 +399,8 @@ def install_from_uri(ns, uri, force=False, update=False):
             Target=ns.Linux_ComputerSystem.first_instance().path,
             InstallOptions=options)
     if results.rval != 0:
-        msg = 'failed to %s package from uri' % (
-                'update' if update else 'install')
+        msg = 'failed to %s package from uri (rval=%d)' % (
+                'update' if update else 'install', results.rval)
         if results.errorstr:
             msg += ': ' + results.errorstr
         raise LmiFailed(msg)
@@ -413,7 +413,7 @@ def remove_package(ns, package):
     failure.
 
     :param package: (``LMIInstance``) Instance or instance name of
-        ``LMI_SoftwareIdentity`` representing package to install.
+        ``LMI_SoftwareIdentity`` representing package to remove.
     """
     if not isinstance(package, (LMIInstance, LMIInstanceName)):
         raise TypeError("package must be an LMIInstance or LMIInstanceName")
@@ -429,3 +429,75 @@ def remove_package(ns, package):
         raise LmiFailed('given package "%s" is not installed!' %
                 get_package_nevra(package))
 
+def render_failed_flags(failed_flags):
+    """
+    :param failed_flags: (``list``) Value of ``FailedFlags`` property
+        of ``LMI_SoftwareIdentityFileCheck``.
+    :rtype: (``str``) Verification string with format matching the output
+        of ``rpm -V`` command.
+    """
+    if 0 in failed_flags:
+        return 'missing'
+    result = []
+    for name, letter, flag_num in (
+                ('file size',     'S', 1),
+                ('file mode',     'M', 2),
+                ('digest',        '5', 3),
+                ('device number', 'D', 4),
+                ('link target',   'L', 5),
+                ('user id',       'U', 6),
+                ('group id',      'G', 7),
+                ('last modification time', 'T', 8),
+                ('capabilities', 'P', -1)   # not yet supported by provider
+            ):
+        if flag_num in failed_flags:
+            result.append(letter)
+        else:
+            result.append('.')
+    return ''.join(result)
+
+def verify_package(ns, package):
+    """
+    Returns the instances of ``LMI_SoftwareIdentityFileCheck`` representing
+    files, that did not pass the verification.
+
+    :param package: (``LMIInstance``) Instance or instance name of
+        ``LMI_SoftwareIdentity`` representing package to verify.
+    :rtype: (``list``) List of instances of ``LMI_SoftwareIdentityFileCheck``
+        with not empty ``FailedFlags`` property.
+    """
+    if not isinstance(package, (LMIInstance, LMIInstanceName)):
+        raise TypeError("package must be an LMIInstance or LMIInstanceName")
+    # we can not use synchronous invocation because the reference to a job is
+    # needed - for enumerating of affected software identities
+    service = ns.LMI_SoftwareInstallationService.first_instance()
+    results = service.VerifyInstalledIdentity(
+            Source=package.path,
+            Target=ns.Linux_ComputerSystem.first_instance().path)
+    nevra = (    package.path['InstanceId']
+            if   isinstance(package, LMIInstanceName)
+            else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
+    if results.rval != 4096:
+        msg = 'failed to verify package "%s (rval=%d)"' % (nevra, results.rval)
+        if results.errorstr:
+            msg += ': ' + results.errorstr
+        raise LmiFailed(msg)
+
+    job = results.rparams['Job'].to_instance()
+    _wait_for_job_finished(job)
+    if not LMIJob.lmi_is_job_completed(job):
+        msg = 'failed to verify package "%s"' % nevra
+        if job.ErrorDescription:
+            msg += ': ' + job.ErrorDescription
+        raise LmiFailed(msg)
+    LOG().debug('verified package "%s" on remote host "%s"',
+            nevra, ns.connection.hostname)
+
+    failed = job.associators(
+            Role='AffectingElement',
+            ResultRole='AffectedElement',
+            ResultClass='LMI_SoftwareIdentityFileCheck')
+    LOG().debug('verified package "%s" on remote host "%s" with %d failures',
+            nevra, ns.connection.hostname, len(failed))
+
+    return failed
