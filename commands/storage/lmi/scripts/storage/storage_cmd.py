@@ -32,7 +32,7 @@
 #
 
 """
-Basic device information.
+Basic storage device information.
 
 Usage:
     %(cmd)s list [ <device> ...]
@@ -79,7 +79,8 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
         get_parents, str2device)
 from lmi.scripts.storage.lvm import get_vgs
 from lmi.shell.LMIUtil import lmi_isinstance
-from lmi.scripts.common import formatter
+from lmi.scripts.common import formatter, get_logger
+LOG = get_logger(__name__)
 
 def get_device_info(ns, device, human_friendly):
     """
@@ -90,11 +91,12 @@ def get_device_info(ns, device, human_friendly):
     else:
         size = 'N/A'
 
+    fslabel = fs.get_device_format_label(ns, device)
     return (device.DeviceID,
             device.Name,
             device.ElementName,
             size,
-            fs.get_device_format_label(ns, device))
+            fslabel)
 
 def get_pool_info(_ns, pool, human_friendly):
     """
@@ -257,17 +259,44 @@ class Tree(command.LmiLister):
         # Load all dependencies, calling get_children iteratively is slow
         # Add CIM_BasedOn dependencies (and omit LMI_LVBasedOn, we need
         # LMI_LVAllocatedFromStoragePool instead)
+        LOG().debug("Loading list of CIM_BasedOn associations.")
         deps = [(self.get_obj_id(ns, i.Antecedent),
                  self.get_obj_id(ns, i.Dependent))
                         for i in ns.CIM_BasedOn.instances()
                             if not lmi_isinstance(i, ns.LMI_LVBasedOn)]
 
+        # Be careful with logical partitions - they are BasedOn on appropriate
+        # extended partition, but we want to draw them as children of
+        # appropriate disk.
+        LOG().debug("Reworking BasedOn associations for logical partitions.")
+        logical = ns.LMI_DiskPartition.PartitionTypeValues.Logical
+        extended = ns.LMI_DiskPartition.PartitionTypeValues.Extended
+        for i in xrange(len(deps)):
+            dev = devices[deps[i][0]]
+            child = devices[deps[i][1]]
+            LOG().debug("Inspecting %s - %s" % deps[i])
+            if ("PartitionType" in dev.properties()
+                    and "PartitionType" in child.properties()
+                    and dev.PartitionType == extended
+                    and child.PartitionType == logical):
+                # We found ext. partition - logical partition dependency
+                # Find the disk
+                disk_id = None
+                for (d, c) in deps:
+                    if c == deps[i][0]:
+                        disk_id = d
+                # Replace the extended->logical dependency with disk->logical
+                deps[i] = (disk_id, deps[i][1])
+                LOG().debug("--- Replaced with %s - %s" % deps[i])
+
         # Add VG-LV dependencies from LMI_LVAllocatedFromStoragePool association
+        LOG().debug("Loading LVAllocatedFromStoragePool associations.")
         deps += [(self.get_obj_id(ns, i.Antecedent),
                   self.get_obj_id(ns, i.Dependent))
                         for i in ns.LMI_LVAllocatedFromStoragePool.instances()]
 
         # Add PV-VG dependencies from LMI_VGAssociatedComponentExtent
+        LOG().debug("Loading VGAssociatedComponentExtent associations.")
         deps += [
                 (self.get_obj_id(ns, i.PartComponent),
                  self.get_obj_id(ns, i.GroupComponent))
@@ -314,8 +343,8 @@ class Tree(command.LmiLister):
             return obj.InstanceID
 
 
-Device = command.register_subcommands(
-        'device', __doc__,
+Storage = command.register_subcommands(
+        'storage', __doc__,
         { 'list'    : Lister,
           'show'    : Show,
           'tree'    : Tree,
