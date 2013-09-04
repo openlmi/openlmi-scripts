@@ -102,16 +102,16 @@ Install all dependencies:
   * openlmi-tools
 
 Either via rpms or from respective git repositories. For openlmi-python-base
-package contained in [openlmi-providers][] repository the setup script is
+package contained in [providers-git][] repository the setup script is
 located at `src/python/setup.py`. In future these will be available from PyPi.
 
 Let's setup an environment:
 
   1. create a workspace directory for current `$USER` (`WSP`)
 
-    * let's call it a `WSP`
-    * this is a place, where our eggs and binaries will be "installed"
-    * it can be located anywhere, for example:
+      * let's call it a `WSP`
+      * this is a place, where our eggs and binaries will be "installed"
+      * it can be located anywhere, for example:
 
             $ WSP=~/.python_workspace
             $ mkdir $WSP
@@ -127,11 +127,11 @@ Let's setup an environment:
 
   4. now let's "install" to our workspace:
 
-    * change to checked out openlmi-scripts repository
+      * change to checked out openlmi-scripts repository
 
             $ cd openlmi-scripts
 
-    * install them and any commands you want -- possibly your own
+      * install them and any commands you want -- possibly your own
 
             $ python setup.py develop --install-dir=$WSP
             $ for cmd in service storage; do
