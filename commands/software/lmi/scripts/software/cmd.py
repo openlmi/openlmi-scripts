@@ -71,7 +71,9 @@ Commands:
     disable     Disable one or more repositories.
 
 Options:
-    --force        Force installation
+    --force        Force installation. This allows to install package already
+                   installed -- make a reinstallation or to downgrade package
+                   to older version.
     --repoid <repository>
                    Select a repository, where the given package will be
                    searched for.
@@ -295,6 +297,50 @@ class Install(command.LmiCheckResult):
 
         return installed
 
+class Update(command.LmiCheckResult):
+    ARG_ARRAY_SUFFIX = '_array'
+
+    def check_result(self, options, result):
+        """
+        :param result: (``list``) List of packages installed. For ``--uri``
+            option, this should contain 1 argument equal to --uri. Otherwise we
+            expect the same list as ``<package_array>``.
+        """
+        if options['<package_array>'] != result:
+            return (False, ('failed to update packages: %s' %
+                    ", ".join(set(options['<package_array>']) - set(result))))
+        return True
+
+    def execute(self, ns,
+            package_array=None,
+            _force=False,
+            _repoid=None):
+        installed = []
+
+        for pkg_spec in package_array:
+            identities = list(software.find_package(ns,
+                pkg_spec=pkg_spec,
+                repoid=_repoid))
+            if len(identities) < 1:
+                LOG().warn('failed to find any matching package for "%s",'
+                    ' skipping', pkg_spec)
+                continue
+            if len(identities) > 1:
+                LOG().warn('more than one package found for "%s": %s',
+                        pkg_spec,
+                        ', '.join(software.get_package_nevra(i)
+                            for i in identities))
+            try:
+                software.install_package(ns,
+                        identities[-1],
+                        force=_force,
+                        update=True)
+                installed.append(pkg_spec)
+            except errors.LmiFailed as err:
+                LOG().warn('failed to update "%s": %s', pkg_spec, err)
+
+        return installed
+
 class Remove(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
 
@@ -363,6 +409,7 @@ Software = command.register_subcommands(
         { 'list'    : Lister
         , 'show'    : Show
         , 'install' : Install
+        , 'update'  : Update
         , 'remove'  : Remove
         , 'verify'  : Verify
         }
