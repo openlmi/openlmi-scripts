@@ -109,43 +109,40 @@ Let's setup an environment:
 
   1. create a workspace directory for current `$USER` (`WSP`)
 
-     * let's call it a `WSP`
-     * this is a place, where our eggs and binaries will be "installed"
-     * it can be located anywhere, for example:
+    * let's call it a `WSP`
+    * this is a place, where our eggs and binaries will be "installed"
+    * it can be located anywhere, for example:
 
-         $ WSP=~/.python_workspace
-         $ mkdir $WSP
+            $ WSP=~/.python_workspace
+            $ mkdir $WSP
 
   2. add workspace to your python path to make all modules installed there
-     importable:
+     importable (you can add this to your `~/.bashrc`):
 
-       $ export PYTHONPATH=$WSP:$PYTHONPATH
-
-     you can add this to your ~/.bashrc
+        $ export PYTHONPATH=$WSP:$PYTHONPATH
 
   3. add workspace to your PATH, so the installed binaries can be run:
 
-       $ export PATH=$WSP:$PATH
+        $ export PATH=$WSP:$PATH
 
   4. now let's "install" to our workspace:
 
-     * change to checked out openlmi-scripts repository
+    * change to checked out openlmi-scripts repository
 
-       $ cd openlmi-scripts
+            $ cd openlmi-scripts
 
-     * install them and any commands you want -- possibly your own
+    * install them and any commands you want -- possibly your own
 
-       $ python setup.py develop --install-dir=$WSP
-       $ for cmd in service storage; do
-             pushd commands/$cmd
-             python setup.py develop --install-dir=$WSP
-             popd
-         done
+            $ python setup.py develop --install-dir=$WSP
+            $ for cmd in service storage; do
+            >     pushd commands/$cmd
+            >     python setup.py develop --install-dir=$WSP
+            >     popd
+            > done
 
 Now any change made to openlmi-scripts is immediately reflected in lmi
 meta-command.
 
-#### References:
-   
-   [git]: https://github.com/openlmi/openlmi-scripts   "openlmi-scripts"
-   [providers-git]: ssh://git.fedorahosted.org/git/openlmi-providers.git/ "openlmi-providers"
+------------------------------------------------------------------------------
+[git]:           https://github.com/openlmi/openlmi-scripts            "openlmi-scripts"
+[providers-git]: ssh://git.fedorahosted.org/git/openlmi-providers.git/ "openlmi-providers"
