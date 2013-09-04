@@ -245,6 +245,52 @@ class Show(command.LmiCommandMultiplexer):
     """ Show information about packages or repositories. """
     COMMANDS = { 'pkg' : PkgInfo, 'repo' : RepoInfo }
 
+def for_each_package_specs(ns, pkg_specs, info, func,
+        repoid=None, just_on_installed=True):
+    """
+    Iterate over package specification strings, find them on remote host,
+    make them into ``LMI_SoftwareIdentity``, and pass them to given function.
+    
+    :param pkg_specs: (``list``) List of package specification strings.
+    :param info: (``str``) What is done with package. This is used in log
+        messages.
+    :param func: (``callable``) Any callable taking instance of
+        ``LMI_SoftwareIdentity`` as the first and only argument.
+    :param repoid: (``str``) Optional repository id used in a search
+        for corresponding software identity.
+    :param just_on_installed: (``bool``) Skip uninstalled software identities
+        found.
+    :rtype: (``list``) List containing a subset of ``pkg_specs`` with items,
+        that were processed successfuly.
+    """
+    done_on = []
+    for pkg_spec in pkg_specs:
+        if just_on_installed:
+            identities = [
+                        i.to_instance()
+                    for i in software.find_package(ns,
+                        pkg_spec=pkg_spec, repoid=repoid)]
+
+            identities = [p for p in identities if p.InstallDate is not None]
+        else:
+            identities = list(software.find_package(ns,
+                pkg_spec=pkg_spec, repoid=repoid))
+        if len(identities) < 1:
+            LOG().warn('failed to find any matching package for "%s",'
+                ' skipping', pkg_spec)
+            continue
+        if len(identities) > 1:
+            LOG().warn('more than one package found for "%s": %s',
+                    pkg_spec,
+                    ', '.join(software.get_package_nevra(i)
+                        for i in identities))
+        try:
+            func(identities[-1])
+            done_on.append(pkg_spec)
+        except errors.LmiFailed as err:
+            LOG().warn('failed to %s "%s": %s', info, pkg_spec, err)
+    return done_on
+
 class Install(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
 
@@ -266,35 +312,21 @@ class Install(command.LmiCheckResult):
             _uri=None,
             _force=False,
             _repoid=None):
-        installed = []
         if _uri is not None:
-            package_array = []
             try:
                 software.install_from_uri(ns, _uri, force=_force)
-                installed.append(_uri)
+                return [_uri]
             except errors.LmiFailed as err:
                 LOG().warn('failed to install "%s": %s', _uri, err)
 
-        for pkg_spec in package_array:
-            identities = list(software.find_package(ns,
-                pkg_spec=pkg_spec,
-                repoid=_repoid))
-            if len(identities) < 1:
-                LOG().warn('failed to find any matching package for "%s",'
-                    ' skipping', pkg_spec)
-                continue
-            if len(identities) > 1:
-                LOG().warn('more than one package found for "%s": %s',
-                        pkg_spec,
-                        ', '.join(software.get_package_nevra(i)
-                            for i in identities))
-            try:
-                software.install_package(ns, identities[-1], force=_force)
-                installed.append(pkg_spec)
-            except errors.LmiFailed as err:
-                LOG().warn('failed to install "%s": %s', pkg_spec, err)
+        else:
+            return for_each_package_specs(ns, package_array, 'install',
+                    lambda identity: software.install_package(
+                        ns, identity, force=_force),
+                    repoid=_repoid,
+                    just_on_installed=False)
 
-        return installed
+        return []
 
 class Update(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
@@ -314,31 +346,12 @@ class Update(command.LmiCheckResult):
             package_array=None,
             _force=False,
             _repoid=None):
-        installed = []
-
-        for pkg_spec in package_array:
-            identities = list(software.find_package(ns,
-                pkg_spec=pkg_spec,
-                repoid=_repoid))
-            if len(identities) < 1:
-                LOG().warn('failed to find any matching package for "%s",'
-                    ' skipping', pkg_spec)
-                continue
-            if len(identities) > 1:
-                LOG().warn('more than one package found for "%s": %s',
-                        pkg_spec,
-                        ', '.join(software.get_package_nevra(i)
-                            for i in identities))
-            try:
-                software.install_package(ns,
-                        identities[-1],
+        return for_each_package_specs(ns, package_array, 'update',
+                lambda identity: software.install_package(ns,
+                        identity,
                         force=_force,
-                        update=True)
-                installed.append(pkg_spec)
-            except errors.LmiFailed as err:
-                LOG().warn('failed to update "%s": %s', pkg_spec, err)
-
-        return installed
+                        update=True),
+                repoid=_repoid)
 
 class Remove(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
@@ -354,54 +367,28 @@ class Remove(command.LmiCheckResult):
         :rtype: (``list``) Packages from ``package_array``, that were
             successfuly removed.
         """
-        removed = []
-        for pkg_spec in package_array:
-            identities = list(software.find_package(ns,
-                pkg_spec=pkg_spec))
-            if len(identities) < 1:
-                LOG().warn('failed to find any matching package for "%s",'
-                    ' skipping', pkg_spec)
-                continue
-            if len(identities) > 1:
-                LOG().warn('more than one package found for "%s": %s',
-                        pkg_spec,
-                        ', '.join(software.get_package_nevra(i)
-                            for i in identities))
-            for identity in identities:
-                try:
-                    software.remove_package(ns, identity)
-                    removed.append(pkg_spec)
-                except errors.LmiFailed as err:
-                    LOG().warn('failed to remove "%s": %s', pkg_spec, err)
-        return removed
+        return for_each_package_specs(ns, package_array, 'remove',
+                lambda identity: software.remove_package(ns, identity))
 
 class Verify(command.LmiLister):
     ARG_ARRAY_SUFFIX = '_array'
     COLUMNS = ('Result', 'Failed file path')
 
     def execute(self, ns, package_array):
-        for pkg_spec in package_array:
-            identities = list(
-                        p.to_instance()
-                    for p in software.find_package(ns, pkg_spec=pkg_spec))
-            # filter out installed
-            identities = [p for p in identities if p.InstallDate is not None]
-            if len(identities) < 1:
-                LOG().warn('failed to find any matching package for "%s",'
-                    ' skipping', pkg_spec)
-                continue
-            if len(identities) > 1:
-                LOG().warn('more than one package found for "%s": %s', pkg_spec,
-                        ", ".join(software.get_package_nevra(i)
-                            for i in identities))
-            failed_checks = list(software.verify_package(ns, identities[-1]))
+        failed_identity_checks = []
+        def _verify_identity(identity):
+            failed_checks = list(software.verify_package(ns, identity))
             if len(failed_checks):
-                yield formatter.NewTableCommand(title=pkg_spec)
-                for file_check in failed_checks:
-                    yield ( software.render_failed_flags(file_check.FailedFlags)
-                          , file_check.Name)
+                failed_identity_checks.append((identity, failed_checks))
             else:
-                LOG().debug('package "%s" passed', pkg_spec)
+                LOG().debug('package "%s" passed', identity.ElementName)
+
+        for_each_package_specs(ns, package_array, 'verify', _verify_identity)
+        for identity, checks in failed_identity_checks:
+            yield formatter.NewTableCommand(title=identity.ElementName)
+            for file_check in checks:
+                yield ( software.render_failed_flags(file_check.FailedFlags)
+                      , file_check.Name)
 
 class ChangeEnabledState(command.LmiCheckResult):
     """
