@@ -93,7 +93,6 @@ Specifying <package>:
     Bottom most notations allow to precisely identify particular package.
 """
 
-import docopt
 import itertools
 
 from lmi.scripts import software
@@ -350,7 +349,7 @@ class Remove(command.LmiCheckResult):
                     ", ".join(set(options['<package_array>']) - set(result))))
         return True
 
-    def execute(self, ns, package_array=None):
+    def execute(self, ns, package_array):
         """
         :rtype: (``list``) Packages from ``package_array``, that were
             successfuly removed.
@@ -380,7 +379,7 @@ class Verify(command.LmiLister):
     ARG_ARRAY_SUFFIX = '_array'
     COLUMNS = ('Result', 'Failed file path')
 
-    def execute(self, ns, package_array=None):
+    def execute(self, ns, package_array):
         for pkg_spec in package_array:
             identities = list(
                         p.to_instance()
@@ -404,6 +403,43 @@ class Verify(command.LmiLister):
             else:
                 LOG().debug('package "%s" passed', pkg_spec)
 
+class ChangeEnabledState(command.LmiCheckResult):
+    """
+    Class for 'enable' and 'disable' commands. This particular class allows
+    to enable repositories. To make a disable command out of it, it needs
+    to be overrided with ``enable`` property returning ``False``.
+    """
+    ARG_ARRAY_SUFFIX = '_array'
+
+    @property
+    def enable(self):
+        """ Whether to enable or disable repository. """
+        return True 
+
+    def check_result(self, options, result):
+        if options['<repository_array>'] != result:
+            return (False, ('failed to %s repositories: %s' % (
+                'enable' if self.enable else 'disable',
+                ", ".join(set(options['<repository_array>']) - set(result)))))
+        return True
+
+    def execute(self, ns, repository_array):
+        modified = []
+        for repoid in repository_array:
+            try:
+                repo = software.get_repository(ns, repoid)
+                software.set_repository_enabled(ns, repo, enable=self.enable)
+                modified.append(repoid)
+            except errors.LmiFailed as err:
+                LOG().warn(str(err))
+        return modified
+
+class DisableRepository(ChangeEnabledState):
+
+    @property
+    def enable(self):
+        return False
+
 Software = command.register_subcommands(
         'Software', __doc__,
         { 'list'    : Lister
@@ -412,5 +448,7 @@ Software = command.register_subcommands(
         , 'update'  : Update
         , 'remove'  : Remove
         , 'verify'  : Verify
+        , 'enable'  : ChangeEnabledState
+        , 'disable' : DisableRepository
         }
     )

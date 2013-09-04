@@ -39,6 +39,8 @@ import time
 from lmi.shell import LMIInstance, LMIInstanceName
 from lmi.shell import LMIJob
 from lmi.shell import LMIMethod
+from lmi.shell import LMIUtil
+from lmi.shell import LMIExceptions
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 
@@ -81,7 +83,7 @@ def _wait_for_job_finished(job):
             sleep_time *= 1.5
         (refreshed, _, errorstr) = job.refresh()
         if not refreshed:
-            raise LMISynchroMethodCallError(errorstr)
+            raise LMIExceptions.LMISynchroMethodCallError(errorstr)
 
 def get_package_nevra(package):
     """
@@ -315,7 +317,37 @@ def get_repository(ns, repoid):
     """
     if not isinstance(repoid, basestring):
         raise TypeError("repoid must be a string")
-    return ns.LMI_SoftwareIdentityResource.first_instance({'Name' : repoid})
+    repo = ns.LMI_SoftwareIdentityResource.first_instance({'Name' : repoid})
+    if repo is None:
+        raise LmiFailed('no such repository "%s"' % repoid)
+    return repo
+
+def set_repository_enabled(ns, repository, enable=True):
+    """
+    Enable or disable repository.
+
+    :param repository: (``LMIInstance``) Instance of
+        ``LMI_SoftwareIdentityResource``.
+    :param enable: (``bool``) New value of ``EnabledState`` property.
+    :rtype: (``bool``) Previous value of repository's ``EnabledState``.
+    """
+    if not isinstance(repository, (LMIInstance, LMIInstanceName)):
+        raise TypeError("repository must be an LMIInstance")
+    cls = ns.LMI_SoftwareIdentityResource
+    if not LMIUtil.lmi_isinstance(repository, cls):
+        raise ValueError("repository must be an instance of"
+            " LMI_SoftwareIdentityResource")
+    requested_state = cls.EnabledStateValues.Enabled if enable else \
+            cls.EnabledStateValues.Disabled
+    if repository.EnabledState != requested_state:
+        results = repository.RequestStateChange(RequestedState=requested_state)
+        if results.rval != 0:
+            msg = 'failed to enable repository "%s" (rval=%d)' % (
+                    repository.Name, results.rval)
+            if results.errorstr:
+                msg += ': ' + results.errorstr
+            raise LmiFailed(msg)
+    return repository.EnabledState
 
 def install_package(ns, package, force=False, update=False):
     """
@@ -439,7 +471,7 @@ def render_failed_flags(failed_flags):
     if 0 in failed_flags:
         return 'missing'
     result = []
-    for name, letter, flag_num in (
+    for _name, letter, flag_num in (
                 ('file size',     'S', 1),
                 ('file mode',     'M', 2),
                 ('digest',        '5', 3),
