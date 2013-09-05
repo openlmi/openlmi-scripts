@@ -21,9 +21,9 @@ setup(
     url='https://github.com/openlmi/openlmi-scripts',
     download_url='https://github.com/openlmi/openlmi-scripts/tarball/master',
     platforms=['Any'],
-    license="LGPLv2+",
+    license="BSD",
     classifiers=[
-        'License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)',
+        'License :: OSI Approved :: BSD License',
         'Operating System :: POSIX :: Linux',
         'Topic :: System :: Systems Administration',
         'Programming Language :: Python',
