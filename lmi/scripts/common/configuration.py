@@ -72,7 +72,7 @@ class Configuration(BaseConfiguration):
         BaseConfiguration.__init__(self, **kwargs)
         self._verbosity = self.OUTPUT_WARNING
         self._trace = False
-        self._verify_certificate = None
+        self._verify_server_cert = None
         self._cim_namespace = None
         self._human_friendly = None
         self._lister_format = None
@@ -179,20 +179,20 @@ class Configuration(BaseConfiguration):
     # [SSL] options
     # *************************************************************************
     @property
-    def verify_certificate(self):
+    def verify_server_cert(self):
         """
         Return boolean saying, whether the server-side certificate should be
         checked.
         """
-        if self._verify_certificate is None:
+        if self._verify_server_cert is None:
             return self.get_safe('SSL', 'VerifyServerCertificate', bool)
-        return self._verify_certificate
-    @verify_certificate.setter
-    def verify_certificate(self, value):
+        return self._verify_server_cert
+    @verify_server_cert.setter
+    def verify_server_cert(self, value):
         """ Allows to override configuration option value. """
         if value is not None:
             value = bool(value)
-        self._verify_certificate = value
+        self._verify_server_cert = value
 
     # *************************************************************************
     # [Format] options

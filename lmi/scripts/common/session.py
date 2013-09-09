@@ -109,11 +109,16 @@ class Session(object):
         :rtype: (``LMIConnection``) Connection to remote host or ``None``.
         """
         username, password = self.get_credentials(hostname)
-        kwargs = dict(interactive=interactive,
-                verify_certificate=self._app.config.verify_certificate)
+        import inspect
         # TODO: remove inspect magic and add dependency on particular
         # version of openlmi-tools, when its released
-        import inspect
+        kwargs = dict(interactive=interactive)
+        if inspect.getargspec(connect).args:
+            # newer name
+            kwargs['verify_server_cert'] = self._app.config.verify_server_cert
+        else:   # older one
+            kwargs['verify_certificate'] = self._app.config.verify_server_cert
+
         if len(self._connections) > 1 \
                 and 'prompt_prefix' in inspect.getargspec(connect).args:
             kwargs['prompt_prefix'] = '[%s] ' % hostname
