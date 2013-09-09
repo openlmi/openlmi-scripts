@@ -60,6 +60,8 @@ Options:
                               Print output of lister commands in CSV or table
                               format. CSV format is more suitable for machine
                               processing. Defaults to table.
+    --help                    Show this text and quite.
+    --version                 Print version of '%(cmd)s' in use and quit.
 """
 
 import docopt
