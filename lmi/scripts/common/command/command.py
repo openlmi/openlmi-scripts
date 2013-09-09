@@ -519,7 +519,7 @@ class LmiLister(LmiBaseListerCommand):
     List of additional recognized properties:
 
         * ``COLUMNS`` - Column names. It's a tuple with name for each column.
-                        Each row shell then contain the same number of items
+                        Each row shall then contain the same number of items
                         as this tuple. If omitted, associated function is
                         expected to provide them in the first row of returned
                         list. It's translated to ``get_columns()`` class
