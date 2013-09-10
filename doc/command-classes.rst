@@ -9,6 +9,9 @@ We focus here on commands intended for subclassing in command wrapper modules.
 *OpenLMI Scripts* defines and uses other kinds of commands internally. But
 the script developer does not need to know about them.
 
+.. seealso::
+    General and class specific properties in :ref:`command_properties`.
+
 .. _end-point_commands:
 
 End-point commands
@@ -25,7 +28,7 @@ methods:
     Properties affecting this pre-processing can be found in
     :ref:`pre_processing_properties`. This method shall check option values or
     their combination and raise ``lmi.scripts.common.errors.LmiInvalidOptions``
-    if any inconsistency discovered.
+    if any inconsistency is discovered.
 
     Example usage: ::
 
@@ -41,8 +44,12 @@ methods:
                             'invalid file type given, must be one of %s' %
                                  file_types)
 
+    .. seealso::
+        API doccumentation on
+        :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.verify_options`
+
 ``transform_options(self, options)``
-    Taking verified options dictionary. It modifies this dictionary in
+    Takes verified options dictionary. It modifies this dictionary in
     arbitrary way in place. Its return value is ignored.
 
     Example usage: ::
@@ -57,11 +64,15 @@ methods:
                 """
                 options['<devices>'] = options.pop('<device>')
 
-Above methods can be used to process options in a way, that any script library
-function can be called. In a case we need more control over what is called or
-when we want to decide at runtime which function shall be call, we may override
-``execute()`` method instead. Example of this may be found at
-:ref:`associating_a_function`.
+    .. seealso::
+        API documentation on
+        :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.transform_options`
+
+Above methods can be used to process options in a way that any script library
+function can be called. In case we need more control over what is called or
+when we want to decide at runtime which function shall be called, we may override
+:py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.execute` method
+instead. Example of this may be found at :ref:`associating_a_function`.
 
 .. _lmi_check_result:
 
@@ -77,11 +88,15 @@ such as ``LMI_Service::StartService()``. Example can be seen in
 
 Its specific properties are listed in :ref:`lmi_check_result_properties`.
 
+.. seealso::
+    API documentation on
+    :py:class:`lmi.scripts.common.command.command.LmiCheckResult`
+
 .. _lmi_lister:
 
 ``LmiLister``
 ~~~~~~~~~~~~~
-Prints a table like data. It expects associated function to return its result
+Prints tablelike data. It expects associated function to return its result
 in form: ::
 
     [row1, row2, ...]
@@ -97,6 +112,10 @@ take the following form instead: ::
 Where ``columns`` has the same meaning as ``COLUMNS`` as a class property and
 ``data`` is the result of previous case [#]_.
 
+.. seealso::
+    API documentation on
+    :py:class:`lmi.scripts.common.command.command.LmiLister`
+
 .. _lmi_instance_lister:
 
 ``LmiInstanceLister``
@@ -104,7 +123,7 @@ Where ``columns`` has the same meaning as ``COLUMNS`` as a class property and
 Is a variant of ``LmiLister``. Instead of rows being tuples, here they are
 instances of some CIM class. Instead of using ``COLUMNS`` property for
 specifying columns labels, ``PROPERTIES`` is used for the same purpose here.
-Its primary use is in specifying, which properties of instances shall be
+Its primary use is in specifying which properties of instances shall be
 rendered in which column. This is described in detail in
 :ref:`lmi_instance_lister_properties`.
 
@@ -114,18 +133,22 @@ The expected output of associated function is therefore: ::
 
 Again, usage of generators is preferred.
 
+.. seealso::
+    API documentation on
+    :py:class:`lmi.scripts.common.command.command.LmiInstanceLister`
+
 .. _lmi_show_instance:
 
 ``LmiShowInstance``
 ~~~~~~~~~~~~~~~~~~~
 Renders a single instance of some CIM class. It's rendered in a form of
-two-column table. Where the first column contains property names and
+two-column table, where the first column contains property names and
 the second their corresponding values. Rendering is controlled in the same
 way as for ``LmiInstanceLister`` (see :ref:`lmi_show_instance_properties`).
 
 .. seealso::
-
-    General and class specific properties in :ref:`command_properties`.
+    API documentation on
+    :py:class:`lmi.scripts.common.command.command.LmiShowInstance`
 
 .. ****************************************************************************
 
@@ -136,5 +159,5 @@ way as for ``LmiInstanceLister`` (see :ref:`lmi_show_instance_properties`).
 
 -------------------------------------------------------------------------------
 
-.. [#] Having the same lenght as each row in returned data.
+.. [#] Having the same length as each row in returned data.
 .. [#] Generator or a ``list`` of rows.

@@ -34,7 +34,7 @@ example looks like this: ::
 
 Values of this dictionary are passed to an associated function as arguments
 with names created out of matching keys. Since argument names can not contain
-characters such as `'<'`, `'>'`, `'-'`, etc. These need to be replaced.
+characters such as `'<'`, `'>'`, `'-'`, etc., these need to be replaced.
 Process of renaming of these options can be described by the following pseudo
 algorithm:
 
@@ -55,7 +55,7 @@ algorithm:
         "-a"    -> "_a"
         "--all" -> "_all"
 
-    4. any not-empty sequence of characters not allowed in python's identitier
+    4. any non-empty sequence of characters not allowed in python's identitier
        shall be replaced with a single underscore ::
 
         "_long-option"     -> "_long_option"
@@ -83,7 +83,7 @@ Property descriptions
 
 ``ARG_ARRAY_SUFFIX`` : ``str`` (defaults to ``""``)
     Adds additional point (5) to `options_transform_algorithm`_. All
-    repeatable arguments, resulting in a ``list`` of items are renamed to
+    repeatable arguments, resulting in a ``list`` of items, are renamed to
     ``<original_name><suffix>`` [#]_. Repeatable argument in usage string
     looks like this: ::
 
@@ -97,7 +97,7 @@ Property descriptions
 .. _own_usage:
 
 ``OWN_USAGE`` : ``bool`` (defaults to ``False``)
-    Says, whether the documentation string of this class is a usage string.
+    Says whether the documentation string of this class is a usage string.
     Each command in hierarchy can have its own usage string.
 
     This can also be assigned a usage string directly: ::
@@ -138,10 +138,11 @@ Influencing properties:
 
     * ``CALLABLE`` (callable_)
 
-When command is invoked, it's method ``execute()`` will get verified and
-transformed options as a positional and keyword arguments. This method
-shall pass them to an associated function residing in script library and
-return its result on completition.
+When command is invoked, its method
+:py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.execute` will
+get verified and transformed options as positional and keyword arguments.
+This method shall pass them to an associated function residing in script
+library and return its result on completition.
 
 One way to associate a function is to use ``CALLABLE`` property. The other
 is to define very own ``execute()`` method like this: ::
@@ -160,9 +161,8 @@ is to define very own ``execute()`` method like this: ::
             for service_inst in service.list_services(ns, kind):
                 yield service_inst
 
-This approach allows to access properties of command and application allowing
-for more advanced approaches to options handling, verifying and result
-post-processing.
+This may come handy if the application object [#]_ needs to be accessed or
+if we need to decide which function to call based on command line options.
 
 .. _property_descriptions:
 
@@ -171,9 +171,10 @@ Property descriptions
 .. _callable:
 
 ``CALLABLE`` : ``str`` (defaults to ``None``)
-    This is a mandatory option if ``execute()`` method is not overriden.
-    It may be a string composed of a full path of module and its callable
-    delimited with ``':'``: ::
+    This is a mandatory option if
+    :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.execute`
+    method is not overriden. It may be a string composed of a full path of
+    module and its callable delimited with ``':'``: ::
 
         CALLABLE = 'lmi.scripts.service:start'
 
@@ -187,11 +188,11 @@ Property descriptions
             CALLABLE = service.start
             EXPECT = 0
 
-    The first variant (by assigning string) comes handy, if the particular
+    The first variant (by assigning string) comes handy if the particular
     module of associated function is not yet imported. Thus delaying the
     import until the point of function's invocation - if the execution comes
     to this point at all. In short it speeds up execution of ``lmi``
-    meta-command by reducing number of module imports, that are not needed.
+    meta-command by reducing number of module imports that are not needed.
 
 .. _function_invocation:
 
@@ -210,19 +211,19 @@ Property descriptions
     This property affects the first argument passed to an associated function.
     Various values have different impact:
 
-    +-----------+---------------------------------------+-------------------+
-    | Value     | Value of first argument.              | Its type          |
-    +===========+=======================================+===================+
-    | ``None``  | Same impact as value ``"root/cimv2"`` | ``LMINamespace``  |
-    +-----------+---------------------------------------+-------------------+
-    | ``False`` | Raw connection object                 | ``LMIConnection`` |
-    +-----------+---------------------------------------+-------------------+
-    | any path  | Namespace object with given path      | ``LMINamespace``  |
-    +-----------+---------------------------------------+-------------------+
+    +-----------+---------------------------------------+-------------------------------------+
+    | Value     | Value of first argument.              | Its type                            |
+    +===========+=======================================+=====================================+
+    | ``None``  | Same impact as value ``"root/cimv2"`` | :py:class:`lmi.shell.LMINamespace`  |
+    +-----------+---------------------------------------+-------------------------------------+
+    | ``False`` | Raw connection object                 | :py:class:`lmi.shell.LMIConnection` |
+    +-----------+---------------------------------------+-------------------------------------+
+    | any path  | Namespace object with given path      | :py:class:`lmi.shell.LMINamespace`  |
+    +-----------+---------------------------------------+-------------------------------------+
 
     This usually won't need any modification. Sometimes perhaps associated
-    function might want to access more than one namespace, in that case
-    an instance of ``LMIConnection`` might provide more useful.
+    function might want to access more than one namespace, in that case an
+    instance of :py:class:`lmi.shell.LMIConnection` might provide more useful.
 
     Namespace can also be overriden globally in a configuration file or with
     an option on command line.
@@ -252,8 +253,10 @@ them.
     Where ``Subcmd1`` and ``Subcmd2`` are some other ``LmiBaseCommand``
     subclasses. Documentation string must be parseable with docopt_.
 
-    ``COMMANDS`` property will be translated to ``child_commands()`` class
-    method by ``lmi.scripts.common.command.meta.MultiplexerMetaClass``.
+    ``COMMANDS`` property will be translated to
+    :py:meth:`lmi.scripts.common.command.command.LmiCommandMultiplexer.child_commands`
+    class method by
+    :py:class:`lmi.scripts.common.command.meta.MultiplexerMetaClass`.
 
 .. _lmi_lister_properties:
 
@@ -265,7 +268,9 @@ them.
     Column names. It's a tuple with name for each column. Each row of data
     shall then contain the same number of items as this tuple. If omitted,
     associated function is expected to provide them in the first row of
-    returned list. It's translated to ``get_columns()`` class method.
+    returned list. It's translated to
+    :py:meth:`lmi.scripts.common.command.command.LmiBaseListerCommand.get_columns`
+    class method.
 
 .. _lmi_instance_commands_properties:
 .. _lmi_show_instance_properties:
@@ -273,9 +278,9 @@ them.
 
 ``LmiShowInstance`` and ``LmiInstanceLister`` properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These two classes expect as a result of their associated function an instance
+These two classes expect, as a result of their associated function, an instance
 or a list of instances of some CIM class. They take care of rendering them to
-standard output. Thus their properties affect the way, how their properties
+standard output. Thus their properties affect the way how their properties
 are rendered. 
 
 .. _properties:
@@ -310,7 +315,7 @@ are rendered.
                     ('Active', 'Started'))
 
     First property will be shown with the same label as the name of property.
-    Second one modifies the value of ``EnabledDefault`` from integer to
+    Second one modifies the value of ``EnabledDefault`` from ``int`` to
     ``bool`` representing enabled state. The last one uses different label for
     property name ``Started``.
 
@@ -325,8 +330,13 @@ are rendered.
     Where ``properties`` have the same inscription and meaning as a
     ``PROPERTIES`` property of class.
 
-    Otherwise only the ``data`` is expexted which has different meaning
-    for ``LmiShowInstance`` and ``LmiInstanceLister``.
+    Otherwise, only the ``data`` is expected.
+
+    .. note::
+        Both :py:class:`lmi.scripts.common.command.command.LmiShowInstance`
+        and :py:class:`lmi.scripts.common.command.command.LmiInstanceLister`
+        expect different ``data`` to be returned. See :ref:`lmi_show_instance`
+        and :ref:`lmi_instance_lister` for more information.
 
 .. note::
 
@@ -342,7 +352,7 @@ are rendered.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This command typically does not produce any output if operation succeeds.
 The operation succeeds if the result of associated function is
-expected. There are more ways, how to say, what is an expected result.
+expected. There are more ways how to say what is an expected result.
 One way is to use ``EXPECT`` property. The other is to provide very own
 definition of ``check_result()`` method.
 
@@ -357,7 +367,8 @@ definition of ``check_result()`` method.
     accept exactly two parameters:
 
         1. options - Dictionary with parsed command line options returned by
-           docopt_ after being processed by ``transform_options()``.
+           docopt_ after being processed by
+           :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.transform_options`.
         2. result - Return value of associated function.
 
 .. seealso::
@@ -368,6 +379,7 @@ definition of ``check_result()`` method.
 
 .. [#] Angle brackets here just mark the boundaries of name components. They
        have nothing to do with arguments.
+.. [#] Application object is accessible through ``app`` property of each command instance.
 
 .. ****************************************************************************
 
