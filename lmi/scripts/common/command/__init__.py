@@ -29,10 +29,10 @@
 #
 """
 This subpackage defines base classes and utility functions for declaring
-commands. These serve as a wrappers for functions in libraries specific to
+commands. These serve as wrappers for functions in libraries specific to
 particular provider.
 
-Tree of these commands build an command line interface for this library.
+Tree of these commands build a command line interface for this library.
 """
 
 from lmi.scripts.common.command.base import LmiBaseCommand

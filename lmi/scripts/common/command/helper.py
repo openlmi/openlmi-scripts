@@ -40,16 +40,24 @@ def make_list_command(func,
         verify_func=None,
         transform_func=None):
     """
-    Create a command subclassed from ``LmiLister``.
+    Create a command subclassed from
+    :py:class:`lmi.scripts.common.command.command.LmiLister`.
     Please refer to this class for detailed usage.
 
-    :param func: (``str`` or callable) Contents of ``CALLABLE`` property.
-    :param name: (``str``) Optional name of resulting class. If not given,
+    :param func: Contents of ``CALLABLE`` property.
+    :type func: string or callable
+    :param string name: Optional name of resulting class. If not given,
         it will be made from the name of associated function.
-    :param columns: (``tuple``) Contents of ``COLUMNS`` property.
-    :param verify_func: Callable overriding ``verify_options()`` method.
-    :param transform_func: Callable overriding ``transform_options()`` method.
-    :rtype: (``type``) Subclass of ``LmiLister`` (command factory).
+    :param tuple columns: Contents of ``COLUMNS`` property.
+    :param callable verify_func: Callable overriding
+        py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.verify_options`
+        method.
+    :param callable transform_func: Callable overriding
+        :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.transform_options`
+        method.
+    :returns:  Subclass of
+        :py:class:`lmi.scripts.common.command.command.LmiLister`.
+    :rtype: type
     """
     if name is None:
         if isinstance(func, basestring):
@@ -69,12 +77,14 @@ def register_subcommands(command_name, usage, command_map):
     """
     Create a multiplexer command (a node in a tree of commands).
 
-    :param command_name: (``str``) Name of created command. The same as will
+    :param string command_name: Name of created command. The same as will
         be given on a command line.
-    :param usage: (``str``) Usage string parseable by ``docopt``.
-    :param command_map: (``dict``) Dictionary of subcommands. Associates
+    :param string usage: Usage string parseable by ``docopt``.
+    :param dictionary command_map: Dictionary of subcommands. Associates
         command names to their factories.
-    :rtype: (``type``) Subclass of ``LmiCommandMultiplexer`` (command factory).
+    :returns: Subclass of
+        :py:class:`lmi.scripts.common.command.command.LmiCommandMultiplexer`.
+    :rtype: type
     """
     props = { 'COMMANDS'   : command_map
             , 'OWN_USAGE'  : True

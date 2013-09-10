@@ -28,13 +28,13 @@
 # Authors: Michal Minar <miminar@redhat.com>
 #
 """
-Meta classes simplyfying declaration of user commands.
+Meta classes simplifying declaration of user commands.
 
 Each command is defined as a class with a set of properties. Some are
-mandatory, the others have some default values. These properties are
-transformed by metaclasses some function, classmethod or other property
-depending on command type and semantic of property. Property itself
-is removed from resulting class after being processed by meta class.
+mandatory, the others have some default values. Each of them is transformed by
+metaclasse to some function, class method or other property depending on
+command type and semantic of property. Property itself is removed from
+resulting class after being processed by meta class.
 """
 
 import abc
@@ -62,19 +62,20 @@ def _handle_usage(name, dcl):
     """
     Take care of ``OWN_USAGE`` property. Supported values:
 
-        * ``True``  - Means that documentation string of class is a usage
-                      string.
-        * ``False`` - No usage string for this command is defined.
-        * ``"usage string"`string`` - This property is a usage string.
+        `True`` :
+            Means that documentation string of class is a usage string.
+        ``False`` :
+            No usage string for this command is defined.
+        ``"usage string"`` :
+            This property is a usage string.
 
     Defaults to ``False``.
 
     Usage string is an input parameter to ``docopt`` command-line options
     parser.
 
-    :param name: (``str``) Name o command class.
-    :param bases: (``tuple``) Base classes of command class.
-    :param dcl: (``dict``) Class dictionary, which is modified by this
+    :param string name: Name o command class.
+    :param dictionary dcl: Class dictionary, which is modified by this
         function.
     """
     has_own_usage = False
@@ -102,11 +103,11 @@ def _make_execute_method(bases, dcl, func):
     """
     Creates ``execute()`` method of a new end point command.
 
-    :param bases: (``tuple``) Base classes of new command.
-    :param dcl: (``dict``) Class dictionary being modified by this method.
-    :param func: A callable wrapped by this new command. It's usually
-        referred as *associated function*. If ``None``, no function will be
-        created -- ``dcl`` won't be modified.
+    :param tuple bases: Base classes of new command.
+    :param dictionary dcl: Class dictionary being modified by this method.
+    :param callable func: A callable wrapped by this new command. It's usually
+        being referred to as *associated function*. If ``None``, no function
+        will be created -- ``dcl`` won't be modified.
     """
     if func is not None and util.is_abstract_method(
             bases, 'execute', missing_is_abstract=True):
@@ -122,8 +123,7 @@ def _handle_namespace(dcl):
     Overrides ``cim_namespace()`` class method if ``NAMESPACE`` property
     is given.
 
-    :param name: (``str``) Name o command class.
-    :param dcl: (``dict``) Class dictionary being modified by this method.
+    :param dictionary dcl: Class dictionary being modified by this method.
     """
     if 'NAMESPACE' in dcl:
         namespace = dcl.pop('NAMESPACE')
@@ -137,9 +137,9 @@ def _handle_callable(name, bases, dcl):
     Process the ``CALLABLE`` property of end-point command. Create the
     ``execute()`` method based on it.
 
-    :param name: (``str``) Name of command class to create.
-    :param bases: (``tuple``) Base classes of new command.
-    :param dcl: (``dict``) Class dictionary being modified by this method.
+    :param string name: Name of command class to create.
+    :param tuple bases: Base classes of new command.
+    :param dictionary dcl: Class dictionary being modified by this method.
     """
     try:
         func = dcl.get('CALLABLE')
@@ -171,10 +171,10 @@ def _make_render_all_properties(bases):
     """
     Creates ``render()`` method, rendering all properties of instance.
 
-    :param bases: (``tuple``) Base classes of new command class.
-    :param dcl: (``dict``) Class dictionary, it gets gets modified.
-    :rtype: (``function``) Rendering method taking CIM instance as an
+    :param tuple bases: Base classes of new command class.
+    :returns: Rendering method taking CIM instance as an
         argument.
+    :rtype: function
     """
     if util.is_abstract_method(bases, 'render', missing_is_abstract=True):
         def _render(_self, inst):
@@ -271,9 +271,9 @@ def _check_render_properties(name, dcl, props):
     Make sanity check for ``PROPERTIES`` class property. Exception will be
     raised when any flaw discovered.
 
-    :param name: (``str``) Name of class to be created.
-    :param dcl: (``dict``) Class dictionary.
-    :param props: (``list``) List of properties of ``None``.
+    :param string name: Name of class to be created.
+    :param dictionary dcl: Class dictionary.
+    :param list props: List of properties or ``None``.
     """
     if props is not None:
         for prop in props:
@@ -300,16 +300,18 @@ def _handle_render_properties(name, bases, dcl, target_formatter_lister=False):
 
     Currently handled properties are:
 
-        * DYNAMIC_PROPERTIES - Whether the associated function itself provides
-            list of properties. Optional property.
-        * PROPERTIES - List of instance properties to print. Optional property.
+        ``DYNAMIC_PROPERTIES`` : ``bool``
+            Whether the associated function itself provides list of
+            properties. Optional property.
+        ``PROPERTIES`` : ``bool``
+            List of instance properties to print. Optional property.
 
-    :param name: (``str``) Name of class to be created.
-    :param bases: (``tuple``) Base classes of new command.
-    :param dcl: (``dict``) Class dictionary being modified by this method.
-    :param target_formatter_lister: (``bool``) Whether the output is targeted
-        for Show command or Lister. The former expects a pair of column_names
-        and values. The latter expects just values.
+    :param string name: Name of class to be created.
+    :param tuple bases: Base classes of new command.
+    :param dictionary dcl: Class dictionary being modified by this method.
+    :param boolean target_formatter_lister: Whether the output is targeted
+        for *Show* command or *Lister*. The former expects a pair of
+        column_names and values. The latter expects just values.
     """
     dynamic_properties = dcl.pop('DYNAMIC_PROPERTIES', False)
     if dynamic_properties and 'PROPERTIES' in dcl:
@@ -356,15 +358,15 @@ def _handle_opt_preprocess(name, dcl):
     overriden, where all of desired name modifications will be made.
     Currently handled properties are:
 
-        * ``OPT_NO_UNDERSCORES`` - When making a function's parameter name
-            out of option, the leading dashes are replaced with underscore.
-            If this property is True, dashes will be removed completely with
-            no replacement.
-        * ``ARG_ARRAY_SUFFIX`` - Add given suffix to all arguments resulting
-            in list objects.
+        ``OPT_NO_UNDERSCORES`` : ``bool``
+            When making a function's parameter name out of option, the leading
+            dashes are replaced with underscore. If this property is True,
+            dashes will be removed completely with no replacement.
+        ``ARG_ARRAY_SUFFIX`` : ``bool``
+            Add given suffix to all arguments resulting in list objects.
 
-    :param name: (``str``) Command class name.
-    :param dcl: (``dict``) Class dictionary being modified by this method.
+    :param string name: Command class name.
+    :param dictionary dcl: Class dictionary being modified by this method.
     """
     if (   dcl.get('__metaclass__', None) is not EndPointCommandMetaClass
        and '_preprocess_options' in dcl):
@@ -415,10 +417,13 @@ class EndPointCommandMetaClass(abc.ABCMeta):
     referred to as an *associated function*. It handles following class
     properties:
 
-        * ``CALLABLE`` - An associated function. Mandatory property.
-        * ``OWN_USAGE`` - Usage string. Optional property.
-        * ``ARG_ARRAY_SUFFIX`` - Suffix added to argument names containing
-            array of values. Optional property.
+        ``CALLABLE`` : ``str`` or callable
+            An associated function. Mandatory property.
+        ``OWN_USAGE`` : ``bool`` or ``str``
+            Usage string. Optional property.
+        ``ARG_ARRAY_SUFFIX`` : ``str``
+            Suffix added to argument names containing array of values.
+            Optional property.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -445,13 +450,15 @@ class SessionCommandMetaClass(EndPointCommandMetaClass):
     """
     Meta class for commands operating upon a session object.
     All associated functions take as first argument an namespace abstraction
-    of type ``lmi.shell.
+    of type ``lmi.shell``.
 
     Handles following class properties:
 
-        * ``NAMESPACE`` - CIM namespace abstraction that will be passed
-            to associated function. Defaults to ``"root/cimv2"``. If ``False``,
-            raw ``LMIConnection`` object will be passed to associated function.
+        ``NAMESPACE`` : ``str``
+            CIM namespace abstraction that will be passed to associated
+            function. Defaults to ``"root/cimv2"``. If ``False``, raw
+            :py:class:`lmi.shell.LMIConnection` object will be passed to
+            associated function.
     """
     def __new__(mcs, name, bases, dcl):
         _handle_usage(name, dcl)
@@ -465,7 +472,8 @@ class ListerMetaClass(SessionCommandMetaClass):
     Meta class for end-point lister commands. Handles following class
     properties:
 
-        * ``COLUMNS`` - List of column names. Optional property.
+        ``COLUMNS`` : ``tuple``
+            List of column names. Optional property.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -489,12 +497,15 @@ class ShowInstanceMetaClass(SessionCommandMetaClass):
     Meta class for end-point show instance commands. Additional handled
     properties:
 
-        * DYNAMIC_PROPERTIES - Whether the associated function itself provides
-            list of properties. Optional property.
-        * PROPERTIES - List of instance properties to print. Optional property.
+        ``DYNAMIC_PROPERTIES`` : ``bool``
+            Whether the associated function itself provides list of
+            properties. Optional property.
+        ``PROPERTIES`` : ``tuple``
+            List of instance properties to print. Optional property.
 
-    These are translated in a ``render()``, which should be marked as
-    abstract in base lister class.
+    These are translated in a
+    :py:meth:`lmi.scripts.common.command.command.LmiShowInstance.render`,
+    which should be marked as abstract in base lister class.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -504,6 +515,10 @@ class ShowInstanceMetaClass(SessionCommandMetaClass):
                 mcs, name, bases, dcl)
 
 class InstanceListerMetaClass(SessionCommandMetaClass):
+    """
+    Meta class for instance lister command handling the same properties
+    as :py:class:`ShowInstanceMetaClass`.
+    """
 
     def __new__(mcs, name, bases, dcl):
         _handle_render_properties(name, bases, dcl, True)
@@ -516,11 +531,12 @@ class CheckResultMetaClass(SessionCommandMetaClass):
     Meta class for end-point command "check result". Additional handled
     properties:
 
-        * ``EXPECT`` - Value to compare against the return value.
-            Mandatory property.
+        ``EXPECT`` :
+            Value to compare against the return value. Mandatory property.
 
-    ``EXPECT`` property is transformed into a ``check_result()`` method taking
-    two arguments ``(options, result)`` and returning a boolean.
+    ``EXPECT`` property is transformed into a
+    :py:meth:`lmi.scripts.common.command.command.LmiCheckResult.check_result`
+    method taking two arguments ``(options, result)`` and returning a boolean.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -562,7 +578,9 @@ class MultiplexerMetaClass(abc.ABCMeta):
     Meta class for node command (not an end-point command). It handles
     following class properties:
 
-        * ``COMMANDS`` - List of subcommands of this command. Mandatory
+        ``COMMANDS`` : ``dict``
+            Command names with assigned command classes. Each of them is a
+            direct subcommands of command with this property. Mandatory
             property.
     """
 

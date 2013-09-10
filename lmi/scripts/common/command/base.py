@@ -28,7 +28,7 @@
 # Authors: Michal Minar <miminar@redhat.com>
 #
 """
-Module defining base command class for all possible commands of lmi
+Module defining base command class for all possible commands of ``lmi``
 meta-command.
 """
 
@@ -43,24 +43,26 @@ RE_COMMAND_NAME = re.compile(r'^[a-z]+(-[a-z]+)*$')
 class LmiBaseCommand(object):
     """
     Abstract base class for all commands handling command line arguemtns.
-    Instances of this class are organized in a tree with root element being
-    the lmi metacommand (if not running in interactive mode). Each such
-    instance can have more child commands if it's ``is_end_point()`` method
-    return False. Each has one parent command except for the top level one,
-    whose ``parent`` property returns ``None``.
+    Instances of this class are organized in a tree with root element being the
+    ``lmi`` meta-command (if not running in interactive mode). Each such
+    instance can have more child commands if its
+    :py:meth:`LmiBaseCommand.is_end_point` method return ``False``. Each has
+    one parent command except for the top level one, whose :py:attr:`parent`
+    property returns ``None``.
 
     Set of commands is organized in a tree, where each command
-    (except for the root) has its own parent. ``is_end_point()`` method
+    (except for the root) has its own parent. :py:meth:`is_end_point` method
     distinguish leaves from nodes. The path from root command to the
     leaf is a sequence of commands passed to command line.
 
-    If the ``has_own_usage()`` returns True, the parent command won't process
-    the whole command line and the remainder will be passed as a second
-    argument to the ``run()`` method.
+    If the :py:meth:`LmiBaseCommand.has_own_usage` returns ``True``, the parent
+    command won't process the whole command line and the remainder will be
+    passed as a second argument to the :py:meth:`LmiBaseCommand.run` method.
 
     :param app: Main application object.
-    :param cmd_name: (``str``) Name of command.
-    :param parent: (``LmiBaseCommand``) Instance of parent command.
+    :param string cmd_name: Name of command.
+    :param parent: Parent command.
+    :type parent: :py:class:`LmiBaseCommand`
     """
 
     __metaclass__ = abc.ABCMeta
@@ -70,6 +72,8 @@ class LmiBaseCommand(object):
         """
         Return description for this command. This is usually a first line
         of documentation string of a class.
+
+        :rtype: string
         """
         if cls.__doc__ is None:
             return ""
@@ -78,19 +82,19 @@ class LmiBaseCommand(object):
     @classmethod
     def is_end_point(cls):
         """
-        Return True, if this command parses the rest of command line and can
-        not have any child subcommands.
-
-        :rtype: (``bool``)
+        :returns: ``True``, if this command parses the rest of command line and
+            can not have any child subcommands.
+        :rtype: boolean
         """
         return True
 
     @classmethod
     def has_own_usage(cls):
         """
-        Return True, if this command has its own usage string, which is
-        returned by get_description(). Otherwise the parent command must be
-        queried.
+        :returns: ``True``, if this command has its own usage string, which is
+            returned by :py:meth:`LmiBaseCommand.get_description`. Otherwise
+            the parent command must be queried.
+        :rtype: boolean
         """
         return False
 
@@ -98,7 +102,7 @@ class LmiBaseCommand(object):
     def child_commands(cls):
         """
         Abstract class method returning dictionary of child commands with
-        structure:
+        structure: ::
 
             { "command-name" : cmd_factory, ... }
 
@@ -141,19 +145,21 @@ class LmiBaseCommand(object):
         subcommand without any options present. In interactive mode
         this won't contain the name of binary (``sys.argv[0]``).
 
-        :rtype: (``str``) Concatenation of all preceding commands with
-            ``cmd_name``.
+        :returns:  Concatenation of all preceding commands with
+            :py:attr:`cmd_name`.
+        :rtype: string
         """
         return ' '.join(self.cmd_name_args)
 
     @property
     def cmd_name_args(self):
         """
-        The same as ``cmd_full_name``, except the result is a list of
+        The same as :py:attr:`cmd_full_name`, except the result is a list of
         subcommands.
 
-        :rtype: (``list``) List of command strings as given on command line
-            up to this command.
+        :returns: List of command strings as given on command line up to this
+            command.
+        :rtype: list 
         """
         if self.parent is not None:
             return self.parent.cmd_name_args + [self.cmd_name]
@@ -162,10 +168,11 @@ class LmiBaseCommand(object):
     @property
     def docopt_cmd_name_args(self):
         """
-        Arguments array for docopt parser. Similar to ``cmd_name_args`` except
-        for the leading binary name, which is omitted here.
+        Arguments array for docopt parser. Similar to
+        :py:meth:`LmiBaseCommand.cmd_name_args` except for the leading binary
+        name, which is omitted here.
 
-        :rtype: (``list``)
+        :rtype: list
         """
         if self.app.interactive_mode:
             return self.cmd_name_args
@@ -181,7 +188,7 @@ class LmiBaseCommand(object):
         missing own usage string this can be generated based on its
         subcommands.
 
-        :param proper: (``bool``) Says, whether the usage string written
+        :param boolean proper: Says, whether the usage string written
             manually is required or not. It applies only to node (not a leaf)
             commands without its own usage string.
         """
@@ -226,10 +233,11 @@ class LmiBaseCommand(object):
         commands. So the arguments are processed recursively by the instances
         of this class.
 
-        :param args: (``list``) Arguments passed to the command line that were
-            not yet parsed. It's the contents of sys.argv (if in
+        :param list args: Arguments passed to the command line that were
+            not yet parsed. It's the contents of ``sys.argv`` (if in
             non-interactive mode) from the current command on.
-        :rtype: (``int``) Exit code of application.
+        :returns: Exit code of application.
+        :rtype: integer
         """
         raise NotImplementedError("run method must be overriden in subclass")
 

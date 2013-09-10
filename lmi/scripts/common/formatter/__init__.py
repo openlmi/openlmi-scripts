@@ -28,11 +28,11 @@
 # Authors: Michal Minar <miminar@redhat.com>
 #
 """
-Sub package with formatter classes used to render and output results.
+Subpackage with formatter classes used to render and output results.
 
-Each formatter has an ``produce_output()`` method taking one argument which
-gets rendered and printed to output stream. Each formatter expects different
-argument, please refer to doc string of particular class.
+Each formatter has a :py:meth:`Formatter.produce_output` method taking one
+argument which gets rendered and printed to output stream. Each formatter
+expects different argument, please refer to doc string of particular class.
 """
 
 import itertools
@@ -44,11 +44,11 @@ class Formatter(object):
     It produces string representation of given argument and prints it.
 
     This formatter supports following commands:
-        NewHostCommand.
+        :py:class:`NewHostCommand`.
 
-    :param stream: (``file``) Output stream.
-    :param padding: (``int``) Number of leading spaces to print at each line.
-    :param no_headings: (``bool``) If table headings should be omitted.
+    :param file stream: Output stream.
+    :param integer padding: Number of leading spaces to print at each line.
+    :param boolean no_headings: If table headings should be omitted.
     """
 
     def __init__(self, stream, padding=0, no_headings=False):
@@ -65,7 +65,8 @@ class Formatter(object):
         Rendering function for single value.
 
         :param val: Any value to render.
-        :rtype: (``str``) Value converted to its string representation.
+        :returns: Value converted to its string representation.
+        :rtype: str
         """
         if isinstance(val, unicode):
             return val.encode('utf-8')
@@ -78,13 +79,13 @@ class Formatter(object):
         Prints single line. Output message is prefixed with ``padding`` spaces,
         formated and printed to output stream.
 
-        :param line: (``str``) Message to print, it can contain markers for
+        :param string line: Message to print, it can contain markers for
             other arguments to include according to ``format_spec`` language.
             Please refer to ``Format Specification Mini-Language`` in python
             documentation.
-        :param args: (``list``) Positional arguemnts to ``format`` function of
+        :param list args: Positional arguments to ``format()`` function of
             ``line`` argument.
-        :param kwargs: (``dict``) Keyword arguments to ``format()`` function.
+        :param dictionary kwargs: Keyword arguments to ``format()`` function.
         """
         self.out.write(' ' * self.padding + line.format(*args, **kwargs))
         self.out.write("\n")
@@ -93,7 +94,7 @@ class Formatter(object):
         """
         Prints header for new host.
 
-        :param hostname: (``str``) Hostname to print.
+        :param string hostname: Hostname to print.
         """
         self.out.write("="*79 + "\n")
         self.out.write("Host: %s\n" % hostname)
@@ -103,14 +104,14 @@ class Formatter(object):
         """
         Render and print given data.
 
-        Data can be also instance of FormatterCommand, see documentation of
-        this class for list of allowed commands.
+        Data can be also instance of :py:class:`FormatterCommand`, see
+        documentation of this class for list of allowed commands.
 
         This shall be overridden by subclasses.
 
         :param data: Any value to print. Subclasses may specify their
             requirements for this argument. It can be also am instance of
-            FormatterCommand.
+            :py:class:`FormatterCommand`.
         """
         self.print_line(str(data))
 
@@ -121,7 +122,7 @@ class ListFormatter(Formatter):
     items, one occupying single line (row).
 
     This formatter supports following commands:
-        NewHostCommand, NewTableCommand, NewTableHeadersCommand.
+        NewHostCommand, NewTableCommand, NewTableHeaderCommand.
 
     The command must be provided as content of one row. This row is then not
     printed and the command is executed.
@@ -137,7 +138,7 @@ class ListFormatter(Formatter):
         """
         Print data row without any header.
 
-        :param row: (``tuple``) Data to print.
+        :param tuple row: Data to print.
         """
         self.out.write(self.render_value(row))
 
@@ -145,7 +146,7 @@ class ListFormatter(Formatter):
         """
         Print data row. Optionaly print header, if requested.
 
-        :param data: (``tuple``) Data to print.
+        :param tuple data: Data to print.
         """
         if self.want_header:
             self.print_header()
@@ -155,7 +156,7 @@ class ListFormatter(Formatter):
         """
         Prints header for new host.
 
-        :param hostname: (``str``) Hostname to print.
+        :param string hostname: Hostname to print.
         """
         super(ListFormatter, self).print_host(hostname)
         self.want_header = True
@@ -164,17 +165,13 @@ class ListFormatter(Formatter):
         """
         Prints title of next tale.
 
-        :param title: (``str``) Title to print.
+        :param string title: Title to print.
         """
         self.out.write("\n%s:\n" % title)
         self.want_header = True
 
     def print_header(self):
-        """
-        Print table header.
-
-        :param columns: (``tuple of strings``) Column headers.
-        """
+        """ Print table header. """
         if self.no_headings:
             return
         if self.column_names:
@@ -185,10 +182,11 @@ class ListFormatter(Formatter):
         """
         Prints list of rows.
 
-        There can be a FormatterCommand instance instead of a row. See
-        documentation of this class for list of allowed commands.
+        There can be a :py:class:`FormatterCommand` instance instead of a row.
+        See documentation of this class for list of allowed commands.
 
-        :param rows: (``list or generator``) List of rows to print.
+        :param rows:  List of rows to print.
+        :type rows: list or generator
         """
         for row in rows:
             if isinstance(row, NewHostCommand):
@@ -210,7 +208,9 @@ class TableFormatter(ListFormatter):
     and the table is printed at once.
 
     This formatter supports following commands:
-        NewHostCommand, NewTableCommand, NewTableHeadersCommand.
+        * :py:class:`NewHostCommand`
+        * :py:class:`NewTableCommand`
+        * :py:class:`NewTableHeaderCommand`
 
     The command must be provided as content of one row. This row is then not
     printed and the command is executed.
@@ -253,7 +253,7 @@ class TableFormatter(ListFormatter):
         """
         Print data row.
 
-        :param data: (``tuple``) Data to print.
+        :param tuple data: Data to print.
         """
         self.stash.append(data)
 
@@ -261,7 +261,7 @@ class TableFormatter(ListFormatter):
         """
         Prints header for new host.
 
-        :param hostname: (``str``) Hostname to print.
+        :param string hostname: Hostname to print.
         """
         self.print_stash()
         super(TableFormatter, self).print_host(hostname)
@@ -270,7 +270,7 @@ class TableFormatter(ListFormatter):
         """
         Prints title of next tale.
 
-        :param title: (``str``) Title to print.
+        :param string title: Title to print.
         """
         self.print_stash()
         self.out.write("\n%s:\n" % title)
@@ -279,10 +279,11 @@ class TableFormatter(ListFormatter):
         """
         Prints list of rows.
 
-        There can be a FormatterCommand instance instead of a row. See
-        documentation of this class for list of allowed commands.
+        There can be a :py:class:`FormatterCommand` instance instead of a row.
+        See documentation of this class for list of allowed commands.
 
-        :param rows: (``list or generator``) List of rows to print.
+        :param rows: List of rows to print.
+        :type rows: list or generator
         """
         super(TableFormatter, self).produce_output(rows)
         self.print_stash()
@@ -292,7 +293,9 @@ class CsvFormatter(ListFormatter):
     Renders data in a csv (Comma-separated values) format.
 
     This formatter supports following commands:
-        NewHostCommand, NewTableCommand, NewTableHeadersCommand.
+        * :py:class:`NewHostCommand`
+        * :py:class:`NewTableCommand`
+        * :py:class:`NewTableHeaderCommand`
     """
 
     def render_value(self, val):
@@ -316,21 +319,21 @@ class SingleFormatter(Formatter):
     variables (attribute names).
 
     This formatter supports following commands:
-        NewHostCommand.
+        * :py:class:`NewHostCommand`
     """
 
     def produce_output(self, data):
         """
         Render and print attributes of single item.
 
-        There can be a FormatterCommand instance instead of a data. See
+        There can be a :py:class:`FormatterCommand` instance instead of a data. See
         documentation of this class for list of allowed commands.
 
-        :param data: (``tuple`` or ``dict``) Is either a pair of property
-            names with list of values or a dictionary with property names as
-            keys. Using the pair allows to order the data the way it should be
-            printing. In the latter case the properties will be sorted by the
-            property names.
+        :param data: Is either a pair of property names with list of values or
+            a dictionary with property names as keys. Using the pair allows to
+            order the data the way it should be printing. In the latter case
+            the properties will be sorted by the property names.
+        :type data: tuple or dict
         """
         if isinstance(data, NewHostCommand):
             self.print_host(data.hostname)
@@ -353,11 +356,11 @@ class SingleFormatter(Formatter):
 
 class ShellFormatter(SingleFormatter):
     """
-    Specialization of ``SingleFormatter`` having its output executable as a
-    shell script.
+    Specialization of :py:class:`SingleFormatter` having its output executable
+    as a shell script.
 
     This formatter supports following commands:
-        NewHostCommand.
+        * :py:class:`NewHostCommand`
     """
 
     def render_value(self, val):
@@ -388,7 +391,7 @@ class NewHostCommand(FormatterCommand):
 class NewTableCommand(FormatterCommand):
     """
     Command for formatter to finish current table (if any), print
-    the 'title' and (if there are any data) print table header.
+    the **title** and (if there are any data) print table header.
     """
     def __init__(self, title=None):
         self.title = title
@@ -398,7 +401,7 @@ class NewTableHeaderCommand(FormatterCommand):
     Command for formatter to finish current table (if any), store new table
     header and (if there are any data) print the table header.
     The table header will be printed in all subsequent tables, until
-    new NewTableHeaderCommand arrives.
+    new instance of this class arrives.
     """
     def __init__(self, columns=None):
         self.columns = columns

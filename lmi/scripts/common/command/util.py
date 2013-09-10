@@ -45,14 +45,16 @@ def is_abstract_method(clss, method, missing_is_abstract=False):
     abstract method in a meta-class in case that no non-abstract
     implementation is defined.
 
-    :param clss: (``type`` or ``tuple``) Class or list of classes that is
+    :param clss: Class or list of classes that is
         searched for non-abstract implementation of particular method.
         If the first class having particular method in this list contain
         non-abstract implementation, ``False`` is returned.
-    :param method: (``str``) Name of method to look for.
-    :param missing_is_abstract: (``bool``) This is a value returned, when
+    :type clss: type or tuple
+    :param string method: Name of method to look for.
+    :param boolean missing_is_abstract: This is a value returned, when
         not such method is defined in a set of given classes.
-    :rtype: (``bool``) Are all occurences of given method abstract?
+    :returns: Are all occurences of given method abstract?
+    :rtype: boolean
     """
     if (   not isinstance(clss, (list, tuple, set))
        and not isinstance(clss, type)):

@@ -58,8 +58,9 @@ class LmiUnexpectedResult(LmiError):
 
 class LmiInvalidOptions(LmiError):
     """
-    Raised in end point command's ``verify_options()`` method if the options
-    given are not valid.
+    Raised in
+    :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.verify_options`
+    method if the options given are not valid.
     """
     pass
 

@@ -48,10 +48,10 @@ class Session(object):
     standard input.
 
     :param app: Instance of main application.
-    :param hosts: (``list``) List of hostname strings.
-    :param credentials: (``dict``) Mapping assigning pair (user, password) to
-        each hostname.
-    :param same_credentials: (``bool``) Use the same credentials for all
+    :param list hosts: List of hostname strings.
+    :param dictionary credentials: Mapping assigning a pair
+        ``(user, password)`` to each hostname.
+    :param boolean same_credentials: Use the same credentials for all
         hosts in session. The first credentials given will be used.
     """
 
@@ -103,10 +103,11 @@ class Session(object):
         """
         Makes the connection to host.
 
-        :param hostname: (``str``) Name of host.
-        :param interactive: (``bool``) Whether we can interact with user
+        :param string hostname: Name of host.
+        :param boolean interactive: Whether we can interact with user
             and expect a reply from him.
-        :rtype: (``LMIConnection``) Connection to remote host or ``None``.
+        :returns: Connection to remote host or ``None``.
+        :rtype: :py:class:`lmi.shell.LMIConnection` or ``None``
         """
         username, password = self.get_credentials(hostname)
         import inspect
@@ -136,14 +137,19 @@ class Session(object):
 
     @property
     def hostnames(self):
-        """ :rtype: (``list``) List of hostnames in session. """
+        """
+        List of hostnames in session.
+
+        :rtype: list
+        """
         return self._connections.keys()
 
     def get_credentials(self, hostname):
         """
-        :rtype: (``tuple``) Pair of (username, password) for given
-            hostname. If no credentials were given for this host,
-            ('', '') is returned.
+        :param string hostname: Name of host to get credentials for.
+        :returns: Pair of ``(username, password)`` for given hostname. If no
+            credentials were given for this host, ``('', '')`` is returned.
+        :rtype: tuple 
         """
         username, password, verified = self._credentials[hostname]
         if (   not verified
@@ -157,8 +163,9 @@ class Session(object):
 
     def get_unconnected(self):
         """
-        :rtype: (``list``) List of hostnames, which do not have associated
-            connection yet.
+        :returns:  List of hostnames, which do not have associated connection
+            yet.
+        :rtype: list
         """
         return [h for h, c in self._connections.items() if c is None]
 

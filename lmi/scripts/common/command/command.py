@@ -55,19 +55,21 @@ def opt_name_sanitize(opt_name):
     character not suitable for python identificator with ``'_'`` and
     make the whole string lowercase.
 
-    :param opt_name: (``str``) Option name.
-    :rtype: (``str``) Modified option name.
+    :param string opt_name: Option name.
+    :returns: Modified option name.
+    :rtype: string
     """
     return re.sub(r'[^a-zA-Z]+', '_', opt_name).lower()
 
 def options_dict2kwargs(options):
     """
-    Convert option name from resulting docopt dictionary to a valid python
+    Convert option name from resulting ``docopt`` dictionary to a valid python
     identificator token used as function argument name.
 
-    :param options: (``dict``) Dictionary returned by docopt call.
-    :rtype: (``dict``) New dictionary with keys passeable to function
-        as argument names.
+    :param dictionary options: Dictionary returned by docopt call.
+    :returns:  New dictionary with keys passable to function as argument
+        names.
+    :rtype: dictionary
     """
     # (new_name, value) for each pair in options dictionary
     kwargs = {}
@@ -86,7 +88,8 @@ def options_dict2kwargs(options):
                 break
         else:
             raise errors.LmiError(
-                    'failed to convert argument "%s" to function option' % name)
+                    'failed to convert argument "%s" to function option' %
+                    name)
         new_name = opt_name_sanitize(new_name)
         if new_name in kwargs:
             raise errors.LmiError('option clash for "%s" and "%s", which both'
@@ -100,7 +103,7 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
     Base class for node commands. It consumes just part of command line
     arguments and passes the remainder to one of its subcommands.
 
-    Example usage:
+    Example usage: ::
 
         class MyCommand(LmiCommandMultiplexer):
             '''
@@ -113,11 +116,28 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
     Where ``Subcmd1`` and ``Subcmd2`` are some other ``LmiBaseCommand``
     subclasses. Documentation string must be parseable with ``docopt``.
 
-    ``COMMANDS`` property will be translated to ``child_commands()`` class
-    method by ``MultiplexerMetaClass``.
+    ``COMMANDS`` property will be translated to
+    :py:meth:`LmiCommandMultiplexer.child_commands` class method by
+    :py:class:`lmi.scripts.common.command.meta.MultiplexerMetaClass`.
+
+    Using metaclass:
+        :py:class:`lmi.scripts.common.command.meta.MultiplexerMetaClass`.
     """
     __metaclass__ = meta.MultiplexerMetaClass
 
+    @classmethod
+    def child_commands(cls):
+        """
+        Abstract class method, that needs to be implemented in subclass.
+        This is done by associated meta-class, when defining a command with
+        assigned ``COMMANDS`` property.
+
+        :returns: Dictionary of subcommand names with assigned command
+            factories.
+        :rtype: dictionary
+        """
+        raise NotImplementedError("child_commands must be implemented in"
+                " a subclass")
     @classmethod
     def is_end_point(cls):
         return False
@@ -126,9 +146,12 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         """
         Pass control to a subcommand identified by given name.
 
-        :param cmd_name: (``str``) Name of direct subcommand, whose ``run()``
+        :param string cmd_name: Name of direct subcommand, whose
+            :py:meth:`lmi.scripts.common.command.base.LmiBaseCommand.run`
             method shall be invoked.
-        :param args: (``list``) List of arguments for particular subcommand.
+        :param list args: List of arguments for particular subcommand.
+        :returns: Application exit code.
+        :rtype: integer
         """
         if not isinstance(cmd_name, basestring):
             raise TypeError("cmd_name must be a string, not %s" %
@@ -149,7 +172,7 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         Handle optional parameters, retrieve desired subcommand name and
         pass the remainder of arguments to it.
 
-        :param args: (``list``) List of arguments with at least subcommand name.
+        :param list args: List of arguments with at least subcommand name.
         """
         if not isinstance(args, (list, tuple)):
             raise TypeError("args must be a list")
@@ -173,22 +196,26 @@ class LmiEndPointCommand(base.LmiBaseCommand):
     Base class for any leaf command.
 
     List of additional recognized properties:
-        * ``CALLABLE``  - Associated function. Will be wrapped in ``execute()``
-                          method and will be accessible directly as a
-                          ``cmd.execute.dest`` property. It may be specified
-                          either as a string in form
-                          ``"<module_name>:<callable>"`` or as a reference to
-                          callable itself.
-        * ``ARG_ARRAY_SUFFIX``
-                        - String appended to every option parsed by ``docopt``
-                          having list as an associated value. It defaults to
-                          empty string. This modification is applied before
-                          calling ``verify_options()`` and
-                          ``transform_options()``.
-        * ``FORMATTER`` - Default formatter factory for instances of given
-                          command. This factory accepts an output stream as
-                          the only parameter and returns an instance of
-                          ``lmi.scripts.common.formatter.Formatter``.
+
+        ``CALLABLE`` : ``tuple``
+            Associated function. Will be wrapped in
+            :py:meth:`LmiEndPointCommand.execute` method and will be accessible
+            directly as a ``cmd.execute.dest`` property. It may be specified
+            either as a string in form ``"<module_name>:<callable>"`` or as a
+            reference to callable itself.
+        ``ARG_ARRAY_SUFFIX`` : ``str``
+            String appended to every option parsed by ``docopt`` having list as
+            an associated value. It defaults to empty string. This modification
+            is applied before calling
+            :py:meth:`LmiEndPointCommand.verify_options` and
+            :py:meth:`LmiEndPointCommand.transform_options`.
+        ``FORMATTER`` : callable
+            Default formatter factory for instances of given command. This
+            factory accepts an output stream as the only parameter and returns
+            an instance of :py:class:`lmi.scripts.common.formatter.Formatter`.
+
+    Using metaclass:
+        :py:class:`lmi.scripts.common.command.meta.EndPointCommandMetaClass`.
     """
     __metaclass__ = meta.EndPointCommandMetaClass
 
@@ -213,7 +240,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         Subclasses shall override this method to provide default formatter
         factory for printing output.
 
-        :rtype: (``type``) Subclass of basic formatter.
+        :returns: Subclass of basic formatter.
         """
         return formatter.Formatter
 
@@ -225,7 +252,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         not belong to options in usage string. Function can take additional
         positional arguments that need to be covered by usage string.
 
-        :rtype: (``int``)
+        :rtype: integer
         """
         dest = getattr(cls.execute, "dest", cls.execute)
         abstract = dest == cls.execute and util.is_abstract_method(
@@ -238,10 +265,11 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         """
         Process end-point arguments and exit.
 
-        :param args: (``list``) Positional arguments to pass to associated
+        :param list args: Positional arguments to pass to associated
             function in command library.
-        :param kwargs: (``dict``) Keyword arguments as a dictionary.
-        :rtype: (``int``) Exit code of application.
+        :param dictionary kwargs: Keyword arguments as a dictionary.
+        :returns: Exit code of application.
+        :rtype: integer
         """
         self.execute(*args, **kwargs)
 
@@ -249,6 +277,8 @@ class LmiEndPointCommand(base.LmiBaseCommand):
     def formatter(self):
         """
         Return instance of default formatter.
+
+        :rtype: :py:class:`lmi.scripts.common.formatter.Formatter`
         """
         if self._formatter is None:
             self._formatter = self.formatter_factory()(
@@ -261,8 +291,9 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         associated function from command line options. All keyword
         options not expected by target function are removed.
 
-        :param options: (``dict``) Output of ``docopt`` parser.
-        :rtype: (``tuple``) Positional and keyword arguments as a pair.
+        :param dictionary options: Output of ``docopt`` parser.
+        :returns: Positional and keyword arguments as a pair.
+        :rtype: tuple
         """
         # if execute method does not have a *dest* attribute, then it's
         # itself a destination
@@ -297,13 +328,14 @@ class LmiEndPointCommand(base.LmiBaseCommand):
 
     def _preprocess_options(self, options):
         """
-        This method may be overriden by EndPointCommandMetaClass as a result of
-        processing ``ARG_ARRAY_SUFFIX`` and other properties modifying names of
-        parsed options.
+        This method may be overriden by
+        :py:class:`lmi.scripts.common.command.meta.EndPointCommandMetaClass`
+        as a result of processing ``ARG_ARRAY_SUFFIX`` and other properties
+        modifying names of parsed options.
 
         This should not be overriden in command class's body.
 
-        :param options: (``dict``) The result of docopt parser invocation
+        :param dictionary options: The result of ``docopt`` parser invocation
             which can be modified by this method.
         """
         pass
@@ -313,11 +345,13 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         Run ``docopt`` command line parser on given list of arguments.
         Removes all unrelated commands from created dictionary of options.
 
-        :param args: (``list``) List of command line arguments just after the
+        :param list args: List of command line arguments just after the
             current command.
-        :rtype: (``dict``) Dictionary with parsed options. Please refer to
-            ``docopt`` documentation for more information on
-            http://docopt.org/.
+        :returns: Dictionary with parsed options. Please refer to
+            docopt_ documentation for more informations.
+        :rtype: dictionary
+
+        .. _docopt: http://docopt.org/
         """
         full_args = self.cmd_name_args[1:] + args
         options = docopt(self.get_usage(), full_args, help=False)
@@ -344,20 +378,25 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         """
         This method can be overriden in subclasses to check, whether the
         options given on command line are valid. If any flaw is discovered, an
-        ``LmiInvalidOptions`` exception shall be raised. Any returned value is
-        ignored. Note, that this is run before ``transform_options()`` method.
+        :py:exc:`lmi.scripts.common.errors.LmiInvalidOptions` exception shall
+        be raised. Any returned value is ignored.
+        
+        .. note::
+            This is run before :py:meth:`transform_options()` method.
 
-        :param options: (``dict``) Dictionary as returned by ``docopt`` parser.
+        :param dictionary options: Dictionary as returned by ``docopt`` parser.
         """
         pass
 
     def transform_options(self, options):
         """
         This method can be overriden in subclasses if options shall be somehow
-        modified before passing them associated function. Run after
-        ``verify_options()`` method.
+        modified before passing them associated function.
+        
+        .. note::
+            Run after :py:meth:`verify_options()` method.
 
-        :param options: (``dict``) Dictionary as returned by ``docopt`` parser.
+        :param dictionary options: Dictionary as returned by ``docopt`` parser.
         """
         pass
 
@@ -366,8 +405,9 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         This method can be use to render and print results with default
         formatter.
 
-        :param data: Is an object expected by the ``produce_output()`` method
-            of formatter.
+        :param data: Is an object expected by the
+            :py:meth:`lmi.scripts.common.formatter.Formatter.produce_output`
+            method of formatter.
         """
         self.formatter.produce_output(data)
 
@@ -377,8 +417,9 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         transform them, make positional and keyword arguments out of them and
         pass them to ``process_session()``.
 
-        :param args: (``list``) List of command arguments.
-        :rtype: (``int``) Exit code of application.
+        :param list args: List of command arguments.
+        :returns: Exit code of application.
+        :rtype: integer
         """
         options = self._parse_args(args)
         self.verify_options(options)
@@ -390,10 +431,11 @@ class LmiEndPointCommand(base.LmiBaseCommand):
     def _print_errors(self, errors):
         """
         Print list of errors.
-        Each error is tuple (hostname, error_text).
+        Each error is a ``tuple``: ::
 
-        :param errors: (``array of tuples (hostname, error_text)``)
-            Errors to print.
+            (hostname, error_text)
+
+        :param list errors: Errors to print.
         """
         fmt = formatter.TableFormatter(self.app.stderr,
                 no_headings=self.app.config.no_headings)
@@ -406,6 +448,9 @@ class LmiEndPointCommand(base.LmiBaseCommand):
 class LmiSessionCommand(LmiEndPointCommand):
     """
     Base class for end-point commands operating upon a session object.
+
+    Using metaclass:
+        :py:class:`lmi.scripts.common.command.meta.SessionCommandMetaClass`.
     """
     __metaclass__ = meta.SessionCommandMetaClass
 
@@ -441,11 +486,13 @@ class LmiSessionCommand(LmiEndPointCommand):
 
         This shall be overriden by a subclass.
 
-        :param session: (``Session``) Session object with set of hosts.
-        :param args: (``list``) Positional arguments to pass to associated
-            function in command library.
-        :param kwargs: (``dict``) Keyword arguments as a dictionary.
-        :rtype: (``int``) Exit code of application.
+        :param session: Session object with set of hosts.
+        :type session: :py:class:`lmi.scripts.common.session.Session`
+        :param list args: Positional arguments to pass to associated function
+            in command library.
+        :param dictionary kwargs: Keyword arguments as a dictionary.
+        :returns: Exit code of application.
+        :rtype: integer
         """
         raise NotImplementedError("process_session must be overriden"
                 " in subclass")
@@ -468,12 +515,11 @@ class LmiBaseListerCommand(LmiSessionCommand):
     @classmethod
     def get_columns(cls):
         """
-        Return a column names for resulting table. ``COLUMNS`` property
-        will be converted to this class method. If ``None``, the associated
-        function shall return column names as the first tuple of returned
-        list.
-
-        :rtype: (``list``) Column names.
+        :returns: Column names for resulting table. ``COLUMNS`` property
+            will be converted to this class method. If ``None``, the associated
+            function shall return column names as the first tuple of returned
+            list.
+        :rtype: list or None
         """
         return None
 
@@ -488,11 +534,12 @@ class LmiBaseListerCommand(LmiSessionCommand):
         """
         Collects results of single host.
 
-        :param connection: (``lmi.shell.LMIConnection``) Connection to
-            a single host.
-        :param args: (``list``) Positional arguments for associated function.
-        :param kwargs: (``dict``) Keyword arguments for associated function.
-        :rtype: (``tuple``) Column names and item list as a pair.
+        :param  connection: Connection to a single host.
+        :type connection: :py:class:`lmi.shell.LMIConnection`
+        :param list args: Positional arguments for associated function.
+        :param dictionary kwargs: Keyword arguments for associated function.
+        :returns: Column names and item list as a pair.
+        :rtype: tuple
         """
         raise NotImplementedError("take_action must be implemented in subclass")
 
@@ -518,12 +565,15 @@ class LmiLister(LmiBaseListerCommand):
 
     List of additional recognized properties:
 
-        * ``COLUMNS`` - Column names. It's a tuple with name for each column.
-                        Each row shall then contain the same number of items
-                        as this tuple. If omitted, associated function is
-                        expected to provide them in the first row of returned
-                        list. It's translated to ``get_columns()`` class
-                        method.
+        ``COLUMNS`` : ``tuple``
+            Column names. It's a tuple with name for each column. Each row
+            shall then contain the same number of items as this tuple. If
+            omitted, associated function is expected to provide them in the
+            first row of returned list. It's translated to ``get_columns()``
+            class method.
+
+    Using metaclass:
+        :py:class:`lmi.scripts.common.command.meta.ListerMetaClass`.
     """
     __metaclass__ = meta.ListerMetaClass
 
@@ -531,11 +581,12 @@ class LmiLister(LmiBaseListerCommand):
         """
         Collects results of single host.
 
-        :param connection: (``lmi.shell.LMIConnection``) Connection to
-            a single host.
-        :param args: (``list``) Positional arguments for associated function.
-        :param kwargs: (``dict``) Keyword arguments for associated function.
-        :rtype: (``tuple``) Column names and item list as a pair.
+        :param connection:  Connection to a single host.
+        :type connection: :py:class:`lmi.shell.LMIConnection`
+        :param list args: Positional arguments for associated function.
+        :param dictionary kwargs: Keyword arguments for associated function.
+        :returns: Column names and item list as a pair.
+        :rtype: tuple
         """
         res = self.execute_on_connection(connection, *args, **kwargs)
         columns = self.get_columns()
@@ -553,8 +604,11 @@ class LmiInstanceLister(LmiBaseListerCommand):
     content of cells.
 
     List of additional recognized properties is the same as for
-    ``LmiInstanceShow``. There is just one difference. Either
-    ``DYNAMIC_PROPERTIES`` must be True or PROPERTIES must be filled.
+    :py:class:`LmiShowInstance`. There is just one difference. Either
+    ``DYNAMIC_PROPERTIES`` must be ``True`` or ``PROPERTIES`` must be filled.
+
+    Using metaclass:
+        :py:class:`lmi.scripts.common.command.meta.InstanceListerMetaClass`.
     """
     __metaclass__ = meta.InstanceListerMetaClass
 
@@ -562,13 +616,16 @@ class LmiInstanceLister(LmiBaseListerCommand):
     def render(self, result):
         """
         This method can either be overriden in a subclass or left alone. In the
-        latter case it will be generated by``InstanceListerMetaClass``
-        metaclass with regard to ``PROPERTIES`` and ``DYNAMIC_PROPERTIES``.
+        latter case it will be generated by
+        :py:class:`lmi.scripts.common.meta.InstanceListerMetaClass` metaclass
+        with regard to ``PROPERTIES`` and ``DYNAMIC_PROPERTIES``.
 
-        :param result: (``LMIInstance`` or ``tuple``) Either an instance to
-            render or pair of properties and instance.
-        :rtype: (``list``) List of pairs, where the first item is a label and
-            second a value to render.
+        :param result: Either an instance to render or pair of properties and
+            instance.
+        :type result: :py:class:`lmi.shell.LMIInstance` or tuple
+        :returns: List of pairs, where the first item is a label and second a
+            value to render.
+        :rtype: list
         """
         raise NotImplementedError(
                 "render method must be overriden in subclass")
@@ -577,11 +634,12 @@ class LmiInstanceLister(LmiBaseListerCommand):
         """
         Collects results of single host.
 
-        :param connection: (``lmi.shell.LMIConnection``) Connection to
-            a single host.
-        :param args: (``list``) Positional arguments for associated function.
-        :param kwargs: (``dict``) Keyword arguments for associated function.
-        :rtype: (``tuple``) Column names and item list as a pair.
+        :param connection: Connection to a single host.
+        :type connection: :py:class:`lmi.shell.LMIConnection`
+        :param list args: Positional arguments for associated function.
+        :param dictionary kwargs: Keyword arguments for associated function.
+        :returns: Column names and item list as a pair.
+        :rtype: tuple
         """
         cols = self.get_columns()
         if cols is None:
@@ -617,23 +675,32 @@ class LmiShowInstance(LmiSessionCommand):
 
     List of additional recognized properties:
 
-        * ``DYNAMIC_PROPERTIES`` - A boolean saying, whether the associated
-            function alone shall specify the list of properties of rendered
-            instance. If True, the result of function must be a pair: ``(props,
-            inst)``. Where props is the same value as can be passed to
-            ``PROPERTIES`` property. Defaults to ``False``.
-        * ``PROPERTIES`` - May contain list of instance properties, that will
-            be produced in the same order as output. Each item of list can be
-            either:
+        ``DYNAMIC_PROPERTIES`` : ``bool``
+            A boolean saying, whether the associated function alone shall
+            specify the list of properties of rendered instance. If ``True``,
+            the result of function must be a pair: ::
+            
+                (props, inst)
+                
+            Where props is the same value as can be passed to ``PROPERTIES``
+            property. Defaults to ``False``.
+        ``PROPERTIES`` : ``tuple``
+            May contain list of instance properties, that will be produced in
+            the same order as output. Each item of list can be either:
 
-            * name - Name of property to render.
-            * pair - A tuple ``(Name, render_func)``, where former item an
-              arbitraty name for rendered value and the latter is a function
-              taking as the only argument particular instance and returning
-              value to render.
+                name : ``str``
+                    Name of property to render.
+                pair : ``tuple``
+                    A tuple ``(Name, render_func)``, where former item an
+                    arbitraty name for rendered value and the latter is a
+                    function taking as the only argument particular instance
+                    and returning value to render.
 
     ``DYNAMIC_PROPERTIES`` and ``PROPERTIES`` are mutually exclusive. If none
     is given, all instance properties will be printed.
+
+    Using metaclass:
+        :py:class:`lmi.scripts.common.command.meta.ShowInstanceMetaClass`.
     """
     __metaclass__ = meta.ShowInstanceMetaClass
 
@@ -644,13 +711,16 @@ class LmiShowInstance(LmiSessionCommand):
     def render(self, result):
         """
         This method can either be overriden in a subclass or left alone. In the
-        latter case it will be generated by``ShowInstanceMetaClass`` metaclass
+        latter case it will be generated by
+        :py:class:`lmi.scripts.common.meta.ShowInstanceMetaClass` metaclass
         with regard to ``PROPERTIES`` and ``DYNAMIC_PROPERTIES``.
 
-        :param result: (``LMIInstance`` or ``tuple``) Either an instance to
+        :param result: Either an instance to
             render or pair of properties and instance.
-        :rtype: (``list``) List of pairs, where the first item is a label and
-            second a value to render.
+        :type: :py:class:`lmi.shell.LMIInstance` or ``tuple``
+        :returns: List of pairs, where the first item is a label and second a
+            value to render.
+        :rtype: list
         """
         raise NotImplementedError(
                 "render method must be overriden in subclass")
@@ -660,8 +730,9 @@ class LmiShowInstance(LmiSessionCommand):
         Process single connection to a host, render result and return a value
         to render.
 
-        :rtype: (``list``) List of pairs, where the first item is a label and
+        :returns: List of pairs, where the first item is a label and
             second a value to render.
+        :rtype: list
         """
         res = self.execute_on_connection(connection, *args, **kwargs)
         return self.render(res)
@@ -695,13 +766,16 @@ class LmiCheckResult(LmiSessionCommand):
 
     List of additional recognized properties:
 
-        * ``EXPECT`` - A value, that is expected to be returned by invoked
-            associated function. This can also be a callable taking two
-            arguments:
+        ``EXPECT`` :
+            Value, that is expected to be returned by invoked associated
+            function. This can also be a callable taking two arguments:
 
                 1. options - Dictionary with parsed command line options
                    returned by ``docopt``.
                 2. result - Return value of associated function.
+
+    Using metaclass:
+        :py:class:`lmi.scripts.common.command.meta.CheckResultMetaClass`.
     """
     __metaclass__ = meta.CheckResultMetaClass
 
@@ -732,12 +806,13 @@ class LmiCheckResult(LmiSessionCommand):
         """
         Invoke associated method and check its return value for single host.
 
-        :param args: (``list``) List of arguments to pass to the associated
+        :param list args: List of arguments to pass to the associated
             function.
-        :param kwargs: (``dict``) Keyword arguments to pass to the associated
+        :param dictionary kwargs: Keyword arguments to pass to the associated
             function.
-        :rtype: (``tuple``) A pair of ``(passed, error)``, where `error`` is an
+        :returns: A pair of ``(passed, error)``, where `error`` is an
             instance of exception if any occured, an error string or ``None``.
+        :rtype: tuple
         """
         try:
             res = self.execute_on_connection(connection, *args, **kwargs)

@@ -28,6 +28,11 @@
 # Authors: Michal Minar <miminar@redhat.com>
 #
 """
+Module defining the root command (``lmi`` binary).
+"""
+
+USAGE_STRING = \
+"""
 OpenLMI command line interface for CIM providers. It's functionality is
 composed of registered subcommands, operating on top of simple libraries,
 interfacing with particular OpenLMI profile providers.
@@ -93,7 +98,7 @@ class TopLevelCommand(base.LmiBaseCommand):
         base.LmiBaseCommand.__init__(self, app, cmd_name)
 
     def get_usage(self, _proper=False):
-        return __doc__ % { 'cmd' : self.cmd_full_name }
+        return USAGE_STRING % { 'cmd' : self.cmd_full_name }
 
     def run_subcommand(self, cmd_name, args):
         """

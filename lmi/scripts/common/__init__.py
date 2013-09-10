@@ -38,17 +38,22 @@ def get_logger(module_name):
     """
     Convenience function for getting callable returning logger for particular
     module name. It's supposed to be used at module's level to assign its
-    result to global variable like this:
+    result to global variable like this: ::
+
+        from lmi.scripts import common
 
         LOG = common.get_logger(__name__)
 
-    This can be used in module's functions and classes like this:
+    This can be used in module's functions and classes like this: ::
 
         def module_function(param):
             LOG().debug("this is debug statement logging param: %s", param)
 
     Thanks to ``LOG`` being a callable, it always returns valid logger object
     with current configuration, which may change overtime.
+
+    :param string module_name: Absolute dotted module path.
+    :rtype: :py:class:`logging.Logger`
     """
     def _logger():
         """ Callable used to obtain current logger object. """

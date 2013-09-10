@@ -28,12 +28,12 @@
 # Authors: Michal Minar <miminar@redhat.com>
 #
 """
-Module for SoftwareConfiguration class.
+Module for Configuration class.
 
-SoftwareConfiguration
+Configuration
 ---------------------
 
-.. autoclass:: SoftwareConfiguration
+.. autoclass:: Configuration
     :members:
 
 """
@@ -45,9 +45,13 @@ LISTER_FORMATS = ['csv', 'table']
 
 class Configuration(BaseConfiguration):
     """
-        Configuration class specific to software providers.
-        OpenLMI configuration file should reside in
-        /etc/openlmi/scripts/lmi.conf.
+    Configuration class specific to software providers.
+    *OpenLMI* configuration file should reside in: ::
+
+        /etc/openlmi/scripts/lmi.conf
+
+    :param string user_config_file_path: Path to the user configuration
+        options.
     """
 
     CONFIG_FILE_PATH_TEMPLATE = BaseConfiguration.CONFIG_DIRECTORY_TEMPLATE + \
@@ -64,10 +68,6 @@ class Configuration(BaseConfiguration):
     LISTER_FORMAT_TABLE = 1
 
     def __init__(self, user_config_file_path=USER_CONFIG_FILE_PATH, **kwargs):
-        """
-        :param user_config_file_path: (``str``) Path to the user configuration
-            options.
-        """
         self._user_config_file_path = os.path.expanduser(user_config_file_path)
         BaseConfiguration.__init__(self, **kwargs)
         self._verbosity = self.OUTPUT_WARNING
@@ -84,7 +84,10 @@ class Configuration(BaseConfiguration):
 
     @classmethod
     def default_options(cls):
-        """ :rtype: (``dict``) Dictionary of default values. """
+        """
+        :returns: Dictionary of default values.
+        :rtype: dictionary
+        """
         defaults = BaseConfiguration.default_options().copy()
         # [Main] options
         defaults["CommandNamespace"] = 'lmi.scripts.cmd'
@@ -214,9 +217,10 @@ class Configuration(BaseConfiguration):
     def lister_format(self):
         """
         Output format used for lister commands. Returns one of
-        { LISTER_FORMAT_CSV, LISTER_FORMAT_TABLE }.
+            * LISTER_FORMAT_CSV
+            * LISTER_FORMAT_TABLE
 
-        :rtype: (``int``)
+        :rtype: integer
         """
         if self._lister_format is None:
             value = self.get_safe('Format', 'ListerFormat')
@@ -231,8 +235,9 @@ class Configuration(BaseConfiguration):
         """
         Allows to override configuration option.
 
-        :param value: (``int`` or ``str``) One of items from
-            ``LISTER_FORMATS`` array or an index to it.
+        :param value: One of items from ``LISTER_FORMATS`` array or an index
+            to it.
+        :type value: integer or string
         """
         if (   value is not None
            and (  not isinstance(value, int)
