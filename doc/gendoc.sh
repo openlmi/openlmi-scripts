@@ -2,7 +2,7 @@
 
 #
 # Helper script to generate developer documentation in
-# doc/devel/modules and index.rst
+# doc/modules and api.rst
 #
 
 TOPDIR=..
@@ -22,6 +22,15 @@ function get_module_name() {
     basename -s .py "$path"
 }
 
+function get_version_string() {
+    out=`python $TOPDIR/setup.py --version`
+    git_version=`git describe HEAD 2>/dev/null`
+    echo -n "\`\`$out\`\`"
+    if [ -n "$git_version" ]; then
+        echo ", git: \`\`$git_version\`\`"
+    fi
+}
+
 # api.rst header
 cat >$TOPDIR/doc/api.rst <<_EOF_
 OpenLMI Scripts API
@@ -32,6 +41,8 @@ This is a generated documentation form *OpenLMI Scripts* sources.
 Developer of script library will be interested in
 :py:mod:\`lmi.scripts.common\` package providing useful functionality to
 script development.
+
+Generated from version: $(get_version_string)
 
 Contents:
 
