@@ -1,3 +1,5 @@
+0.2.1
+* compability fix for newer openlmi-tools
 * enhanced check_result() method invocation
 * fixed handling of verbosity parameter
 * fixed handling of ARG_ARRAY_SUFFIX
