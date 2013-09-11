@@ -1,15 +1,24 @@
 #!/usr/bin/env python
 
+import os
+import sys
+from setuptools import setup, find_packages
+
 PROJECT = 'openlmi-scripts'
 VERSION = '0.2.1'
 
-# Bootstrap installation of Distribute
-from setuptools import setup, find_packages
-
+long_description = ''
 try:
-    long_description = open('README.md', 'rt').read()
+    try:
+        ret = os.system('make readme')
+        if ret:
+            long_description = open('README.txt', 'rt').read()
+    except Exception as err:
+        sys.stderr.write('ERROR while reading README.txt: %s\n', str(err))
+    if not long_description:
+        long_description = open('README.md', 'rt').read()
 except IOError:
-    long_description = ''
+    pass
 
 setup(
     name=PROJECT,

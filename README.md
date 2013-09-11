@@ -48,6 +48,14 @@ There are following python dependencies:
  * openlmi-tools
  * python-docopt
 
+### Uploading to PyPI
+Since *PyPI* expects README file to be in a *reStructuredText* markup
+language and the one present is written in *markdown*, it needs to be
+converted to it. So please make sure you have `pandoc` installed before
+running:
+
+    $ python setup.py sdist upload
+
 Installation
 ------------
 Use standard `setuptools` script for installation:
