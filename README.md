@@ -10,6 +10,9 @@ commands can be installed separately in a modular way.
 of hosts with just one statement from `shell` or it can run in an
 interactive way.
 
+For more information please refer to online documentation on [pythonhosted][]
+or build your own in `doc/` directory.
+
 Structure
 ---------
 Following diagram depicts directory structure.
@@ -107,42 +110,37 @@ located at `src/python/setup.py`. In future these will be available from PyPi.
 
 Let's setup an environment:
 
-  1. create a workspace directory for current `$USER` (`WSP`)
+  1. Create a workspace directory for current `$USER` (let's call it a `WSP`).
+     This is a place, where our eggs and binaries will be "installed".
+     It can be located anywhere, for example:
 
-      * let's call it a `WSP`
-      * this is a place, where our eggs and binaries will be "installed"
-      * it can be located anywhere, for example:
+        $ WSP=~/.python_workspace
+        $ mkdir $WSP
 
-            $ WSP=~/.python_workspace
-            $ mkdir $WSP
-
-  2. add workspace to your python path to make all modules installed there
+  2. Add workspace to your python path to make all modules installed there
      importable (you can add this to your `~/.bashrc`):
 
         $ export PYTHONPATH=$WSP:$PYTHONPATH
 
-  3. add workspace to your PATH, so the installed binaries can be run:
+  3. Add workspace to your PATH, so the installed binaries can be run:
 
         $ export PATH=$WSP:$PATH
 
-  4. now let's "install" to our workspace:
+  4. Now let's "install" to our workspace. First `cd` to checked out
+     openlmi-scripts repository.
+  5. Install them and any commands you want -- possibly your own
 
-      * change to checked out openlmi-scripts repository
+        $ python setup.py develop --install-dir=$WSP
+        $ for cmd in service storage; do
+        >     pushd commands/$cmd
+        >     python setup.py develop --install-dir=$WSP
+        >     popd
+        > done
 
-            $ cd openlmi-scripts
-
-      * install them and any commands you want -- possibly your own
-
-            $ python setup.py develop --install-dir=$WSP
-            $ for cmd in service storage; do
-            >     pushd commands/$cmd
-            >     python setup.py develop --install-dir=$WSP
-            >     popd
-            > done
-
-Now any change made to openlmi-scripts is immediately reflected in lmi
+Now any change made to openlmi-scripts is immediately reflected in `lmi`
 meta-command.
 
 ------------------------------------------------------------------------------
-[git]:           https://github.com/openlmi/openlmi-scripts            "openlmi-scripts"
-[providers-git]: ssh://git.fedorahosted.org/git/openlmi-providers.git/ "openlmi-providers"
+[git]:           https://github.com/openlmi/openlmi-scripts                 "openlmi-scripts"
+[providers-git]: https://fedorahosted.org/openlmi/browser/openlmi-providers "openlmi-providers"
+[pythonhosted]:  http://pythonhosted.org/openlmi-scripts/index.html         "python hosted"
