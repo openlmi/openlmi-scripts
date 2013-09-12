@@ -14,7 +14,7 @@ try:
         if ret:
             long_description = open('README.txt', 'rt').read()
     except Exception as err:
-        sys.stderr.write('ERROR while reading README.txt: %s\n', str(err))
+        sys.stderr.write('ERROR while reading README.txt: %s\n' % str(err))
     if not long_description:
         long_description = open('README.md', 'rt').read()
 except IOError:

@@ -341,18 +341,42 @@ Script library is distributed as an python egg, making it easy to distribute
 and install either to system or user directory.
 
 Following tree shows directory structure of *service* egg residing in
-`upstream git`_: ::
+`upstream git`_:
 
-    commands/service
-    ├── lmi
-    │   ├── __init__.py
-    │   └── scripts
-    │       ├── __init__.py
-    │       └── service
-    │           ├── cmd.py
-    │           └── __init__.py
-    ├── README.md
-    └── setup.py
+.. only:: not latex
+
+    ::
+
+        commands/service
+        ├── lmi
+        │   ├── __init__.py
+        │   └── scripts
+        │       ├── __init__.py
+        │       └── service
+        │           ├── cmd.py
+        │           └── __init__.py
+        ├── README.md
+        └── setup.py
+
+.. raw:: latex
+
+    \begin{center}
+        \begin{tikzpicture}[dirtree]
+            \node {commands/service}
+                child { node {lmi}
+                    child { node {\_\_init\_\_.py} }
+                    child { node {scripts}
+                        child { node {\_\_init\_\_.py} }
+                        child { node {service}
+                            child { node {cmd.py} }
+                            child { node {\_\_init\_\_.py} }
+                        }
+                    }
+                }
+                child { node {README.md} }
+                child { node {setup.py} };
+        \end{tikzpicture} \\
+    \end{center}
 
 This library then can be imported with: ::
 
