@@ -114,14 +114,18 @@ class Session(object):
         # TODO: remove inspect magic and add dependency on particular
         # version of openlmi-tools, when its released
         kwargs = dict(interactive=interactive)
-        if inspect.getargspec(connect).args:
+        con_argspec = inspect.getargspec(connect)
+        if 'verify_server_cert' in con_argspec.args or con_argspec.keywords:
             # newer name
             kwargs['verify_server_cert'] = self._app.config.verify_server_cert
-        else:   # older one
+        elif 'verify_certificate' in con_argspec.args:
+            # older one
             kwargs['verify_certificate'] = self._app.config.verify_server_cert
+        # else: this must be very old and bearded shell
 
-        if len(self._connections) > 1 \
-                and 'prompt_prefix' in inspect.getargspec(connect).args:
+        if (  len(self._connections) > 1 \
+           and (  'prompt_prefix' in con_argspec.args
+               or con_argspec.keywords)):
             kwargs['prompt_prefix'] = '[%s] ' % hostname
         connection = connect(hostname, username, password, **kwargs)
         if connection is not None:
