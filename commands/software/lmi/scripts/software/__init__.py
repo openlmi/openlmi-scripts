@@ -29,6 +29,51 @@
 #
 """
 LMI software provider client library.
+
+.. _package_specification:
+
+Package specification
+---------------------
+Referred to as :abbr:`pkg_spec`. Is a string identifying set of packages.
+It constitutes at least of package name. Each additional detail narrows the
+the possible set of matchin packages. The most complete specifications are
+``nevra`` and ``envra``.
+
+Follows the list of all possible specifications:
+
+    * ``<name>``
+    * ``<name>.<arch>``
+    * ``<name>-<version>-<release>.<arch>`` (nvra)
+    * ``<name>-<epoch>:<version>-<release>.<arch>`` (nevra)
+    * ``<epoch>:<name>-<version>-<release>.<arch>`` (envra)
+
+Regular expressions
+-------------------
+These may be used check, whether the given
+:abbr:`pkg_spec (package specification)`
+is valid and allows to get all the interesting parts out of it. 
+
+.. py:data:: RE_NA
+
+    Regular expression matching package specified as ``<name>.<arch>``.
+
+.. py:data:: RE_NEVRA
+
+    Regular expression matching package specified as: ::
+
+        <name>-<epoch>:<version>-<release>.<arch>
+
+    The epoch part is optional. So it can be used also to match ``nvra``
+    string.
+
+.. py:data:: RE_ENVRA
+
+    Regular expression matching package specified as: ::
+
+        <epoch>:<name>-<version>-<release>.<arch>
+
+Functions
+---------
 """
 
 from collections import defaultdict
@@ -54,6 +99,7 @@ RE_ENVRA = re.compile(
     r'^(?P<epoch>\d+):(?P<name>.+)-(?P<evra>(?P<version>[0-9.]+)'
     r'-(?P<release>.+)\.(?P<arch>[^.]+))$')
 
+#: Array of file type names.
 FILE_TYPES = (
     'Unknown',
     'File',
@@ -70,7 +116,8 @@ def _wait_for_job_finished(job):
     """
     This function waits for asynchronous job to be finished.
 
-    :param job: (``LMIInstance``) Instance of ``LMI_SoftwareJob``.
+    :param job: Instance of ``LMI_SoftwareJob``.
+    :type job: :py:class:`lmi.shell.LMIInstance`
     """
     if not isinstance(job, LMIInstance):
         raise TypeError("job must be an LMIInstance")
@@ -89,9 +136,12 @@ def get_package_nevra(package):
     """
     Get a nevra from an instance of ``LMI_SoftwareIdentity``.
 
-    :param package: (``LMIInstance``) Instance or instance name of
+    :param package: Instance or instance name of
         ``LMI_SoftwareIdentity`` representing package to install.
-    :rtype: (``str``) Nevra string of particular package.
+    :type package: :py:class:`lmi.shell.LMIInstance`
+        or :py:class:`lmi.schell.LMIInstanceName`
+    :returns: Nevra string of particular package.
+    :rtype: string
     """
     if not isinstance(package, (LMIInstanceName, LMIInstance)):
         raise TypeError("package must be an instance or instance name")
@@ -101,7 +151,9 @@ def get_package_nevra(package):
 
 def list_installed_packages(ns):
     """
-    Yields instances of LMI_SoftwareIdentity representing installed packages.
+    Yields instances of ``LMI_SoftwareIdentity`` representing installed packages.
+
+    :rtype: generator
     """
     for identity in ns.Linux_ComputerSystem.first_instance().associators(
             Role="System",
@@ -114,16 +166,17 @@ def list_available_packages(ns,
         allow_duplicates=False,
         repoid=None):
     """
-    Yields instances of LMI_SoftwareIdentity representing available packages.
+    Yields instances of ``LMI_SoftwareIdentity`` representing available packages.
 
-    :param allow_installed: (``bool``) Whether to include available packages
+    :param boolean allow_installed: Whether to include available packages
         that are installed.
-    :param allow_duplicates: (``bool``) Whether to include duplicates packages
+    :param boolean allow_duplicates: Whether to include duplicates packages
         (those having same name and architecture). Otherwise only the newest
         packages available for each (name, architecture) pair will be contained
         in result.
-    :param repoid: (``str``) Repository identification string. This will filter
+    :param string repoid: Repository identification string. This will filter
         available packages just for those provided by this repository.
+    :rtype: generator
     """
     if repoid is not None:
         inst = ns.LMI_SoftwareIdentityResource.first_instance(
@@ -162,10 +215,13 @@ def pkg_spec_to_filter(pkg_spec):
     Converts package specification to a set of keys, that can be used to
     query package properties.
 
-    :param pkg_spec: (``str``) Package specification (see usage). Only keys
-        given in this string will appear in resulting dictionary.
-    :rtype: (``dict``) Dictionary with possible keys being a subset of
+    :param string pkg_spec: Package specification (see
+        :py:ref:`package_specification`). Only keys given in this string will
+        appear in resulting dictionary.
+    :returns: Dictionary with possible keys being a subset of
         following: ``{'name', 'epoch', 'version', 'release', 'arch'}``.
+        Values are non-empty parts of ``pkg_spec`` string.
+    :rtype: dictionary
     """
     if not isinstance(pkg_spec, basestring):
         raise TypeError("pkg_spec must be a string")
@@ -192,31 +248,40 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
     Keyword arguments are used to specify this filter, which can contain
     following keys:
 
-        * name - package name
-        * epoch - package's epoch
-        * version - version of package
-        * release - release of package
-        * arch - requested architecture of package
-        * nevra - string containing all previous keys in following notation:
-            <name>-<epoch>:<version>-<release>.<arch>
-        * envra - similar to nevra, the notation is different:
-            <epoch>:<name>-<version>-<release>.<arch>   # envra
-        * repoid - repository identification string, where package must be
-            available
-        * pkg_spec - one of:
-            * <name>
-            * <name>.<arch>
-            * <name>-<version>-<release>.<arch>           # nvra
-            * <name>-<epoch>:<version>-<release>.<arch>   # nevra
-            * <epoch>:<name>-<version>-<release>.<arch>   # envra
+        ``name`` :
+            Package name.
+        ``epoch`` :
+            package's epoch
+        ``version`` :
+            version of package
+        ``release`` :
+            release of package
+        ``arch`` :
+            requested architecture of package
+        ``nevra`` :
+            string containing all previous keys in following notation: ::
 
-    :param allow_duplicates: (``bool``) Whether the output shall contain
+            <name>-<epoch>:<version>-<release>.<arch>
+
+        ``envra`` :
+            similar to nevra, the notation is different: ::
+
+                <epoch>:<name>-<version>-<release>.<arch>
+
+        ``repoid`` :
+            repository identification string, where package must be
+            available
+
+        ``pkg_spec`` :
+            Package specification string. See :py:ref:`package_specification`.
+
+    :param boolean allow_duplicates: Whether the output shall contain
         multiple versions of the same packages identified with
         ``<name>.<architecture>``.
-    :param exact_match: (``bool``) Whether the ``name`` key shall be tested for
+    :param boolean exact_match: Whether the ``name`` key shall be tested for
         exact match. If ``False`` it will be tested for inclusion.
-    :rtype: (``LmiInstanceName``) Generator over instance names of
-        ``LMI_SoftwareIdentity``.
+    :returns: Instance names of ``LMI_SoftwareIdentity``.
+    :rtype: generator over :py:class:`lmi.shell.LmiInstanceName`
     """
     opts = {}
     for key in ('name', 'epoch', 'version', 'release', 'arch'):
@@ -251,12 +316,15 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
 
 def list_repositories(ns, enabled=True):
     """
-    Yields instances of LMI_SoftwareIdentityResource representing
-    software repositories.
+    Yields instances of ``LMI_SoftwareIdentityResource`` representing software
+    repositories.
 
-    :param enabled: (``bool`` or ``None``) Whether to list only enabled
-        repositories. If ``False`` only disabled repositories shall be listed.
-        If ``None``, all repositories shall be listed.
+    :param enabled: Whether to list only enabled repositories. If ``False``
+        only disabled repositories shall be listed. If ``None``, all
+        repositories shall be listed.
+    :type enabled: boolean or ``None``
+    :returns: Instances of ``LMI_SoftwareIdentityResource``
+    :rtype: generator over :py:class:`lmi.shell.LMIInstance`
     """
     if not isinstance(enabled, bool) and enabled is not None:
         raise TypeError("kind must be a boolean or None")
@@ -272,13 +340,17 @@ def list_repositories(ns, enabled=True):
 
 def list_package_files(ns, package, file_type=None):
     """
-    Get a list of files belonging to package. Yields instances of
-        LMI_SoftwareIdentityFileCheck.
+    Get a list of files belonging to particular installed *RPM* package. Yields
+    instances of ``LMI_SoftwareIdentityFileCheck``.
 
-    :param package: (``LMIInstance``) Instance or instance name of
-        ``LMI_SoftwareIdentity``.
-    :param file_type: Either an index to ``FILE_TYPES`` array or one of:
+    :param package: Instance or instance name of ``LMI_SoftwareIdentity``.
+    :type package: :py:class:`lmi.shell.LMIInstance`
+        or :py:class:`lmi.shell.LMIInstanceName` 
+    :param file_type: Either an index to :py:data:`FILE_TYPES` array or one of:
         ``{ "all", "file", "directory", "symlink", "fifo", "device" }``.
+    :type file_type: string, integer or ``None``
+    :returns: Instances of ``LMI_SoftwareIdentityFileCheck``.
+    :rtype: generator over :py:class:`lmi.shell.LMIInstance`
     """
     if not isinstance(package, (LMIInstance, LMIInstanceName)):
         raise TypeError("package must be an LMIInstance")
@@ -312,8 +384,9 @@ def get_repository(ns, repoid):
     """
     Return an instance of repository identified by its identification string.
 
-    :param repoid: (``str``) Identification string of repository.
-    :rtype: (``LMIInstance``) Instance of ``LMI_SoftwareIdentityResource``.
+    :param string repoid: Identification string of repository.
+    :returns: Instance of ``LMI_SoftwareIdentityResource``.
+    :rtype: :py:class:`lmi.shell.LMIInstance`
     """
     if not isinstance(repoid, basestring):
         raise TypeError("repoid must be a string")
@@ -326,10 +399,12 @@ def set_repository_enabled(ns, repository, enable=True):
     """
     Enable or disable repository.
 
-    :param repository: (``LMIInstance``) Instance of
-        ``LMI_SoftwareIdentityResource``.
-    :param enable: (``bool``) New value of ``EnabledState`` property.
-    :rtype: (``bool``) Previous value of repository's ``EnabledState``.
+    :param repository: Instance of ``LMI_SoftwareIdentityResource``.
+    :type repository: :py:class:`lmi.shell.LMIInstance`
+        or :py:class:`lmi.shell.LMIInstanceName`
+    :param boolean enable: New value of ``EnabledState`` property.
+    :returns: Previous value of repository's ``EnabledState``.
+    :rtype: boolean
     """
     if not isinstance(repository, (LMIInstance, LMIInstanceName)):
         raise TypeError("repository must be an LMIInstance")
@@ -353,14 +428,18 @@ def install_package(ns, package, force=False, update=False):
     """
     Install package on system.
 
-    :param package: (``LMIInstance``) Instance or instance name of
-        ``LMI_SoftwareIdentity`` representing package to install.
-    :param force: (``bool``) Whether the installation shall be done even if
-        installing the same (re-installation) or older version, than already
+    :param package: Instance or instance name of ``LMI_SoftwareIdentity``
+        representing package to install.
+    :type package: :py:class:`lmi.shell.LMIInstance`
+        or :py:class:`lmi.shell.LMIInstanceName`
+    :param boolean force: Whether the installation shall be done even if
+        installing the same (reinstalling) or older version than already
         installed.
-    :param update: (``bool``) Whether this is an update. Update fails, if
+    :param boolean update: Whether this is an update. Update fails if
         package is not already installed on system.
-    :rtype: (``LMIInstance``) Software identity installed on remote system.
+    :returns: Software identity installed on remote system.
+        It's an instance ``LMI_SoftwareIdentity``.
+    :rtype: :py:class:`lmi.shell.LMIInstance`
     """
     if not isinstance(package, (LMIInstance, LMIInstanceName)):
         raise TypeError("package must be an LMIInstance or LMIInstanceName")
@@ -410,14 +489,14 @@ def install_package(ns, package, force=False, update=False):
 
 def install_from_uri(ns, uri, force=False, update=False):
     """
-    Install package from URI on remote system.
+    Install package from *URI* on remote system.
 
-    :param uri: (``str``) Identifier of RPM package available via http, https,
+    :param string uri: Identifier of *RPM* package available via http, https,
         or ftp service.
-    :param force: (``bool``) Whether the installation shall be done even if
-        installing the same (re-installation) or older version, than already
+    :param boolean force: Whether the installation shall be done even if
+        installing the same (reinstalling) or older version than already
         installed.
-    :param update: (``bool``) Whether this is an update. Update fails, if
+    :param boolean update: Whether this is an update. Update fails if
         package is not already installed on system.
     """
     if not isinstance(uri, basestring):
@@ -441,11 +520,13 @@ def install_from_uri(ns, uri, force=False, update=False):
 
 def remove_package(ns, package):
     """
-    Uninstall given pacakge from system. ``LmiFailed`` will be raised on
-    failure.
+    Uninstall given package from system.
 
-    :param package: (``LMIInstance``) Instance or instance name of
+    :raises: :py:exc:`LmiFailed`` will be raised on failure.
+    :param package:  Instance or instance name of
         ``LMI_SoftwareIdentity`` representing package to remove.
+    :type package: :py:class:`lmi.shell.LMIInstance`
+        or :py:class:`lmi.shell.LMIInstanceName`
     """
     if not isinstance(package, (LMIInstance, LMIInstanceName)):
         raise TypeError("package must be an LMIInstance or LMIInstanceName")
@@ -463,10 +544,14 @@ def remove_package(ns, package):
 
 def render_failed_flags(failed_flags):
     """
-    :param failed_flags: (``list``) Value of ``FailedFlags`` property
-        of ``LMI_SoftwareIdentityFileCheck``.
-    :rtype: (``str``) Verification string with format matching the output
-        of ``rpm -V`` command.
+    Make one liner string representing failed flags list of file that did not
+    pass the verification.
+
+    :param list failed_flags: Value of ``FailedFlags`` property
+        of some ``LMI_SoftwareIdentityFileCheck``.
+    :returns: Verification string with format matching the output of ``rpm -V``
+        command.
+    :rtype: string
     """
     if 0 in failed_flags:
         return 'missing'
@@ -493,10 +578,13 @@ def verify_package(ns, package):
     Returns the instances of ``LMI_SoftwareIdentityFileCheck`` representing
     files, that did not pass the verification.
 
-    :param package: (``LMIInstance``) Instance or instance name of
+    :param package: Instance or instance name of
         ``LMI_SoftwareIdentity`` representing package to verify.
-    :rtype: (``list``) List of instances of ``LMI_SoftwareIdentityFileCheck``
-        with not empty ``FailedFlags`` property.
+    :type package: :py:class:`lmi.shell.LMIInstance`
+        or :py:class:`lmi.shell.LMIInstanceName`
+    :returns: List of instances of ``LMI_SoftwareIdentityFileCheck``
+        with non-empty ``FailedFlags`` property.
+    :rtype: list
     """
     if not isinstance(package, (LMIInstance, LMIInstanceName)):
         raise TypeError("package must be an LMIInstance or LMIInstanceName")

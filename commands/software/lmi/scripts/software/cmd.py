@@ -58,15 +58,17 @@ Commands:
     verify      Verify package. Files that did not pass the verification are
                 listed prefixed with a sequence of characters, each
                 representing particular attribute, that failed. Those are:
-                   S file Size differs
-                   M Mode differs (includes permissions and file type)
-                   5 digest (formerly MD5 sum) differs
-                   D Device major/minor number mismatch
-                   L readLink(2) path mismatch
-                   U User ownership differs
-                   G Group ownership differs
-                   T mTime differs
-                   P caPabilities differ
+
+                   * S file Size differs
+                   * M Mode differs (includes permissions and file type)
+                   * 5 digest (formerly MD5 sum) differs
+                   * D Device major/minor number mismatch
+                   * L readLink(2) path mismatch
+                   * U User ownership differs
+                   * G Group ownership differs
+                   * T mTime differs
+                   * P caPabilities differ
+
     enable      Enable one or more repositories.
     disable     Disable one or more repositories.
 
@@ -85,11 +87,13 @@ Options:
 
 Specifying <package>:
     Package can be given in one of following notations:
-        <name>
-        <name>.<arch>
-        <name>-<version>-<release>.<arch>           # nvra
-        <name>-<epoch>:<version>-<release>.<arch>   # nevra
-        <epoch>:<name>-<version>-<release>.<arch>   # envra
+
+        * <name>
+        * <name>.<arch>
+        * <name>-<version>-<release>.<arch>           # nvra
+        * <name>-<epoch>:<version>-<release>.<arch>   # nevra
+        * <epoch>:<name>-<version>-<release>.<arch>   # envra
+
     Bottom most notations allow to precisely identify particular package.
 """
 
