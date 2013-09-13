@@ -178,6 +178,7 @@ latex_elements = {
 
 # Additional stuff for the LaTeX preamble.
 'preamble': u"""
+\\usepackage{imakeidx}
 \\usepackage{tikz}
 
 \\makeatletter
