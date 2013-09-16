@@ -1,0 +1,71 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
+    !!!!!!!!!
+
+service
+-------
+
+System service management.
+
+
+**Usage:**
+
+    **lmi** **service** **list** [\ **--all**\  | \ **--disabled**\  | \ **--oneshot**\ ]
+
+    **lmi** **service** **show** \ *<service>*\ 
+
+    **lmi** **service** **start** \ *<service>*\ 
+
+    **lmi** **service** **stop** \ *<service>*\ 
+
+    **lmi** **service** **restart** [\ **--try**\ ] \ *<service>*\ 
+
+    **lmi** **service** **reload** \ *<service>*\ 
+
+    **lmi** **service** **reload-or-restart** [\ **--try**\ ] \ *<service>*\ 
+
+
+
+**Commands:**
+
+
+    **list**
+        Prints a list of services. Only enabled services are
+        printed at default.
+
+    **show**
+        Show detailed information about service.
+
+    **start**
+        Starts a service.
+
+    **stop**
+        Stops the service.
+
+    **restart**
+        Restarts the service.
+
+    **reload**
+        Ask the service to reload its configuration.
+
+    **reload-or-restart**
+        
+        Reload the service if it supports it. If not, restart it
+        instead.
+
+**Options:**
+
+
+    **--all**
+        List all services available.
+
+    **--disabled**
+        List only disabled services.
+
+    **--oneshot**
+        List only oneshot services.
+
+    **--try**
+        Whether to abandon the operation if the service is not running.
+
