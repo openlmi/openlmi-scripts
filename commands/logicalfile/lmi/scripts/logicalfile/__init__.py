@@ -1,4 +1,4 @@
-# Storage Management Providers
+# LogicalFile Management Providers
 #
 # Copyright (c) 2013, Red Hat, Inc. All rights reserved.
 #
@@ -27,6 +27,8 @@
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of the FreeBSD Project.
 #
-# Authors: Jan Safranek <jsafrane@redhat.com>
+# Authors: Jan Synacek <jsynacek@redhat.com>
 #
-__import__('pkg_resources').declare_namespace(__name__)
+"""
+LMI logicalfile provider client library.
+"""
