@@ -35,7 +35,9 @@ Usage:
     %(cmd)s show <service>
     %(cmd)s start <service>
     %(cmd)s stop <service>
-    %(cmd)s restart <service>
+    %(cmd)s restart [--try] <service>
+    %(cmd)s reload <service>
+    %(cmd)s reload-or-restart [--try] <service>
 
 Commands:
     list        Prints a list of services. Only enabled services are
@@ -44,14 +46,19 @@ Commands:
     start       Starts a service.
     stop        Stops the service.
     restart     Restarts the service.
+    reload      Ask the service to reload its configuration.
+    reload-or-restart
+                Reload the service if it supports it. If not, restart it
+                instead.
 
 Options:
     --all       List all services available.
     --disabled  List only disabled services.
     --oneshot   List only oneshot services.
+    --try       Whether to abandon the operation if the service is not running.
 """
 
-from lmi.scripts import service
+from lmi.scripts import service as srv
 from lmi.scripts.common import command
 
 class Lister(command.LmiInstanceLister):
@@ -65,23 +72,42 @@ class Lister(command.LmiInstanceLister):
             kind = 'disabled'
         elif _oneshot:
             kind = 'oneshot'
-        for service_inst in service.list_services(ns, kind):
+        for service_inst in srv.list_services(ns, kind):
             yield service_inst
 
 class Start(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.service:start'
+    CALLABLE = srv.start_service
     EXPECT = 0
 
 class Stop(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.service:stop'
+    CALLABLE = srv.stop_service
     EXPECT = 0
 
 class Restart(command.LmiCheckResult):
-    CALLABLE = 'lmi.scripts.service:restart'
+    CALLABLE = srv.restart_service
     EXPECT = 0
 
+    def transform_options(self, options):
+        """
+        ``try`` is a keyword argument in python, let's rename it to
+        ``just_try``.
+        """
+        options['just_try'] = options.pop('--try')
+
+class Reload(command.LmiCheckResult):
+    EXPECT = 0
+
+    def execute(self, ns, service):
+        return srv.reload_service(ns, service)
+
+class ReloadOrRestart(command.LmiCheckResult):
+    EXPECT = 0
+
+    def execute(self, ns, service, _try=False):
+        return srv.reload_service(ns, service, force=True, just_try=_try)
+
 class Show(command.LmiShowInstance):
-    CALLABLE = 'lmi.scripts.service:get_instance'
+    CALLABLE = srv.get_service
     PROPERTIES = (
             'Name',
             'Caption',
@@ -96,5 +122,7 @@ Service = command.register_subcommands(
         , 'start'   : Start
         , 'stop'    : Stop
         , 'restart' : Restart
+        , 'reload'  : Reload
+        , 'reload-or-restart' : ReloadOrRestart
         },
     )
