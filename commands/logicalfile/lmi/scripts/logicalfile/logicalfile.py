@@ -135,9 +135,9 @@ def lf_list(ns, directory, depth=None):
 
     for (f, lvl) in walk_cim_directory(d, depth):
         rwx = ''
-        if f.Readable:   rwx += 'r'
-        if f.Writeable:  rwx += 'w'
-        if f.Executable: rwx += 'x'
+        rwx += 'r' if f.Readable else '-'
+        rwx += 'w' if f.Writeable else '-'
+        rwx += 'x' if f.Executable else '-'
         prefix = '  ' * (depth-lvl)
         ident = f.associators(AssocClass='LMI_FileIdentity')[0]
         yield(get_file_identification(f), prefix+f.Name, rwx, ident.SELinuxCurrentContext)
