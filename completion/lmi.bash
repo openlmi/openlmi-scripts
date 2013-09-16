@@ -20,8 +20,6 @@
 # Bash completion for LMI commands
 
 _lmi() {
-#    echo $COMP_CWORD
-#    printf '<%s>\n' "${COMP_WORDS[@]}"
     local options=(-c --config-file -h --host --hosts-file --user -v --trace -q --quiet -n --noverify --same-credentials --help --version)
     local current="${COMP_WORDS[$COMP_CWORD]}"
     local previous="${COMP_WORDS[COMP_CWORD-1]}"
@@ -49,7 +47,13 @@ _lmi() {
     else
         case $current in
             -*) COMPREPLY=( $(compgen "-W ${options[*]}" -- "$current" ) );;
-            *) COMPREPLY=( $(compgen "-W ${commands[*]}" -- "$current" ) );;
+            *) case $previous in
+                 -c|--config-file|--hosts-file) COMPREPLY=( $(compgen -f -- "$current" ) );;
+                 -h|--host) COMPREPLY=( $(compgen -A hostname -- "$current" ) );;
+                 --user) COMPREPLY=( $(compgen -u -- "$current" ) );;
+                 --help|--version) ;;
+                 *) COMPREPLY=( $(compgen "-W ${commands[*]}" -- "$current" ) );;
+               esac
         esac
     fi
 }
