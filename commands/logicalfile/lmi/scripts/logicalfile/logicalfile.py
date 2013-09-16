@@ -46,14 +46,14 @@ def get_file_identification(file_instance):
     :param file_instance: The file's instance object.
     :rtype: string
     """
-    _CLASSES = {'LMI_DataFile':'F',
-                'LMI_UnixDeviceFile':'Dev',
-                'LMI_UnixDirectory':'Dir',
-                'LMI_FIFOPipeFile':'P',
-                'LMI_SymbolicLink':'L',
-                'LMI_UnixSocket':'S'}
+    _CLASSES = {'lmi_datafile':'F',
+                'lmi_unixdevicefile':'Dev',
+                'lmi_unixdirectory':'Dir',
+                'lmi_fifopipefile':'P',
+                'lmi_symboliclink':'L',
+                'lmi_unixsocket':'S'}
     try:
-        return _CLASSES[file_instance.classname]
+        return _CLASSES[file_instance.classname.lower()]
     except KeyError:
         return 'Unk'
 
