@@ -46,12 +46,12 @@ Commands:
                The files and directories are listed in a tree-like structure.
 
                Possible listed file types are:
-               F   : Regular data file.
-               Dev : Device file. Can be either block or character device.
-               Dir : Directory.
-               P   : Pipe file.
-               L   : Symbolic link.
-               S   : Unix socket.
+                   * F   : Regular data file.
+                   * Dev : Device file. Can be either block or character device.
+                   * Dir : Directory.
+                   * P   : Pipe file.
+                   * L   : Symbolic link.
+                   * S   : Unix socket.
 
     createdir  Create a directory. The parent directory must exist.
 
@@ -67,41 +67,20 @@ from lmi.scripts.logicalfile import logicalfile
 class Lister(command.LmiLister):
     COLUMNS = ('Type', 'Name', 'Mode', 'Current SELinux Context')
     OPT_NO_UNDERSCORES = True
-
-    def execute(self, ns, directory, depth=0):
-        """
-        Implementation of 'lf list' command.
-        """
-        return logicalfile.lf_list(ns, directory, depth)
-
+    CALLABLE = logicalfile.lf_list
 
 class Show(command.LmiLister):
     COLUMNS = ('Name', 'Value')
     OPT_NO_UNDERSCORES = True
-
-    def execute(self, ns, target):
-        """
-        Implementation of 'lf show' command.
-        """
-        return logicalfile.lf_show(ns, target)
+    CALLABLE = logicalfile.lf_show
 
 class CreateDir(command.LmiCheckResult):
     EXPECT = None
-
-    def execute(self, ns, directory):
-        """
-        Implementation of 'lf createdir' command.
-        """
-        return logicalfile.lf_createdir(ns, directory)
+    CALLABLE = logicalfile.lf_createdir
 
 class DeleteDir(command.LmiCheckResult):
     EXPECT = None
-
-    def execute(self, ns, directory):
-        """
-        Implementation of 'lf deletedir' command.
-        """
-        return logicalfile.lf_deletedir(ns, directory)
+    CALLABLE = logicalfile.lf_deletedir
 
 Lf = command.register_subcommands(
         'Lf', __doc__,
