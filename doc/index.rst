@@ -15,6 +15,7 @@ Content:
     configuration
     script-development
     api
+    commands
 
 Indices and tables
 ==================

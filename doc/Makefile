@@ -2,11 +2,14 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
-PAPER         =
-BUILDDIR      = _build
-PROJECTNAME   = OpenLMIScripts
+SPHINXOPTS        =  
+SPHINXBUILD       = sphinx-build
+PAPER             =  
+BUILDDIR         ?= _build
+PROJECTNAME       = OpenLMIScripts
+COMMANDS_PATH    ?= ../commands
+INCLUDE_COMMANDS ?= 0
+COMMANDS         ?= service software storage
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -15,7 +18,7 @@ ALLSPHINXOPTS   = -n -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) 
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext mof generated
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext commands.rst
 
 all: html epub latexpdf
 
@@ -47,8 +50,57 @@ api.rst: gendoc.sh $(wildcard ../lmi/scripts/*.py \
 	    ../lmi/scripts/formatter/*.py)
 	./gendoc.sh
 
+commands.rst:
+	echo "Command libraries documentation" > $@
+	echo "===============================" >> $@
+ifneq ($(INCLUDE_COMMANDS), 0)
+	-[ -e commands ] && rm -rf commands
+	mkdir commands
+	echo "Usage and developer documentations of provider libraries" >> $@
+	echo "(also called *commands*.)" >> $@
+	printf "\n.. toctree::\n" >> $@
+	printf "    :maxdepth: 2\n\n" >> $@
+	for cmd in $(COMMANDS); do \
+	    printf "    commands/$$cmd\n" >> $@; \
+	    ln -s ../$(COMMANDS_PATH)/$${cmd}/doc commands/$${cmd}_docdir; \
+	    make -C commands/$${cmd}_docdir html; \
+	    title="$${cmd^} library"; \
+	    length=`echo "$$title" | wc -c`; \
+	    ( \
+		printf "$${title}\n"; \
+		printf -- "!%.0s" `seq 2 $$length`; \
+		printf "\n\n"; \
+		if [ -e commands/$${cmd}_docdir/cmdline.rst ]; then \
+		    sed "s,\(\.\.\s\+include::\s*\)\(.*\),\1$${cmd}_docdir/\2," \
+			commands/$${cmd}_docdir/cmdline.rst \
+			>commands/$${cmd}_cmdline.txt; \
+		    printf ".. include:: $${cmd}_cmdline.txt\n\n"; \
+		fi; \
+		printf    "$${cmd^} library reference\n"; \
+		printf -- "==========================\n"; \
+		if [ -e commands/$${cmd}_docdir/python.rst ]; then \
+		    printf ".. toctree::\n    :maxdepth: 2\n\n"; \
+		    printf "    $${cmd}_docdir/python\n\n"; \
+		else \
+		    printf ".. automodule:: lmi.scripts.$${cmd}\n"; \
+		    printf "    :members:\n"; \
+		fi; \
+	    ) > commands/$${cmd}.rst; \
+	done
+else
+	( \
+	printf "You may visit command usage and developer documentations\n"; \
+	printf "on pythonhosted site:\n\n"; \
+	for cmd in $(COMMANDS); do \
+	    printf "    * \`openlmi-scripts-$${cmd}"; \
+	    printf " <http://pythonhosted.org/openlmi-scripts-$${cmd}>\`_\n"; \
+	done \
+	) >> $@
+endif
+
+
 clean:
-	-rm -rf $(BUILDDIR)/* modules/ api.rst
+	-rm -rf $(BUILDDIR)/* modules/ api.rst commands.rst commands/
 
 %.png: %.dia
 	dia -e $@ $<
@@ -59,7 +111,7 @@ clean:
 figures:
 
 
-html: figures api.rst
+html: figures api.rst commands.rst
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -108,12 +160,12 @@ devhelp:
 	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/AnacondaStorageProvider"
 	@echo "# devhelp"
 
-epub: figures api.rst
+epub: figures api.rst commands.rst
 	$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
 	@echo
 	@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
 
-latex: figures api.rst
+latex: figures api.rst commands.rst
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	sed -i 's/^\\makeindex$$/\0[columns=1]/' $(BUILDDIR)/latex/$(PROJECTNAME).tex
 	@echo

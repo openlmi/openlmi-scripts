@@ -19,6 +19,13 @@ It has the following structrure:
     │   │       └── <provider_prefix>   # library as an interface to providers
     │   │           ├── cmd.py          # definitions of commands
     │   │           └── __init__.py
+    │   ├── doc                         # usage and developer documentation
+    │   │   ├── cmdline.generated
+    │   │   ├── cmdline.rst             # source in reStructured text [rst]
+    │   │   ├── conf.py                 # documentation configuration
+    │   │   ├── index.rst               # top-level documentation source
+    │   │   ├── Makefile
+    │   │   └── python.rst              # library reference source
     │   ├── README.md
     │   └── setup.py
     │   ... ...
@@ -32,6 +39,18 @@ provide easy to use interface for any third party python application for
 system management of remote hosts. Part of the interface is exported via
 commands to `lmi` meta-command. These, by a convention, are defined in
 `lmi.scripts.<provider_prefix>.cmd` module.
+
+### Documentation directory
+Please stick to the structure presented above. It makes it easy to include
+library documents into the global documentation.
+
+ * `cmdline.generated` is a file in [*reStructuredText*][see rst] format generated
+   with `tools/help2rst` script from command's usage string.
+ * `cmdline.rst` is a file including the one above and providing some additional
+   informations related to command's invocation.
+ * `python.rst` just lists the modules from `lmi.scripts.<provider_prefix>` to
+   document for python reference.
+ * `index.rst` binds all the other files together.
 
 Setup file
 ----------
@@ -68,7 +87,7 @@ description of *Command module* below.
     [a-z]+(-[a-z]+)*(\.py)?
 
 Command module
------------
+--------------
 Is a python module named (by a convention) `.cmd` under your command library.
 It has a documentation string passeable to the `docopt` command line parser
 (see `http://docopt.org/`). The structure of this file is following:
@@ -119,6 +138,8 @@ global variable, which holds the result of this call must be listed in
 available in `lmi` meta-command.
 
 ### <requirement\_string>
+**This is not yet supported feature**
+
 Allows to specify, which profiles and their specific versions are neccessary
 to run this command. It's format can be described by following grammar:
 
@@ -154,3 +175,4 @@ First sequence of digits will be compared with `MajorVersion`, second to
 where `<class_name>` denotes the name of CIM class. And `<version>` the value
 of its `Version` qualifier in the mof file.
 
+[rst]: http://sphinx-doc.org/rest.html "reStructuredText"

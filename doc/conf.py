@@ -18,6 +18,16 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../lmi'))
 
+if os.environ.get('INCLUDE_COMMANDS', '0').lower() in {'1', 'true', 'yes'}:
+    commands_path = os.environ.get('COMMANDS_PATH', '../commands')
+    commands = os.environ.get('COMMANDS', '')
+    if commands:
+	for i, cmd in enumerate(commands.split(',')):
+	    sys.path.insert(1 + i, os.path.join(os.path.abspath(commands_path), cmd))
+
+    include_commands_docs = True
+    include_commands = commands.split(',')
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -274,3 +284,7 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
+
+def setup(app):
+    app.add_config_value('include_commands', False, 'env')
+    app.add_config_value('commands', '', 'env')
