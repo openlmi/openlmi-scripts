@@ -1,0 +1,53 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
+    !!!!!!!!!
+
+lf
+--
+
+Logicalfile management functions.
+
+
+**Usage:**
+
+    **lmi** **lf** **list** \ *<directory>*\  [ \ *<depth>*\  ]
+
+    **lmi** **lf** **createdir** \ *<directory>*\ 
+
+    **lmi** **lf** **deletedir** \ *<directory>*\ 
+
+    **lmi** **lf** **show** \ *<target>*\ 
+
+
+
+**Commands:**
+
+
+    **list**
+        List a directory. When depth is specified, at most depth levels
+        will be listed recursively.
+
+        The files and directories are listed in a tree-like structure.
+
+        Possible listed file types are:
+            * F   : Regular data file.
+            * Dev : Device file. Can be either block or character device.
+            * Dir : Directory.
+            * P   : Pipe file.
+            * L   : Symbolic link.
+            * S   : Unix socket.
+
+
+    **createdir**
+        Create a directory. The parent directory must exist.
+
+
+    **deletedir**
+        Delete a directory. The directory must be empty.
+
+
+    **show**
+        Show detailed information about target. Target can be any file
+        on the remote system.
+
