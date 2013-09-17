@@ -1,6 +1,8 @@
 PYTHONPATH?=$(HOME)/workspace/python_sandbox
 DEVELOPDIR?=$(shell echo $(PYTHONPATH) | cut -d : -f 1)
 
+.PHONY: readme sdist develop upload_docs clean all
+
 all: sdist
 
 sdist:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import subprocess
 import sys
 from setuptools import setup, find_packages
 
@@ -10,9 +11,16 @@ VERSION = '0.2.1'
 long_description = ''
 try:
     try:
-        ret = os.system('make readme')
-        if ret:
-            long_description = open('README.txt', 'rt').read()
+        script_dir = os.path.dirname(sys.argv[0])
+        cmd = ['/usr/bin/make', 'readme']
+        readme_file = 'README.txt'
+        if script_dir not in (',', ''):
+            cmd[1:1] = ['-C', script_dir]
+            readme_file = os.path.join(script_dir, readme_file)
+        with open('/dev/null', 'w') as null:
+            ret = subprocess.call(cmd, stdout=null, stderr=null)
+        if not ret:
+            long_description = open(readme_file, 'rt').read()
     except Exception as err:
         sys.stderr.write('ERROR while reading README.txt: %s\n' % str(err))
     if not long_description:
