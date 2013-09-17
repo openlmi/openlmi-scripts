@@ -53,8 +53,7 @@ Commands:
 from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
 from lmi.scripts.storage.common import str2size, size2str, str2vg
-from lmi.scripts.common import formatter
-
+from lmi.scripts.common.formatter import command as fcmd
 
 class Lister(command.LmiLister):
     COLUMNS = ('InstanceID', 'ElementName', "ExtentSize", "Total space",
@@ -133,7 +132,7 @@ class Show(command.LmiLister):
             vgs = lvm.get_vgs(ns)
         for vg in vgs:
             vg = str2vg(ns, vg)
-            cmd = formatter.NewTableCommand(title=vg.InstanceID)
+            cmd = fcmd.NewTableCommand(title=vg.InstanceID)
             yield cmd
             for line in show.vg_show(ns, vg, self.app.config.human_friendly):
                 yield line

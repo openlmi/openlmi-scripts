@@ -42,6 +42,7 @@ from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common import formatter
+from lmi.scripts.common.formatter import command as fcmd
 from lmi.scripts.common.session import Session
 from lmi.scripts.common.command import base
 from lmi.scripts.common.command import meta
@@ -439,9 +440,9 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         """
         fmt = formatter.TableFormatter(self.app.stderr,
                 no_headings=self.app.config.no_headings)
-        command1 = formatter.NewTableCommand(
+        command1 = fcmd.NewTableCommand(
                 "There were %d errors" % len(errors))
-        command2 = formatter.NewTableHeaderCommand(("Host", "Error"))
+        command2 = fcmd.NewTableHeaderCommand(("Host", "Error"))
         fmt.produce_output((command1, command2))
         fmt.produce_output(errors)
 
@@ -549,7 +550,7 @@ class LmiBaseListerCommand(LmiSessionCommand):
                     % repr(session))
         for connection in session:
             if len(session) > 1:
-                command = formatter.NewHostCommand(connection.hostname)
+                command = fcmd.NewHostCommand(connection.hostname)
                 self.produce_output((command,))
             data = self.take_action(connection, args, kwargs)
             self.produce_output(data)
@@ -591,7 +592,7 @@ class LmiLister(LmiBaseListerCommand):
         res = self.execute_on_connection(connection, *args, **kwargs)
         columns = self.get_columns()
         if columns is not None:
-            command = formatter.NewTableHeaderCommand(columns)
+            command = fcmd.NewTableHeaderCommand(columns)
             self.formatter.produce_output((command,))
         return res
 
@@ -653,7 +654,7 @@ class LmiInstanceLister(LmiBaseListerCommand):
                 raise errors.LmiUnexpectedResult(
                         self.__class__, "(tuple, ...)", (cols, '...'))
             header = [c if isinstance(c, basestring) else c[0] for c in cols]
-            cmd = formatter.NewTableHeaderCommand(columns=header)
+            cmd = fcmd.NewTableHeaderCommand(columns=header)
             self.produce_output((cmd,))
             return [self.render((cols, inst)) for inst in data]
         else:
@@ -661,7 +662,7 @@ class LmiInstanceLister(LmiBaseListerCommand):
             if not hasattr(data, '__iter__'):
                 raise errors.LmiUnexpectedResult(
                         self.__class__, 'list or generator', data)
-            cmd = formatter.NewTableHeaderCommand(columns=cols)
+            cmd = fcmd.NewTableHeaderCommand(columns=cols)
             self.produce_output((cmd,))
             return [self.render(inst) for inst in data]
 
@@ -741,7 +742,7 @@ class LmiShowInstance(LmiSessionCommand):
         failures = []
         for connection in session:
             if len(session) > 1:
-                command = formatter.NewHostCommand(connection.hostname)
+                command = fcmd.NewHostCommand(connection.hostname)
                 self.produce_output(command)
             try:
                 self.produce_output(self.take_action(connection, args, kwargs))

@@ -34,8 +34,9 @@
 Logicalfile management functions.
 """
 
+from lmi.scripts.common import get_logger
 from lmi.scripts.common.errors import LmiFailed
-from lmi.scripts.common import get_logger, formatter
+from lmi.scripts.common.formatter import command as fcmd
 LOG = get_logger(__name__)
 
 def get_file_identification(file_instance):
@@ -192,7 +193,7 @@ def lf_show(ns, target):
 
     ident = uf.associators(AssocClass='LMI_FileIdentity')[0]
 
-    yield formatter.NewTableCommand(title=uf.Name)
+    yield fcmd.NewTableCommand(title=uf.Name)
     yield('Type', get_file_identification(ident))
     yield('Readable', ident.Readable)
     yield('Writeable', ident.Writeable)

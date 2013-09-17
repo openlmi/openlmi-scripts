@@ -54,6 +54,7 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import size2str, str2device
 from lmi.scripts.common import formatter
+from lmi.scripts.common.formatter import command as fcmd
 
 class Lister(command.LmiLister):
     COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Largest free region')
@@ -122,7 +123,7 @@ class Show(command.LmiLister):
             devices = [i[0] for i in ret]
         for device in devices:
             device = str2device(ns, device)
-            cmd = formatter.NewTableCommand(title=device.DeviceID)
+            cmd = fcmd.NewTableCommand(title=device.DeviceID)
             yield cmd
             for line in show.partition_table_show(
                     ns, device, self.app.config.human_friendly):

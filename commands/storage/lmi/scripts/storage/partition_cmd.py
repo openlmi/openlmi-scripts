@@ -176,7 +176,7 @@ class Show(command.LmiLister):
             partitions = partition.get_partitions(ns)
         for part in partitions:
             part = str2device(ns, part)
-            cmd = formatter.NewTableCommand(title=part.DeviceID)
+            cmd = fcmd.NewTableCommand(title=part.DeviceID)
             yield cmd
             for line in show.partition_show(ns, part,
                     self.app.config.human_friendly):

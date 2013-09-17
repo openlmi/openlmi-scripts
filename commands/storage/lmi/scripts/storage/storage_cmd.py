@@ -73,13 +73,14 @@ Commands:
                 and all dependent devices are shown.
 """
 
+from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
+from lmi.scripts.common import get_logger
+from lmi.scripts.common.formatter import command as fcmd
 from lmi.scripts.storage import show, fs
 from lmi.scripts.storage.common import (size2str, get_devices, get_children,
         get_parents, str2device)
 from lmi.scripts.storage.lvm import get_vgs
-from lmi.shell.LMIUtil import lmi_isinstance
-from lmi.scripts.common import formatter, get_logger
 LOG = get_logger(__name__)
 
 def get_device_info(ns, device, human_friendly):
@@ -163,7 +164,7 @@ class Show(command.LmiLister):
             devices = get_devices(ns)
         for dev in devices:
             dev = str2device(ns, dev)
-            cmd = formatter.NewTableCommand(title=dev.DeviceID)
+            cmd = fcmd.NewTableCommand(title=dev.DeviceID)
             yield cmd
             for line in show.device_show(ns, dev,
                     self.app.config.human_friendly):
@@ -186,7 +187,7 @@ class Depends(command.LmiLister):
         Implementation of 'device depends' command.
         """
         for device in devices:
-            yield formatter.NewTableCommand(title=device)
+            yield fcmd.NewTableCommand(title=device)
             for parent in  get_parents(ns, device, _deep):
                 yield get_obj_info(ns, parent, self.app.config.human_friendly)
 
@@ -206,7 +207,7 @@ class Provides(command.LmiLister):
         Implementation of 'device provides' command.
         """
         for device in devices:
-            yield formatter.NewTableCommand(title=device)
+            yield fcmd.NewTableCommand(title=device)
             for child in  get_children(ns, device, _deep):
                 yield get_obj_info(ns, child, self.app.config.human_friendly)
 

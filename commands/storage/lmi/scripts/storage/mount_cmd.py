@@ -81,8 +81,9 @@ Commands:
              attached to them. Optionally, show all mounted filesystems.
 """
 
-from lmi.scripts.common import command, get_logger, formatter
+from lmi.scripts.common import command, get_logger
 from lmi.scripts.common.errors import LmiFailed
+from lmi.scripts.common.formatter import command as fcmd
 from lmi.scripts.storage import mount
 
 
@@ -128,7 +129,7 @@ class Show(command.LmiLister):
         if all is False:
             transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
 
-        yield formatter.NewTableCommand('Mounted filesystems')
+        yield fcmd.NewTableCommand('Mounted filesystems')
         for mnt in mount.get_mounts(ns):
             # treat root specially (can be mounted twice - as a rootfs and with
             # a device)

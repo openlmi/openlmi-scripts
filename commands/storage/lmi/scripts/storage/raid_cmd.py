@@ -54,6 +54,7 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import raid, show
 from lmi.scripts.storage.common import str2device
 from lmi.scripts.common import formatter
+from lmi.scripts.common.formatter import command as fcmd
 
 class Lister(command.LmiLister):
     COLUMNS = ('DeviceID', 'Name', "Level", "Nr. of members")
@@ -120,7 +121,7 @@ class Show(command.LmiLister):
             devices = raid.get_raids(ns)
         for r in devices:
             r = str2device(ns, r)
-            cmd = formatter.NewTableCommand(title=r.DeviceID)
+            cmd = fcmd.NewTableCommand(title=r.DeviceID)
             yield cmd
             for line in show.raid_show(ns, r, self.app.config.human_friendly):
                 yield line

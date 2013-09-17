@@ -102,8 +102,8 @@ import itertools
 from lmi.scripts import software
 from lmi.scripts.common import command
 from lmi.scripts.common import errors
-from lmi.scripts.common import formatter
 from lmi.scripts.common import get_logger
+from lmi.scripts.common.formatter import command as fcmd
 
 LOG = get_logger(__name__)
 
@@ -389,7 +389,7 @@ class Verify(command.LmiLister):
 
         for_each_package_specs(ns, package_array, 'verify', _verify_identity)
         for identity, checks in failed_identity_checks:
-            yield formatter.NewTableCommand(title=identity.ElementName)
+            yield fcmd.NewTableCommand(title=identity.ElementName)
             for file_check in checks:
                 yield ( software.render_failed_flags(file_check.FailedFlags)
                       , file_check.Name)

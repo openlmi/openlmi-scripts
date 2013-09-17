@@ -36,6 +36,7 @@ expects different argument, please refer to doc string of particular class.
 """
 
 import itertools
+from lmi.scripts.common.formatter import command as fcmd
 
 class Formatter(object):
     """
@@ -44,7 +45,7 @@ class Formatter(object):
     It produces string representation of given argument and prints it.
 
     This formatter supports following commands:
-        :py:class:`NewHostCommand`.
+        :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`.
 
     :param file stream: Output stream.
     :param integer padding: Number of leading spaces to print at each line.
@@ -104,14 +105,15 @@ class Formatter(object):
         """
         Render and print given data.
 
-        Data can be also instance of :py:class:`FormatterCommand`, see
-        documentation of this class for list of allowed commands.
+        Data can be also instance of
+        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`,
+        see documentation of this class for list of allowed commands.
 
         This shall be overridden by subclasses.
 
         :param data: Any value to print. Subclasses may specify their
             requirements for this argument. It can be also am instance of
-            :py:class:`FormatterCommand`.
+            :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`.
         """
         self.print_line(str(data))
 
@@ -122,7 +124,9 @@ class ListFormatter(Formatter):
     items, one occupying single line (row).
 
     This formatter supports following commands:
-        NewHostCommand, NewTableCommand, NewTableHeaderCommand.
+        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewTableCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewTableHeaderCommand`
 
     The command must be provided as content of one row. This row is then not
     printed and the command is executed.
@@ -182,18 +186,20 @@ class ListFormatter(Formatter):
         """
         Prints list of rows.
 
-        There can be a :py:class:`FormatterCommand` instance instead of a row.
-        See documentation of this class for list of allowed commands.
+        There can be a
+        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`
+        instance instead of a row. See documentation of this class for list of
+        allowed commands.
 
         :param rows:  List of rows to print.
         :type rows: list or generator
         """
         for row in rows:
-            if isinstance(row, NewHostCommand):
+            if isinstance(row, fcmd.NewHostCommand):
                 self.print_host(row.hostname)
-            elif isinstance(row, NewTableCommand):
+            elif isinstance(row, fcmd.NewTableCommand):
                 self.print_table_title(row.title)
-            elif isinstance(row, NewTableHeaderCommand):
+            elif isinstance(row, fcmd.NewTableHeaderCommand):
                 self.column_names = row.columns
             else:
                 self.print_row(row)
@@ -208,9 +214,9 @@ class TableFormatter(ListFormatter):
     and the table is printed at once.
 
     This formatter supports following commands:
-        * :py:class:`NewHostCommand`
-        * :py:class:`NewTableCommand`
-        * :py:class:`NewTableHeaderCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewTableCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewTableHeaderCommand`
 
     The command must be provided as content of one row. This row is then not
     printed and the command is executed.
@@ -279,8 +285,10 @@ class TableFormatter(ListFormatter):
         """
         Prints list of rows.
 
-        There can be a :py:class:`FormatterCommand` instance instead of a row.
-        See documentation of this class for list of allowed commands.
+        There can be a
+        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`
+        instance instead of a row. See documentation of this class for list of
+        allowed commands.
 
         :param rows: List of rows to print.
         :type rows: list or generator
@@ -293,9 +301,9 @@ class CsvFormatter(ListFormatter):
     Renders data in a csv (Comma-separated values) format.
 
     This formatter supports following commands:
-        * :py:class:`NewHostCommand`
-        * :py:class:`NewTableCommand`
-        * :py:class:`NewTableHeaderCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewTableCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewTableHeaderCommand`
     """
 
     def render_value(self, val):
@@ -319,15 +327,17 @@ class SingleFormatter(Formatter):
     variables (attribute names).
 
     This formatter supports following commands:
-        * :py:class:`NewHostCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
     """
 
     def produce_output(self, data):
         """
         Render and print attributes of single item.
 
-        There can be a :py:class:`FormatterCommand` instance instead of a data. See
-        documentation of this class for list of allowed commands.
+        There can be a
+        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`
+        instance instead of a data. See documentation of this class for list
+        of allowed commands.
 
         :param data: Is either a pair of property names with list of values or
             a dictionary with property names as keys. Using the pair allows to
@@ -335,7 +345,7 @@ class SingleFormatter(Formatter):
             the properties will be sorted by the property names.
         :type data: tuple or dict
         """
-        if isinstance(data, NewHostCommand):
+        if isinstance(data, fcmd.NewHostCommand):
             self.print_host(data.hostname)
             return
 
@@ -360,7 +370,7 @@ class ShellFormatter(SingleFormatter):
     as a shell script.
 
     This formatter supports following commands:
-        * :py:class:`NewHostCommand`
+        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
     """
 
     def render_value(self, val):
@@ -374,34 +384,3 @@ class ShellFormatter(SingleFormatter):
             val = str(val)
         return val
 
-class FormatterCommand(object):
-    """
-    Base class for formatter commands.
-    """
-    pass
-
-class NewHostCommand(FormatterCommand):
-    """
-    Command for formatter to finish current table (if any), print
-    header for new host and (if there are any data) print table header.
-    """
-    def __init__(self, hostname):
-        self.hostname = hostname
-
-class NewTableCommand(FormatterCommand):
-    """
-    Command for formatter to finish current table (if any), print
-    the **title** and (if there are any data) print table header.
-    """
-    def __init__(self, title=None):
-        self.title = title
-
-class NewTableHeaderCommand(FormatterCommand):
-    """
-    Command for formatter to finish current table (if any), store new table
-    header and (if there are any data) print the table header.
-    The table header will be printed in all subsequent tables, until
-    new instance of this class arrives.
-    """
-    def __init__(self, columns=None):
-        self.columns = columns

@@ -131,7 +131,7 @@ class Show(command.LmiLister):
             lvs = lvm.get_lvs(ns)
         for lv in lvs:
             lv = str2device(ns, lv)
-            cmd = formatter.NewTableCommand(title=lv.DeviceID)
+            cmd = fcmd.NewTableCommand(title=lv.DeviceID)
             yield cmd
             for line in show.lv_show(ns, lv, self.app.config.human_friendly):
                 yield line
