@@ -101,6 +101,11 @@ endif
 
 clean:
 	-rm -rf $(BUILDDIR)/* modules/ api.rst commands.rst commands/
+ifneq ($(INCLUDE_COMMANDS), 0)
+	for cmd in $(COMMANDS); do \
+	    make -C $(COMMANDS_PATH)/$${cmd}/doc clean; \
+	done
+endif
 
 %.png: %.dia
 	dia -e $@ $<
