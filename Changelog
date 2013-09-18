@@ -1,3 +1,8 @@
+* added [Log] LogToConsole configuration option
+* added --notrace and --log-file options
+* logging configuration fixes
+* support for openlmi-python-base 0.2.1+
+
 0.2.1
 * compability fix for newer openlmi-tools
 * enhanced check_result() method invocation
