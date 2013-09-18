@@ -54,8 +54,6 @@ class Configuration(BaseConfiguration):
         options.
     """
 
-    CONFIG_FILE_PATH_TEMPLATE = BaseConfiguration.CONFIG_DIRECTORY_TEMPLATE + \
-            "lmi.conf"
     USER_CONFIG_FILE_PATH = "~/.lmirc"
 
     OUTPUT_SILENT  = -1
@@ -263,3 +261,12 @@ class Configuration(BaseConfiguration):
             value = bool(value)
         self._no_headings = value
 
+
+# There were some path changes in BaseConfiguration after 0.2.0 release.
+# Let's fallback to older variable name when the new one is not present.
+if hasattr(BaseConfiguration, 'CONFIG_DIRECTORY_TEMPLATE_PROVIDER'):
+    Configuration.CONFIG_FILE_PATH_TEMPLATE_PROVIDER = \
+            BaseConfiguration.CONFIG_DIRECTORY_TEMPLATE_PROVIDER + 'lmi.conf'
+else:   # fallback
+    Configuration.CONFIG_FILE_PATH_TEMPLATE = \
+            BaseConfiguration.CONFIG_DIRECTORY_TEMPLATE + 'lmi.conf'
