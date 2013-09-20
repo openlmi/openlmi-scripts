@@ -36,7 +36,23 @@ expects different argument, please refer to doc string of particular class.
 """
 
 import itertools
+import os
+
 from lmi.scripts.common.formatter import command as fcmd
+
+def get_terminal_width():
+    """
+    Get the number of columns of current terminal if attached to it. It
+    defaults to 79 characters.
+
+    :returns: Number of columns of attached terminal.
+    :rtype: integer
+    """
+    try:
+        term_cols = int(os.popen('stty size', 'r').read().split()[1])
+    except (IOError, OSError, ValueError):
+        term_cols = 79  # fallback
+    return term_cols
 
 class Formatter(object):
     """
@@ -60,6 +76,12 @@ class Formatter(object):
         self.out = stream
         self.padding = padding
         self.no_headings = no_headings
+        #: counter of hosts printed
+        self.host_counter = 0
+        #: counter of tables produced for current host
+        self.table_counter = 0
+        #: counter of lines producted for current table
+        self.line_counter = 0
 
     def render_value(self, val):
         """
@@ -90,6 +112,7 @@ class Formatter(object):
         """
         self.out.write(' ' * self.padding + line.format(*args, **kwargs))
         self.out.write("\n")
+        self.line_counter += 1
 
     def print_host(self, hostname):
         """
@@ -97,9 +120,17 @@ class Formatter(object):
 
         :param string hostname: Hostname to print.
         """
-        self.out.write("="*79 + "\n")
+        if (  self.host_counter > 0
+           or self.table_counter > 0
+           or self.line_counter > 0):
+            self.out.write("\n")
+        term_width = get_terminal_width()
+        self.out.write("="*term_width + "\n")
         self.out.write("Host: %s\n" % hostname)
-        self.out.write("="*79 + "\n")
+        self.out.write("="*term_width + "\n")
+        self.host_counter += 1
+        self.table_counter = 0
+        self.line_counter = 0
 
     def produce_output(self, data):
         """
@@ -116,6 +147,7 @@ class Formatter(object):
             :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`.
         """
         self.print_line(str(data))
+        self.line_counter += 1
 
 class ListFormatter(Formatter):
     """
@@ -135,7 +167,6 @@ class ListFormatter(Formatter):
     """
     def __init__(self, stream, padding=0, no_headings=False):
         super(ListFormatter, self).__init__(stream, padding, no_headings)
-        self.want_header = True
         self.column_names = None
 
     def print_text_row(self, row):
@@ -144,7 +175,8 @@ class ListFormatter(Formatter):
 
         :param tuple row: Data to print.
         """
-        self.out.write(self.render_value(row))
+        self.out.write(" "*self.padding + self.render_value(row) + "\n")
+        self.line_counter += 1
 
     def print_row(self, data):
         """
@@ -152,18 +184,9 @@ class ListFormatter(Formatter):
 
         :param tuple data: Data to print.
         """
-        if self.want_header:
+        if self.line_counter == 0 and not self.no_headings:
             self.print_header()
         self.print_text_row(data)
-
-    def print_host(self, hostname):
-        """
-        Prints header for new host.
-
-        :param string hostname: Hostname to print.
-        """
-        super(ListFormatter, self).print_host(hostname)
-        self.want_header = True
 
     def print_table_title(self, title):
         """
@@ -171,8 +194,11 @@ class ListFormatter(Formatter):
 
         :param string title: Title to print.
         """
-        self.out.write("\n%s:\n" % title)
-        self.want_header = True
+        if self.table_counter > 0 or self.line_counter > 0:
+            self.out.write('\n')
+        self.out.write("%s:\n" % title)
+        self.table_counter += 1
+        self.line_counter = 0
 
     def print_header(self):
         """ Print table header. """
@@ -180,7 +206,6 @@ class ListFormatter(Formatter):
             return
         if self.column_names:
             self.print_text_row(self.column_names)
-        self.want_header = False
 
     def produce_output(self, rows):
         """
@@ -232,6 +257,7 @@ class TableFormatter(ListFormatter):
             self.out.write(item)
             self.out.write(" ")
         self.out.write("\n")
+        self.line_counter += 1
 
     def print_stash(self):
         if not self.stash:
@@ -279,7 +305,11 @@ class TableFormatter(ListFormatter):
         :param string title: Title to print.
         """
         self.print_stash()
-        self.out.write("\n%s:\n" % title)
+        if self.table_counter > 0 or self.line_counter > 0:
+            self.out.write('\n')
+        self.out.write("%s:\n" % title)
+        self.table_counter += 1
+        self.line_counter = 0
 
     def produce_output(self, rows):
         """
@@ -319,6 +349,7 @@ class CsvFormatter(ListFormatter):
 
     def print_text_row(self, row):
         self.print_line(",".join(self.render_value(v) for v in row))
+        self.line_counter += 1
 
 class SingleFormatter(Formatter):
     """
@@ -363,6 +394,7 @@ class SingleFormatter(Formatter):
                     sorted(data.keys()))
         for name, value in dataiter:
             self.print_line("{0}={1}", name, value)
+            self.line_counter += 1
 
 class ShellFormatter(SingleFormatter):
     """
