@@ -22,7 +22,7 @@ By a *script* in this document we mean:
     package, where ``<profile_name>`` corresponds to a DMTF profile or an
     arbitrary set of ``OpenLMI`` providers.
   * Command wrappers for this library as a set of classes inheriting from
-    :py:class:`lmi.scripts.common.command.base.LmiBaseCommand`. These may
+    :py:class:`~lmi.scripts.common.command.base.LmiBaseCommand`. These may
     create a hierarchy of nested subcommands. They are the entry points of
     ``lmi`` meta-command to the wrapped functionality of library.
 
@@ -146,7 +146,7 @@ directly. Wrapper commands shall post-process instances or data returned,
 render useful information and print it on standard output stream.
 
 If operation fails due to some not-so-unexpected error, please use
-:py:class:`lmi.scripts.common.errors.LmiFailed` exception with human readable
+:py:class:`~lmi.scripts.common.errors.LmiFailed` exception with human readable
 description.
 
 For more *real world* examples, take a look on scripts already present in our
@@ -158,7 +158,7 @@ Command wrappers overview
 -------------------------
 They are a set of commands wrapping up library's functionality in a set of
 commands creating a tree invocable by ``lmi`` meta-command. All commands are
-subclasses of :py:class:`lmi.scripts.common.command.base.LmiBaseCommand`.
+subclasses of :py:class:`~lmi.scripts.common.command.base.LmiBaseCommand`.
 
 Behaviour of commands is controlled by class properties such as these: ::
 
@@ -332,7 +332,7 @@ string at the same time. It's  mentioned in point 2. ``Service`` is a name,
 which will be listed in ``entry_points`` dictionary described in section below
 (entry_points_). The global variable's name we assign to should be the same as
 the value of the first argument to
-:py:func:`lmi.scripts.common.command.helper.register_subcommands`. The last
+:py:func:`~lmi.scripts.common.command.helper.register_subcommands`. The last
 argument here is the dictionary mapping all subcommands of **service** to their
 names [#]_.
 
@@ -419,7 +419,7 @@ register single top-level command (see `Top-level commands`_) called
 ``service`` in ``lmi.scripts.cmd`` namespace. This particular namespace is used
 by ``lmi`` meta-command when searching of registered user commands. ``Service``
 is a command multiplexer, created with a call to
-:py:func:`lmi.scripts.common.command.helper.register_subcommands` grouping
+:py:func:`~lmi.scripts.common.command.helper.register_subcommands` grouping
 end-point commands together.
 
 Next example shows setup with more top-level commands

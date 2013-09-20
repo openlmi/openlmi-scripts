@@ -59,10 +59,9 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
 
     ``COMMANDS`` property will be translated to
     :py:meth:`LmiCommandMultiplexer.child_commands` class method by
-    :py:class:`lmi.scripts.common.command.meta.MultiplexerMetaClass`.
+    :py:class:`~.meta.MultiplexerMetaClass`.
 
-    Using metaclass:
-        :py:class:`lmi.scripts.common.command.meta.MultiplexerMetaClass`.
+    Using metaclass: :py:class:`.meta.MultiplexerMetaClass`.
     """
     __metaclass__ = meta.MultiplexerMetaClass
 
@@ -88,8 +87,7 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         Pass control to a subcommand identified by given name.
 
         :param string cmd_name: Name of direct subcommand, whose
-            :py:meth:`lmi.scripts.common.command.base.LmiBaseCommand.run`
-            method shall be invoked.
+            :py:meth:`~.base.LmiBaseCommand.run` method shall be invoked.
         :param list args: List of arguments for particular subcommand.
         :returns: Application exit code.
         :rtype: integer

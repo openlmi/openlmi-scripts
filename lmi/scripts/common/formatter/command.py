@@ -40,16 +40,20 @@ class FormatterCommand(object):
 
 class NewHostCommand(FormatterCommand):
     """
-    Command for formatter to finish current table (if any), print
-    header for new host and (if there are any data) print table header.
+    Command for formatter to finish current table (if any), print header for
+    new host and (if there are any data) print table header.
+
+    :param string hostname: Name of host appearing at the front of new table.
     """
     def __init__(self, hostname):
         self.hostname = hostname
 
 class NewTableCommand(FormatterCommand):
     """
-    Command for formatter to finish current table (if any), print
-    the **title** and (if there are any data) print table header.
+    Command for formatter to finish current table (if any), print the **title**
+    and (if there are any data) print table header.
+
+    :param string title: Optional title for new table.
     """
     def __init__(self, title=None):
         self.title = title
@@ -60,6 +64,8 @@ class NewTableHeaderCommand(FormatterCommand):
     header and (if there are any data) print the table header.
     The table header will be printed in all subsequent tables, until
     new instance of this class arrives.
+
+    :param tuple columns: Array of column names.
     """
     def __init__(self, columns=None):
         self.columns = columns

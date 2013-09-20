@@ -63,7 +63,8 @@ class Formatter(object):
     It produces string representation of given argument and prints it.
 
     This formatter supports following commands:
-        :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`.
+
+        * :py:class:`~.command.NewHostCommand`.
 
     :param file stream: Output stream.
     :param integer padding: Number of leading spaces to print at each line.
@@ -139,14 +140,15 @@ class Formatter(object):
         Render and print given data.
 
         Data can be also instance of
-        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`,
-        see documentation of this class for list of allowed commands.
+        :py:class:`~.command.FormatterCommand`, see
+        documentation of this class for list of
+        allowed commands.
 
         This shall be overridden by subclasses.
 
         :param data: Any value to print. Subclasses may specify their
             requirements for this argument. It can be also am instance of
-            :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`.
+            :py:class:`~.command.FormatterCommand`.
         """
         self.print_line(str(data))
         self.line_counter += 1
@@ -158,9 +160,9 @@ class ListFormatter(Formatter):
     items, one occupying single line (row).
 
     This formatter supports following commands:
-        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
-        * :py:class:`~lmi.scripts.common.formatter.command.NewTableCommand`
-        * :py:class:`~lmi.scripts.common.formatter.command.NewTableHeaderCommand`
+        * :py:class:`~.command.NewHostCommand`
+        * :py:class:`~.command.NewTableCommand`
+        * :py:class:`~.command.NewTableHeaderCommand`
 
     The command must be provided as content of one row. This row is then not
     printed and the command is executed.
@@ -213,13 +215,11 @@ class ListFormatter(Formatter):
         """
         Prints list of rows.
 
-        There can be a
-        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`
-        instance instead of a row. See documentation of this class for list of
-        allowed commands.
+        There can be a :py:class:`~.command.FormatterCommand` instance instead
+        of a row. See documentation of this class for list of allowed commands.
 
         :param rows:  List of rows to print.
-        :type rows: list or generator
+        :type rows: list, generator or :py:class:`.command.FormatterCommand`
         """
         for row in rows:
             if isinstance(row, fcmd.NewHostCommand):
@@ -241,9 +241,9 @@ class TableFormatter(ListFormatter):
     and the table is printed at once.
 
     This formatter supports following commands:
-        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
-        * :py:class:`~lmi.scripts.common.formatter.command.NewTableCommand`
-        * :py:class:`~lmi.scripts.common.formatter.command.NewTableHeaderCommand`
+        * :py:class:`~.command.NewHostCommand`
+        * :py:class:`~.command.NewTableCommand`
+        * :py:class:`~.command.NewTableHeaderCommand`
 
     The command must be provided as content of one row. This row is then not
     printed and the command is executed.
@@ -317,10 +317,8 @@ class TableFormatter(ListFormatter):
         """
         Prints list of rows.
 
-        There can be a
-        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`
-        instance instead of a row. See documentation of this class for list of
-        allowed commands.
+        There can be :py:class:`~.command.FormatterCommand` instance instead of
+        a row. See documentation of this class for list of allowed commands.
 
         :param rows: List of rows to print.
         :type rows: list or generator
@@ -333,9 +331,9 @@ class CsvFormatter(ListFormatter):
     Renders data in a csv (Comma-separated values) format.
 
     This formatter supports following commands:
-        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
-        * :py:class:`~lmi.scripts.common.formatter.command.NewTableCommand`
-        * :py:class:`~lmi.scripts.common.formatter.command.NewTableHeaderCommand`
+        * :py:class:`~.command.NewHostCommand`
+        * :py:class:`~.command.NewTableCommand`
+        * :py:class:`~.command.NewTableHeaderCommand`
     """
 
     def render_value(self, val):
@@ -355,22 +353,20 @@ class CsvFormatter(ListFormatter):
 
 class SingleFormatter(Formatter):
     """
-    Meant to render and print attributes of single object.
-    Attributes are rendered as a list of assignments of values to
-    variables (attribute names).
+    Meant to render and print attributes of single object. Attributes are
+    rendered as a list of assignments of values to variables (attribute names).
 
     This formatter supports following commands:
-        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
+        * :py:class:`~.command.NewHostCommand`
     """
 
     def produce_output(self, data):
         """
         Render and print attributes of single item.
 
-        There can be a
-        :py:class:`~lmi.scripts.common.formatter.command.FormatterCommand`
-        instance instead of a data. See documentation of this class for list
-        of allowed commands.
+        There can be a :py:class:`~.command.FormatterCommand` instance instead
+        of a data. See documentation of this class for list of allowed
+        commands.
 
         :param data: Is either a pair of property names with list of values or
             a dictionary with property names as keys. Using the pair allows to
@@ -404,7 +400,7 @@ class ShellFormatter(SingleFormatter):
     as a shell script.
 
     This formatter supports following commands:
-        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
+        * :py:class:`~.command.NewHostCommand`
     """
 
     def render_value(self, val):
@@ -421,8 +417,7 @@ class ShellFormatter(SingleFormatter):
 class ErrorFormatter(ListFormatter):
     """
     Render error strings for particular host. Supported commands:
-
-        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
+        * :py:class:`~.command.NewHostCommand`
     """
     def __init__(self, stream, padding=4):
         super(ErrorFormatter, self).__init__(stream, padding)

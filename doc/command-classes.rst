@@ -148,7 +148,7 @@ way as for ``LmiInstanceLister`` (see :ref:`lmi_show_instance_properties`).
 
 .. seealso::
     API documentation on
-    :py:class:`lmi.scripts.common.command.show.LmiShowInstance`
+    :py:class:`~lmi.scripts.common.command.show.LmiShowInstance`
 
 .. ****************************************************************************
 

@@ -502,9 +502,8 @@ class ShowInstanceMetaClass(SessionCommandMetaClass):
         ``PROPERTIES`` : ``tuple``
             List of instance properties to print. Optional property.
 
-    These are translated in a
-    :py:meth:`lmi.scripts.common.command.show.LmiShowInstance.render`,
-    which should be marked as abstract in base lister class.
+    These are translated in a :py:meth:`~.show.LmiShowInstance.render`, which
+    should be marked as abstract in base lister class.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -534,8 +533,8 @@ class CheckResultMetaClass(SessionCommandMetaClass):
             Value to compare against the return value. Mandatory property.
 
     ``EXPECT`` property is transformed into a
-    :py:meth:`lmi.scripts.common.command.checkresult.LmiCheckResult.check_result`
-    method taking two arguments ``(options, result)`` and returning a boolean.
+    :py:meth:``.checkresult.LmiCheckResult.check_result` method taking two
+    arguments ``(options, result)`` and returning a boolean.
     """
 
     def __new__(mcs, name, bases, dcl):

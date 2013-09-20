@@ -159,7 +159,7 @@ class LmiBaseCommand(object):
 
         :returns: List of command strings as given on command line up to this
             command.
-        :rtype: list 
+        :rtype: list
         """
         if self.parent is not None:
             return self.parent.cmd_name_args + [self.cmd_name]
@@ -240,4 +240,3 @@ class LmiBaseCommand(object):
         :rtype: integer
         """
         raise NotImplementedError("run method must be overriden in subclass")
-

@@ -73,8 +73,7 @@ class LmiCheckResult(LmiSessionCommand):
                    returned by ``docopt``.
                 2. result - Return value of associated function.
 
-    Using metaclass:
-        :py:class:`lmi.scripts.common.command.meta.CheckResultMetaClass`.
+    Using metaclass: :py:class:`~.meta.CheckResultMetaClass`.
     """
     __metaclass__ = meta.CheckResultMetaClass
 

@@ -139,7 +139,7 @@ def get_package_nevra(package):
     :param package: Instance or instance name of
         ``LMI_SoftwareIdentity`` representing package to install.
     :type package: :py:class:`lmi.shell.LMIInstance`
-        or :py:class:`lmi.schell.LMIInstanceName`
+        or :py:class:`lmi.shell.LMIInstanceName`
     :returns: Nevra string of particular package.
     :rtype: string
     """

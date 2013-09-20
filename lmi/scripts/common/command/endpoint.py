@@ -115,10 +115,10 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         ``FORMATTER`` : callable
             Default formatter factory for instances of given command. This
             factory accepts an output stream as the only parameter and returns
-            an instance of :py:class:`lmi.scripts.common.formatter.Formatter`.
+            an instance of :py:class:`~lmi.scripts.common.formatter.Formatter`.
 
     Using metaclass:
-        :py:class:`lmi.scripts.common.command.meta.EndPointCommandMetaClass`.
+        :py:class:`.meta.EndPointCommandMetaClass`.
     """
     __metaclass__ = meta.EndPointCommandMetaClass
 
@@ -181,7 +181,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         """
         Return instance of default formatter.
 
-        :rtype: :py:class:`lmi.scripts.common.formatter.Formatter`
+        :rtype: :py:class:`~lmi.scripts.common.formatter.Formatter`
         """
         if self._formatter is None:
             self._formatter = self.formatter_factory()(
@@ -232,7 +232,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
     def _preprocess_options(self, options):
         """
         This method may be overriden by
-        :py:class:`lmi.scripts.common.command.meta.EndPointCommandMetaClass`
+        :py:class:`~.meta.EndPointCommandMetaClass`
         as a result of processing ``ARG_ARRAY_SUFFIX`` and other properties
         modifying names of parsed options.
 
@@ -281,7 +281,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         """
         This method can be overriden in subclasses to check, whether the
         options given on command line are valid. If any flaw is discovered, an
-        :py:exc:`lmi.scripts.common.errors.LmiInvalidOptions` exception shall
+        :py:exc:`~lmi.scripts.common.errors.LmiInvalidOptions` exception shall
         be raised. Any returned value is ignored.
 
         .. note::
@@ -309,7 +309,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         formatter.
 
         :param data: Is an object expected by the
-            :py:meth:`lmi.scripts.common.formatter.Formatter.produce_output`
+            :py:meth:`~lmi.scripts.common.formatter.Formatter.produce_output`
             method of formatter.
         """
         self.formatter.produce_output(data)

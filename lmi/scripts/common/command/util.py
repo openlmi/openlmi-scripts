@@ -33,9 +33,15 @@ Utility functions used in command sub-package.
 
 import re
 
+#: Regular expression matching bracket argument such as ``<arg_name>``.
 RE_OPT_BRACKET_ARGUMENT = re.compile('^<(?P<name>[^>]+)>$')
+#: Regular expression matching argument written in upper case such as
+#:``ARG_NAME``.
 RE_OPT_UPPER_ARGUMENT = re.compile('^(?P<name>[A-Z]+(?:[_-][A-Z]+)*)$')
+#: Regular expression matching showt options. They are one character
+#: long, prefixed with single dash.
 RE_OPT_SHORT_OPTION = re.compile('^-(?P<name>[a-z])$', re.IGNORECASE)
+#: Regular expression matching long options (prefixed with double dash).
 RE_OPT_LONG_OPTION = re.compile('^--(?P<name>[a-z_-]+)$', re.IGNORECASE)
 
 def is_abstract_method(clss, method, missing_is_abstract=False):

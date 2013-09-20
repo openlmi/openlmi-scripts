@@ -139,7 +139,7 @@ Influencing properties:
     * ``CALLABLE`` (callable_)
 
 When command is invoked, its method
-:py:meth:`lmi.scripts.common.command.endpoint.LmiEndPointCommand.execute` will
+:py:meth:`~lmi.scripts.common.command.endpoint.LmiEndPointCommand.execute` will
 get verified and transformed options as positional and keyword arguments.
 This method shall pass them to an associated function residing in script
 library and return its result on completition.
@@ -172,7 +172,7 @@ Property descriptions
 
 ``CALLABLE`` : ``str`` (defaults to ``None``)
     This is a mandatory option if
-    :py:meth:`lmi.scripts.common.command.endpoint.LmiEndPointCommand.execute`
+    :py:meth:`~lmi.scripts.common.command.endpoint.LmiEndPointCommand.execute`
     method is not overriden. It may be a string composed of a full path of
     module and its callable delimited with ``':'``: ::
 
@@ -254,9 +254,9 @@ them.
     subclasses. Documentation string must be parseable with docopt_.
 
     ``COMMANDS`` property will be translated to
-    :py:meth:`lmi.scripts.common.command.multiplexer.LmiCommandMultiplexer.child_commands`
+    :py:meth:`~lmi.scripts.common.command.multiplexer.LmiCommandMultiplexer.child_commands`
     class method by
-    :py:class:`lmi.scripts.common.command.meta.MultiplexerMetaClass`.
+    :py:class:`~lmi.scripts.common.command.meta.MultiplexerMetaClass`.
 
 .. _lmi_lister_properties:
 
@@ -333,8 +333,8 @@ are rendered.
     Otherwise, only the ``data`` is expected.
 
     .. note::
-        Both :py:class:`lmi.scripts.common.command.show.LmiShowInstance`
-        and :py:class:`lmi.scripts.common.command.lister.LmiInstanceLister`
+        Both :py:class:`~lmi.scripts.common.command.show.LmiShowInstance`
+        and :py:class:`~lmi.scripts.common.command.lister.LmiInstanceLister`
         expect different ``data`` to be returned. See :ref:`lmi_show_instance`
         and :ref:`lmi_instance_lister` for more information.
 
@@ -368,7 +368,7 @@ definition of ``check_result()`` method.
 
         1. options - Dictionary with parsed command line options returned by
            docopt_ after being processed by
-           :py:meth:`lmi.scripts.common.command.endpoint.LmiEndPointCommand.transform_options`.
+           :py:meth:`~lmi.scripts.common.command.endpoint.LmiEndPointCommand.transform_options`.
         2. result - Return value of associated function.
 
 .. seealso::

@@ -18,7 +18,7 @@ Follows a list of sections with their list of options. Most of the options
 listed here can be overriden with command line parameters.
 
 .. seealso::
-    :py:mod:`lmi.scripts.common.configuration`
+    :py:mod:`~lmi.scripts.common.configuration`
 
 Section [Main]
 --------------

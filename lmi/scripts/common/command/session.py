@@ -48,8 +48,7 @@ class LmiSessionCommand(LmiEndPointCommand):
     """
     Base class for end-point commands operating upon a session object.
 
-    Using metaclass:
-        :py:class:`lmi.scripts.common.command.meta.SessionCommandMetaClass`.
+    Using metaclass: :py:class:`~.meta.SessionCommandMetaClass`.
     """
     __metaclass__ = meta.SessionCommandMetaClass
 
@@ -83,7 +82,7 @@ class LmiSessionCommand(LmiEndPointCommand):
         function, collect results and print it to standard output.
 
         :param session: Session object with set of hosts.
-        :type session: :py:class:`lmi.scripts.common.session.Session`
+        :type session: :py:class:`~lmi.scripts.common.session.Session`
         :param list args: Positional arguments to pass to associated function
             in command library.
         :param dictionary kwargs: Keyword arguments as a dictionary.
