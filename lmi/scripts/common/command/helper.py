@@ -41,7 +41,7 @@ def make_list_command(func,
         transform_func=None):
     """
     Create a command subclassed from
-    :py:class:`lmi.scripts.common.command.command.LmiLister`.
+    :py:class:`lmi.scripts.common.command.lister.LmiLister`.
     Please refer to this class for detailed usage.
 
     :param func: Contents of ``CALLABLE`` property.
@@ -50,13 +50,13 @@ def make_list_command(func,
         it will be made from the name of associated function.
     :param tuple columns: Contents of ``COLUMNS`` property.
     :param callable verify_func: Callable overriding
-        py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.verify_options`
+        py:meth:`lmi.scripts.common.command.endpoint.LmiEndPointCommand.verify_options`
         method.
     :param callable transform_func: Callable overriding
-        :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.transform_options`
+        :py:meth:`lmi.scripts.common.command.endpoint.LmiEndPointCommand.transform_options`
         method.
     :returns:  Subclass of
-        :py:class:`lmi.scripts.common.command.command.LmiLister`.
+        :py:class:`lmi.scripts.common.command.lister.LmiLister`.
     :rtype: type
     """
     if name is None:
@@ -83,7 +83,7 @@ def register_subcommands(command_name, usage, command_map):
     :param dictionary command_map: Dictionary of subcommands. Associates
         command names to their factories.
     :returns: Subclass of
-        :py:class:`lmi.scripts.common.command.command.LmiCommandMultiplexer`.
+        :py:class:`lmi.scripts.common.command.multiplexer.LmiCommandMultiplexer`.
     :rtype: type
     """
     props = { 'COMMANDS'   : command_map

@@ -46,7 +46,7 @@ methods:
 
     .. seealso::
         API doccumentation on
-        :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.verify_options`
+        :py:meth:`~lmi.scripts.common.command.endpoint.LmiEndPointCommand.verify_options`
 
 ``transform_options(self, options)``
     Takes verified options dictionary. It modifies this dictionary in
@@ -66,12 +66,12 @@ methods:
 
     .. seealso::
         API documentation on
-        :py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.transform_options`
+        :py:meth:`~lmi.scripts.common.command.endpoint.LmiEndPointCommand.transform_options`
 
 Above methods can be used to process options in a way that any script library
 function can be called. In case we need more control over what is called or
 when we want to decide at runtime which function shall be called, we may override
-:py:meth:`lmi.scripts.common.command.command.LmiEndPointCommand.execute` method
+:py:meth:`~lmi.scripts.common.command.endpoint.LmiEndPointCommand.execute` method
 instead. Example of this may be found at :ref:`associating_a_function`.
 
 .. _lmi_check_result:
@@ -90,7 +90,7 @@ Its specific properties are listed in :ref:`lmi_check_result_properties`.
 
 .. seealso::
     API documentation on
-    :py:class:`lmi.scripts.common.command.command.LmiCheckResult`
+    :py:class:`~lmi.scripts.common.command.checkresult.LmiCheckResult`
 
 .. _lmi_lister:
 
@@ -114,7 +114,7 @@ Where ``columns`` has the same meaning as ``COLUMNS`` as a class property and
 
 .. seealso::
     API documentation on
-    :py:class:`lmi.scripts.common.command.command.LmiLister`
+    :py:class:`~lmi.scripts.common.command.lister.LmiLister`
 
 .. _lmi_instance_lister:
 
@@ -135,7 +135,7 @@ Again, usage of generators is preferred.
 
 .. seealso::
     API documentation on
-    :py:class:`lmi.scripts.common.command.command.LmiInstanceLister`
+    :py:class:`~lmi.scripts.common.command.lister.LmiInstanceLister`
 
 .. _lmi_show_instance:
 
@@ -148,7 +148,7 @@ way as for ``LmiInstanceLister`` (see :ref:`lmi_show_instance_properties`).
 
 .. seealso::
     API documentation on
-    :py:class:`lmi.scripts.common.command.command.LmiShowInstance`
+    :py:class:`lmi.scripts.common.command.show.LmiShowInstance`
 
 .. ****************************************************************************
 

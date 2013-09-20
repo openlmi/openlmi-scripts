@@ -36,13 +36,13 @@ Tree of these commands build a command line interface for this library.
 """
 
 from lmi.scripts.common.command.base import LmiBaseCommand
-from lmi.scripts.common.command.command import LmiEndPointCommand
-from lmi.scripts.common.command.command import LmiSessionCommand
-from lmi.scripts.common.command.command import LmiCommandMultiplexer
-from lmi.scripts.common.command.command import LmiLister
-from lmi.scripts.common.command.command import LmiInstanceLister
-from lmi.scripts.common.command.command import LmiShowInstance
-from lmi.scripts.common.command.command import LmiCheckResult
+from lmi.scripts.common.command.checkresult import LmiCheckResult
+from lmi.scripts.common.command.endpoint import LmiEndPointCommand
+from lmi.scripts.common.command.lister import LmiInstanceLister
+from lmi.scripts.common.command.lister import LmiLister
+from lmi.scripts.common.command.multiplexer import LmiCommandMultiplexer
+from lmi.scripts.common.command.session import LmiSessionCommand
+from lmi.scripts.common.command.show import LmiShowInstance
 
 from lmi.scripts.common.command.helper import make_list_command
 from lmi.scripts.common.command.helper import register_subcommands

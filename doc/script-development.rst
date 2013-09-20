@@ -286,7 +286,8 @@ under particular *wish* like this:
     * ``sw show package``
 
 To reflect it in our commands definition hierarchy, we need to use
-:py:class:`lmi.scripts.common.command.command.LmiCommandMultiplexer` command.
+:py:class:`~lmi.scripts.common.command.multiplexer.LmiCommandMultiplexer`
+command.
 
 ::
 
