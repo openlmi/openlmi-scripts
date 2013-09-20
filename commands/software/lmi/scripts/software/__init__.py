@@ -158,6 +158,7 @@ def list_installed_packages(ns):
     for identity in ns.Linux_ComputerSystem.first_instance().associators(
             Role="System",
             ResultRole="InstalledSoftware",
+            AssocClass='LMI_InstalledSoftwareIdentity',
             ResultClass="LMI_SoftwareIdentity"):
         yield identity
 
@@ -194,7 +195,9 @@ def list_available_packages(ns,
                 ns.LMI_SoftwareIdentityResource.EnabledStateValues.Enabled:
             continue                  # skip disabled repositories
         for identity in repo.associators(
-                Role="AvailableSAP", ResultRole="ManagedElement",
+                Role="AvailableSAP",
+                ResultRole="ManagedElement",
+                AssocClass="LMI_ResourceForSoftwareIdentity",
                 ResultClass="LMI_SoftwareIdentity"):
             if not allow_installed and identity.InstallDate:
                 continue
@@ -375,6 +378,7 @@ def list_package_files(ns, package, file_type=None):
     for file_inst in package.associators(
             Role="Element",
             ResultRole="Check",
+            AssocClass="LMI_SoftwareIdentityChecks",
             ResultClass="LMI_SoftwareIdentityFileCheck"):
         if file_type is not None and file_inst.FileType != file_type:
             continue
@@ -478,6 +482,7 @@ def install_package(ns, package, force=False, update=False):
     installed = job.associators(
             Role='AffectingElement',
             ResultRole='AffectedElement',
+            AssocClass="LMI_AffectedSoftwareJobElement",
             ResultClass='LMI_SoftwareIdentity')
     if len(installed) < 1:
         raise LmiFailed('failed to find installed package "%s"' % nevra)
@@ -616,6 +621,7 @@ def verify_package(ns, package):
     failed = job.associators(
             Role='AffectingElement',
             ResultRole='AffectedElement',
+            AssocClass="LMI_AffectedSoftwareJobElement",
             ResultClass='LMI_SoftwareIdentityFileCheck')
     LOG().debug('verified package "%s" on remote host "%s" with %d failures',
             nevra, ns.connection.hostname, len(failed))
