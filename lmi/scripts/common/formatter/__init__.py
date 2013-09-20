@@ -37,7 +37,9 @@ expects different argument, please refer to doc string of particular class.
 
 import itertools
 import os
+import pywbem
 
+from lmi.scripts.common import errors
 from lmi.scripts.common.formatter import command as fcmd
 
 def get_terminal_width():
@@ -415,4 +417,40 @@ class ShellFormatter(SingleFormatter):
         else:
             val = str(val)
         return val
+
+class ErrorFormatter(ListFormatter):
+    """
+    Render error strings for particular host. Supported commands:
+
+        * :py:class:`~lmi.scripts.common.formatter.command.NewHostCommand`
+    """
+    def __init__(self, stream, padding=4):
+        super(ErrorFormatter, self).__init__(stream, padding)
+
+    def print_row(self, data):
+        if isinstance(data, Exception):
+            if isinstance(data, pywbem.CIMError):
+                self.print_text_row("%s: %s" % (data.args[1], data.message))
+            elif not isinstance(data, errors.LmiFailed):
+                self.print_text_row("(%s) %s" % (data.__class__.__name__,
+                    str(data)))
+            else:
+                self.print_text_row(data)
+        else:
+            self.print_text_row(data)
+
+    def print_host(self, hostname):
+        self.out.write("host %s\n" % hostname)
+        self.host_counter += 1
+        self.table_counter = 0
+        self.line_counter = 0
+
+    def produce_output(self, rows):
+        for row in rows:
+            if isinstance(row, fcmd.NewHostCommand):
+                self.print_host(row.hostname)
+            elif isinstance(row, fcmd.NewTableCommand):
+                self.print_table_title(row.title)
+            else:
+                self.print_row(row)
 
