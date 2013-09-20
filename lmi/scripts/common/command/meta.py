@@ -440,8 +440,8 @@ class EndPointCommandMetaClass(abc.ABCMeta):
            and len(argspec.args) < cls.dest_pos_args_count()):
             raise errors.LmiCommandInvalidCallable(
                     dcl['__module__'], name,
-                    'Callable must accept at least %d positional'
-                    ' arguments' % base.dest_pos_args_count())
+                    'Callable must accept at least %d positional arguments' %
+                    cls.dest_pos_args_count())
 
         return cls
 
@@ -560,8 +560,8 @@ class CheckResultMetaClass(SessionCommandMetaClass):
                         result = result.rval
                     passed = expect == result
                     if not passed:
-                        LOG().info('expected "%s", got "%s"', expected, result)
-                        return (False, '%s != %s' % (expected, result))
+                        LOG().info('expected "%s", got "%s"', expect, result)
+                        return (False, '%s != %s' % (expect, result))
                     return passed
                 _new_expect.expected = expect
             del dcl['EXPECT']
