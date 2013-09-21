@@ -598,7 +598,7 @@ class MultiplexerMetaClass(abc.ABCMeta):
                         'keys of COMMANDS dictionary must contain command'
                         ' names as strings')
             for cmd_name, cmd in cmds.items():
-                if not base.RE_COMMAND_NAME.match(cmd_name):
+                if not util.RE_COMMAND_NAME.match(cmd_name):
                     raise errors.LmiCommandInvalidName(
                             module_name, name, cmd_name)
                 if not issubclass(cmd, base.LmiBaseCommand):

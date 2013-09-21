@@ -43,6 +43,8 @@ RE_OPT_UPPER_ARGUMENT = re.compile('^(?P<name>[A-Z]+(?:[_-][A-Z]+)*)$')
 RE_OPT_SHORT_OPTION = re.compile('^-(?P<name>[a-z])$', re.IGNORECASE)
 #: Regular expression matching long options (prefixed with double dash).
 RE_OPT_LONG_OPTION = re.compile('^--(?P<name>[a-z_-]+)$', re.IGNORECASE)
+#: Command name can also be a single or double dash.
+RE_COMMAND_NAME = re.compile(r'^([a-z]+(-[a-z]+)*|--?)$')
 
 def is_abstract_method(clss, method, missing_is_abstract=False):
     """

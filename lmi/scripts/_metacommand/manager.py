@@ -38,6 +38,7 @@ from lmi.scripts.common import Configuration
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.command import base
+from lmi.scripts.common.command import util
 
 LOG = get_logger(__name__)
 
@@ -110,7 +111,7 @@ class CommandManager(object):
             Convenience function taking an entry point, making some name
             checks and adding it to registered commands.
             """
-            if not base.RE_COMMAND_NAME.match(epoint.name):
+            if not util.RE_COMMAND_NAME.match(epoint.name):
                 LOG().error('invalid command name: %s, ignoring', epoint.name)
                 return
             if epoint.name in self._commands:
@@ -139,7 +140,7 @@ class CommandManager(object):
             raise TypeError("name must be a string")
         if not issubclass(cmd_class, base.LmiBaseCommand):
             raise TypeError("cmd_class must be a LmiBaseCommand")
-        if not base.RE_COMMAND_NAME.match(name):
+        if not util.RE_COMMAND_NAME.match(name):
             raise errors.LmiCommandInvalidName(
                     cmd_class.__module__, cmd_class.__class__.__name__, name)
         if name in self._commands:

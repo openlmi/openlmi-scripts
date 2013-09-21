@@ -77,7 +77,7 @@ def options_dict2kwargs(options):
                 (util.RE_OPT_UPPER_ARGUMENT,   lambda m: m.group('name')),
                 (util.RE_OPT_SHORT_OPTION,     lambda m: m.group(0)),
                 (util.RE_OPT_LONG_OPTION,      lambda m: m.group(0)),
-                (base.RE_COMMAND_NAME,         lambda m: m.group(0))):
+                (util.RE_COMMAND_NAME,         lambda m: m.group(0))):
             match = reg.match(name)
             if match:
                 new_name = func(match)
@@ -86,6 +86,8 @@ def options_dict2kwargs(options):
             raise errors.LmiError(
                     'failed to convert argument "%s" to function option' %
                     name)
+        if new_name == '--':
+            continue    # ignore double dash
         new_name = opt_name_sanitize(new_name)
         if new_name in kwargs:
             raise errors.LmiError('option clash for "%s" and "%s", which both'

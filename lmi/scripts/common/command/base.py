@@ -38,7 +38,6 @@ import re
 # regular expression matching leading whitespaces not until the first line
 # containing non-white-spaces
 RE_LSPACES = re.compile(r'\A(\s*$.)*', re.DOTALL | re.MULTILINE)
-RE_COMMAND_NAME = re.compile(r'^[a-z]+(-[a-z]+)*$')
 
 class LmiBaseCommand(object):
     """
