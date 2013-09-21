@@ -255,7 +255,9 @@ class TableFormatter(ListFormatter):
     def print_text_row(self, row, column_size):
         for i in xrange(len(row)):
             size = column_size[i]
-            item = self.render_value(unicode(row[i]).ljust(size))
+            item = self.render_value(row[i])
+            if i < len(row) - 1:
+                item = item.ljust(size)
             self.out.write(item)
             self.out.write(" ")
         self.out.write("\n")
