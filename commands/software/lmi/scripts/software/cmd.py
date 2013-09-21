@@ -184,7 +184,10 @@ class FileLister(command.LmiInstanceLister):
     def execute(self, ns, package, _type=None):
         properties = [
                 ('Name'),
-                ('Type', lambda i: software.FILE_TYPES[i.FileType]),
+                ('Type', lambda i: 
+                         software.FILE_TYPES[i.FileType]
+                    if   i.FileExists
+                    else 'Missing'),
                 ('FileSize', lambda i: i.FileSize),
                 ('Passed', lambda i: len(i.FailedFlags) < 1)]
         if _type is not None:
