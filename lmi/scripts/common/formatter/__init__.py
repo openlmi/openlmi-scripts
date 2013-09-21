@@ -36,6 +36,7 @@ expects different argument, please refer to doc string of particular class.
 """
 
 import itertools
+import locale
 import os
 import pywbem
 
@@ -86,6 +87,19 @@ class Formatter(object):
         #: counter of lines producted for current table
         self.line_counter = 0
 
+    @property
+    def encoding(self):
+        """
+        Try to determine encoding for output terminal.
+
+        :returns: Encoding used to encode unicode strings.
+        :rtype: string
+        """
+        enc = getattr(self.out, 'encoding')
+        if not enc:
+            enc = locale.getpreferredencoding()
+        return enc
+
     def render_value(self, val):
         """
         Rendering function for single value.
@@ -95,7 +109,7 @@ class Formatter(object):
         :rtype: str
         """
         if isinstance(val, unicode):
-            return val.encode('utf-8')
+            return val.encode(self.encoding)
         if not isinstance(val, str):
             val = str(val)
         return val
@@ -341,7 +355,7 @@ class CsvFormatter(ListFormatter):
     def render_value(self, val):
         if isinstance(val, basestring):
             if isinstance(val, unicode):
-                val.encode('utf-8')
+                val.encode(self.encoding)
             val = '"%s"' % val.replace('"', '""')
         elif val is None:
             val = ''
@@ -408,7 +422,7 @@ class ShellFormatter(SingleFormatter):
     def render_value(self, val):
         if isinstance(val, basestring):
             if isinstance(val, unicode):
-                val.encode('utf-8')
+                val.encode(self.encoding)
             val = "'%s'" % val.replace("'", "\\'")
         elif val is None:
             val = ''
