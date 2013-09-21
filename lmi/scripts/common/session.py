@@ -153,7 +153,7 @@ class Session(object):
         :param string hostname: Name of host to get credentials for.
         :returns: Pair of ``(username, password)`` for given hostname. If no
             credentials were given for this host, ``('', '')`` is returned.
-        :rtype: tuple 
+        :rtype: tuple
         """
         username, password, verified = self._credentials[hostname]
         if (   not verified

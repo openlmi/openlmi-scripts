@@ -283,8 +283,12 @@ class Configuration(BaseConfiguration):
 # There were some path changes in BaseConfiguration after 0.2.0 release.
 # Let's fallback to older variable name when the new one is not present.
 if hasattr(BaseConfiguration, 'CONFIG_DIRECTORY_TEMPLATE_PROVIDER'):
-    Configuration.CONFIG_FILE_PATH_TEMPLATE_PROVIDER = \
-            BaseConfiguration.CONFIG_DIRECTORY_TEMPLATE_PROVIDER + 'lmi.conf'
+    setattr( Configuration
+           , 'CONFIG_FILE_PATH_TEMPLATE_PROVIDER'
+           , getattr(BaseConfiguration, 'CONFIG_DIRECTORY_TEMPLATE_PROVIDER')
+                + 'lmi.conf')
 else:   # fallback
-    Configuration.CONFIG_FILE_PATH_TEMPLATE = \
-            BaseConfiguration.CONFIG_DIRECTORY_TEMPLATE + 'lmi.conf'
+    setattr( Configuration
+           , 'CONFIG_FILE_PATH_TEMPLATE'
+           , getattr(BaseConfiguration, 'CONFIG_DIRECTORY_TEMPLATE')
+                + 'lmi.conf')
