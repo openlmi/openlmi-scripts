@@ -535,7 +535,7 @@ class CheckResultMetaClass(SessionCommandMetaClass):
             Value to compare against the return value. Mandatory property.
 
     ``EXPECT`` property is transformed into a
-    :py:meth:``.checkresult.LmiCheckResult.check_result` method taking two
+    :py:meth:`.checkresult.LmiCheckResult.check_result` method taking two
     arguments ``(options, result)`` and returning a boolean.
     """
 
