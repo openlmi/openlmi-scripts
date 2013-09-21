@@ -234,6 +234,8 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
                     LOG().error('failed to render property "%s": %s',
                             prop[0], exc)
                 value = "ERROR"
+        if value is None:
+            value = ''
         return prop_name, value
 
     if target_formatter_lister:
