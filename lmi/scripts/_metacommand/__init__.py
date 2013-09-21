@@ -97,17 +97,25 @@ class MetaCommand(object):
         Logging can be tuned in various ways:
 
             * In configuration file with options:
+                * [Main] Verbosity
                 * [Log] OutputFile
                 * [Log] FileFormat
                 * [Log] ConsoleFormat
+                * [Log] LogToConsole
             * With command line options:
-                * -v flags - each such flag increases logging level of
-                  what is logged into console
-                * -q - supress any output made to stdout
-                * --trace - whether exception tracebacks are shown
+                ``-v`` flags :
+                    Each such flag increases logging level of what is logged
+                    into console. This overrides `[Main] Verbosity` option.
+                ``-q`` :
+                    Causes supression of any output made to stdout except for
+                    critical messages. This overrides ``[Main] Verbosity``.
+                    option and ``-v`` flags.
+                ``--log-file`` :
+                    Output file for logging messages. This overrides ``[Log]
+                    OutputFile`` option.
 
-        Implicitly only warnings and errors are logged to the standard
-        error stream without any tracebacks.
+        Implicitly only warnings and errors are logged to the standard error
+        stream without any tracebacks.
         """
         util.setup_logging(self.config, self.stderr)
         if self.config.silent:
@@ -181,21 +189,24 @@ class MetaCommand(object):
         if options['--config-file']:
             conf_kwargs['user_config_file_path'] = options.pop('--config-file')
         self.config = Configuration.get_instance(**conf_kwargs)
-        self.config.trace = options.pop('--trace', False)
-        if options['--quiet']:
+        # two mutually exclusive options
+        if options['--trace'] or options['--notrace']:
+            self.config.trace = bool(options['--trace'])
+        if options.pop('--quiet', False):
             self.config.verbosity = Configuration.OUTPUT_SILENT
         elif options['-v'] and options['-v'] > 0:
             self.config.verbosity = options['-v']
-        if options['--noverify']:
+        if options.pop('--noverify', False):
             self.config.verify_server_cert = False
         self._configure_logging()
-        del options['--quiet']
+        del options['--trace']
+        del options['--notrace']
         del options['-v']
-        del options['--noverify']
         self.config.namespace = options.pop('--namespace', None)
         self.config.human_friendly = options.pop('--human-friendly', None)
         self.config.no_headings = options.pop('--no-headings', None)
         self.config.lister_format = options.pop('--lister-format', None)
+        self.config.log_file = options.pop('--log-file', None)
         # unhandled options may be used later (for session creation),
         # so let's save them
         self._options = options

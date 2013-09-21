@@ -91,36 +91,36 @@ def setup_logging(app_config, stderr=sys.stderr):
     cfg = DEFAULT_LOGGING_CONFIG.copy()
 
     # Set up logging to a file
-    log_file = None
-    if app_config.config.has_option('Log', 'OutputFile'):
-        # avoid warning for missing/unconfigured option
-        log_file = app_config.get_safe('Log', 'OutputFile')
-        if log_file is not None:
-            cfg['handlers']['file']['filename'] = log_file
-            cfg['formatters']['file']['format'] = app_config.get_safe(
-                    'Log', 'FileFormat', raw=True)
-            try:
-                cfg['handlers']['file']['level'] = \
-                        getattr(logging, app_config.logging_level.upper())
-            except KeyError:
-                LOG().error('unsupported logging level: "%s"',
-                        app_config.logging_level)
-            cfg['root']['handlers'].append('file')
-    if log_file is None:
+    if app_config.log_file:
+        cfg['handlers']['file']['filename'] = app_config.log_file
+        cfg['formatters']['file']['format'] = app_config.get_safe(
+                'Log', 'FileFormat', raw=True)
+        try:
+            cfg['handlers']['file']['level'] = \
+                    getattr(logging, app_config.logging_level.upper())
+        except KeyError:
+            LOG().error('unsupported logging level: "%s"',
+                    app_config.logging_level)
+        cfg['root']['handlers'].append('file')
+    else:
         del cfg['formatters']['file']
         del cfg['handlers']['file']
 
-    # Set up logging to console
-    if stderr is not sys.stderr:
-        cfg['handlers']['console']['stream'] = stderr
-    cfg['handlers']['console']['level'] = {
-            Configuration.OUTPUT_SILENT  : logging.ERROR,
-            Configuration.OUTPUT_WARNING : logging.WARNING,
-            Configuration.OUTPUT_INFO    : logging.INFO,
-            Configuration.OUTPUT_DEBUG   : logging.DEBUG,
-        }.get(app_config.verbosity)
-    cfg['formatters']['console']['format'] = app_config.get_safe(
-            'Log', 'ConsoleFormat', raw=True)
+    if app_config.get_safe('Log', "LogToConsole", bool):
+        # Set up logging to console
+        if stderr is not sys.stderr:
+            cfg['handlers']['console']['stream'] = stderr
+        cfg['handlers']['console']['level'] = {
+                Configuration.OUTPUT_SILENT  : logging.CRITICAL,
+                Configuration.OUTPUT_WARNING : logging.WARNING,
+                Configuration.OUTPUT_INFO    : logging.INFO,
+                Configuration.OUTPUT_DEBUG   : logging.DEBUG,
+            }.get(app_config.verbosity)
+        cfg['formatters']['console']['format'] = app_config.get_safe(
+                'Log', 'ConsoleFormat', raw=True)
+    else:
+        del cfg['handlers']['console']
+        cfg['root']['handlers'].remove('console')
 
     logging.config.dictConfig(cfg)
 

@@ -40,8 +40,9 @@ Works also in interactive mode which is entered, when <command> argument is
 omitted.
 
 Usage:
-    %(cmd)s [options] [-v]... [-h <host>]... <command> [<args> ...]
-    %(cmd)s [options] [-v]... [-h <host>]...
+    %(cmd)s [options] [(--trace | --notrace)] [-v]... [-h <host>]...
+        <command> [<args> ...]
+    %(cmd)s [options] [(--trace | --notrace)] [-v]... [-h <host>]...
     %(cmd)s (--help | --version)
 
 Options:
@@ -56,7 +57,9 @@ Options:
     -n --noverify             Do not verify cimom's ssl certificate.
     -v                        Increase verbosity of output.
     --trace                   Show tracebacks on errors.
+    --notrace                 Suppress tracebacks for exceptions.
     -q --quiet                Supress output except for errors.
+    --log-file <log_file>     Output file for logging messages.
     --namespace <namespace>   Default CIM namespace to use.
     -N --no-headings          Don't print table headings.
     -H --human-friendly       Print large values in human friendly units (i.e.

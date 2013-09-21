@@ -68,13 +68,14 @@ class Configuration(BaseConfiguration):
     def __init__(self, user_config_file_path=USER_CONFIG_FILE_PATH, **kwargs):
         self._user_config_file_path = os.path.expanduser(user_config_file_path)
         BaseConfiguration.__init__(self, **kwargs)
-        self._verbosity = self.OUTPUT_WARNING
-        self._trace = False
+        self._verbosity = None
+        self._trace = None
         self._verify_server_cert = None
         self._cim_namespace = None
         self._human_friendly = None
         self._lister_format = None
         self._no_headings = None
+        self._log_file = None
 
     @classmethod
     def provider_prefix(cls):
@@ -95,6 +96,8 @@ class Configuration(BaseConfiguration):
         defaults['ConsoleFormat'] = "%(levelname)s: %(message)s"
         defaults['FileFormat'] = \
                 "%(asctime)s:%(levelname)-8s:%(name)s:%(lineno)d - %(message)s"
+        defaults['LogToConsole'] = 'True'
+        defaults['OutputFile'] = ''
         # [SSL] options
         defaults['VerifyServerCertificate'] = 'True'
         # [Format] options
@@ -141,9 +144,9 @@ class Configuration(BaseConfiguration):
     @property
     def trace(self):
         """ Whether the tracebacks shall be printed upon errors. """
-        if self._trace:
+        if self._trace is not None:
             return self._trace
-        return self.get_safe('Main', 'Trace', bool, False)
+        return self.get_safe('Main', 'Trace', bool)
 
     @trace.setter
     def trace(self, trace):
@@ -161,7 +164,7 @@ class Configuration(BaseConfiguration):
     def verbosity(self):
         """ Return integer indicating verbosity level of output to console. """
         if self._verbosity is None:
-            return self.get_safe('Main', 'Verbosity', int, self.OUTPUT_WARNING)
+            return self.get_safe('Main', 'Verbosity', int)
         return self._verbosity
 
     @verbosity.setter
@@ -175,6 +178,22 @@ class Configuration(BaseConfiguration):
             elif level > self.OUTPUT_DEBUG:
                 level = self.OUTPUT_DEBUG
         self._verbosity = level
+
+    # *************************************************************************
+    # [Log] options
+    # *************************************************************************
+    @property
+    def log_file(self):
+        """ Path to a file, where logging messages shall be written. """
+        if self._log_file is None:
+            return self.get_safe('Log', 'OutputFile')
+        return self._log_file
+    @log_file.setter
+    def log_file(self, log_file):
+        """ Override logging file path. """
+        if log_file is not None and not isinstance(log_file, basestring):
+            raise TypeError("log_file must be a string")
+        self._log_file = log_file
 
     # *************************************************************************
     # [SSL] options
@@ -260,7 +279,6 @@ class Configuration(BaseConfiguration):
         if value is not None:
             value = bool(value)
         self._no_headings = value
-
 
 # There were some path changes in BaseConfiguration after 0.2.0 release.
 # Let's fallback to older variable name when the new one is not present.
