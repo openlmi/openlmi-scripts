@@ -138,7 +138,8 @@ class LmiSessionCommand(LmiEndPointCommand):
         supposed to do any summary work upon results from all hosts. By default
         it just prints errors in a form of list.
 
-        :param :py:class:`lmi.scripts.common.session.Session` session.
+        :param session: Session object.
+        :type session: :py:class:`lmi.scripts.common.session.Session`
         :param dictionary results: Dictionary of form: ::
 
                 { 'hostname' : (success_flag, result), ... }

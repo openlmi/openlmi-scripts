@@ -88,13 +88,14 @@ class LmiCheckResult(LmiSessionCommand):
         """
         Check the returned value of associated function.
 
-        :param options: (``dict``) Dictionary as returned by ``docopt`` parser
-            after running ``transform_options()``.
+        :param dictionary options: Dictionary as returned by ``docopt`` parser
+            after running
+            :py:meth:`~.endpoint.LmiEndPointCommand.transform_options`.
         :param result: Any return value that will be compared against what is
             expected.
-        :rtype: (``bool`` or ``tuple``) Whether the result is expected value or
-            not. If ``tuple`` is returned, it contains
-            ``(passed_flag, error_description)``.
+        :returns:  Whether the result is expected value or not. If ``tuple``
+            is returned, it contains ``(passed_flag, error_description)``.
+        :rtype: boolean or tuple.
         """
         raise NotImplementedError("check_result must be overriden in subclass")
 
