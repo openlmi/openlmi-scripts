@@ -64,6 +64,32 @@ algorithm:
 Points 3 and 4 could be merged into one. But we separate them due to effects
 of ``OPT_NO_UNDERSCORES`` property described below.
 
+Treating dashes
+~~~~~~~~~~~~~~~
+Single dash and double dash are special cases of commands.
+
+Double dash in usage string allows to pass option-like argument to a script
+e.g.: ::
+
+    lmi file show -- --file-prefix-with-double-dash
+
+Without the ``'--'`` argument prefixing the file, docopt_ would throw an error
+beacause of ``--file-prefix-with-double-dash`` being treated as an unknown
+option. This way it's correctly treated as an argument ``<file>`` given the
+usage string: ::
+
+    Usage: %(cmd)s file show [--] <file>
+
+Double dash isn't be passed to an associated function.
+
+Single dash on a command line is commonly used to specify stdout or stding. For
+example in the following snippet: ::
+
+    Usage: %(cmd)s file copy (- | <file>) <dest>
+
+``'-'`` stands for standard input which will be read instead of a file if the
+user wishes to.
+
 Property descriptions
 ~~~~~~~~~~~~~~~~~~~~~
 .. _opt_no_underscores:
