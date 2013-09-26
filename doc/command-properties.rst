@@ -64,6 +64,11 @@ algorithm:
 Points 3 and 4 could be merged into one. But we separate them due to effects
 of ``OPT_NO_UNDERSCORES`` property described below.
 
+.. seealso::
+    Notes in :ref:`end-point_commands` for method
+    :py:meth`lmi.scripts.common.command.endpoint.LmiEndPointCommand.transform_options`
+    which is issued before the above algorithm is run.
+
 Treating dashes
 ~~~~~~~~~~~~~~~
 Single dash and double dash are special cases of commands.
@@ -376,11 +381,12 @@ are rendered.
 
 ``LmiCheckResult`` properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This command typically does not produce any output if operation succeeds.
-The operation succeeds if the result of associated function is
-expected. There are more ways how to say what is an expected result.
-One way is to use ``EXPECT`` property. The other is to provide very own
-definition of ``check_result()`` method.
+This command typically does not produce any output if operation succeeds. The
+operation succeeds if the result of associated function is expected. There are
+more ways how to say what is an expected result. One way is to use ``EXPECT``
+property. The other is to provide very own implementation of
+:py:class:`~lmi.scripts.common.command.checkresult.LmiCheckResult.check_result`
+method.
 
 .. _expect:
 
@@ -396,6 +402,44 @@ definition of ``check_result()`` method.
            docopt_ after being processed by
            :py:meth:`~lmi.scripts.common.command.endpoint.LmiEndPointCommand.transform_options`.
         2. result - Return value of associated function.
+
+    If the associated function does not return an expected result, an error
+    such as: ::
+
+        There was 1 error:
+        host kvm-fedora-20
+            0 != 1
+
+    will be presented to user which is not much helpful. To improve user
+    experience, the
+    :py:class:`~lmi.scripts.common.command.checkresult.LmiCheckResult.check_result`
+    method could be implemented instead. Note the example: ::
+
+        class Update(command.LmiCheckResult):
+            ARG_ARRAY_SUFFIX = '_array'
+
+            def check_result(self, options, result):
+                """
+                :param list result: List of packages successfuly installed
+                    that were passed as an ``<package_array>`` arguments.
+                """
+                if options['<package_array>'] != result:
+                    return (False, ('failed to update packages: %s' %
+                            ", ".join( set(options['<package_array>'])
+                                     - set(result))))
+                return True
+
+    The ``execute()`` method is not listed to make the listing shorter. This
+    command could be used with usage string such as: ::
+
+        %(cmd)s update [--force] [--repoid <repository>] <package> ...
+
+    In case of a failure, this would produce output like this one: ::
+
+        $ lmi sw update wt wt-doc unknownpackage
+        There was 1 error:
+        host kvm-fedora-20
+            failed to update packages: unknownpackage
 
 .. seealso::
 
