@@ -90,9 +90,9 @@ class Restart(command.LmiCheckResult):
     def transform_options(self, options):
         """
         ``try`` is a keyword argument in python, let's rename it to
-        ``just_try``.
+        ``just-try`` which will be transformed into ``just_try``.
         """
-        options['just_try'] = options.pop('--try')
+        options['just-try'] = options.pop('--try')
 
 class Reload(command.LmiCheckResult):
     EXPECT = 0
