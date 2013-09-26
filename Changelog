@@ -1,3 +1,4 @@
+0.2.2
 * double and single dash can now be used in usage strings
 * fixed error handling
 * improved logging of errors - handled the same way for all commands
