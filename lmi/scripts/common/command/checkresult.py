@@ -122,6 +122,8 @@ class LmiCheckResult(LmiSessionCommand):
             elif not passed and hasattr(self.check_result, 'expected'):
                 err = _make_result_failed(self.check_result.expected, result)
                 raise err
+        except LmiResultFailed:
+            raise
         except Exception as err:
             if self.app.config.trace:
                 LOG().exception("failed to execute wrapped function")
