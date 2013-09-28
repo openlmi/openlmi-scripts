@@ -52,6 +52,12 @@ library documents into the global documentation.
    document for python reference.
  * `index.rst` binds all the other files together.
 
+### Generating it
+You may use `make_new.py` script to generate whole directory structure with
+regard to provided data. See its help message:
+
+    $ ./make_new.py --help
+
 Setup file
 ----------
 Allows to install command python egg and register their exported commands to
