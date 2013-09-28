@@ -1,24 +1,23 @@
-!!!!!!!!!
-.. This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
-!!!!!!!!!
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
+    !!!!!!!!!
 
-device
-------
+fs
+--
 
-Basic device information.
+Filesystem and other data format management.
 
 
 **Usage:**
 
-    **lmi** **device** **list** [ \ *<device>*\  ...]
+    **lmi** **fs** **list** [\ **--all**\ ] [ \ *<device>*\  ...]
 
-    **lmi** **device** **show** [ \ *<device>*\  ...]
+    **lmi** **fs** **create** [ \ **--label**\ =\ *<label>*\  ] \ *<fstype>*\   \ *<device>*\  ...
 
-    **lmi** **device** **depends** [ \ **--deep**\  ] [ \ *<device>*\  ...]
+    **lmi** **fs** **delete** \ *<device>*\  ...
 
-    **lmi** **device** **provides** [ \ **--deep**\  ] [ \ *<device>*\  ...]
-
-    **lmi** **device** **tree** [ \ *<device>*\  ]
+    **lmi** **fs** list-supported
 
 
 
@@ -26,77 +25,32 @@ Basic device information.
 
 
     **list**
-        List short information about given device. If no devices
-        are given, all devices are listed.
-
-
-    **show**
-        Show detailed information about given devices. If no devices
-        are provided, all of them are displayed.
-
-
-    **provides**
-        Show devices, which are created from given devices
-        (= show children of the devices).
-
-        For example, if disk is provided, all partitions on it are
-        returned. If 'deep' is used, all RAIDs, Volume Groups and
-        Logical Volumes indirectly allocated from it are returned too.
-
-
-    **depends**
-        Show devices, which are required by given devices to operate
-        correctly (= show parents of the devices).
-
-        For example, if a Logical Volume is provided, its Volume Group
-        is returned. If 'deep' is used, also all Physical Volumes and
-        disk are returned.
-
-
-    **tree**
-        Show tree of devices, similar to lsblk.
-        (Note that the output is really crude and needs to be worked
-        on).
-
-        If no device is provided, all devices are shown, starting
-        with physical disks.
-
-        If a device is provided, tree starts with the device
-        and all dependent devices are shown.
-
-partition-table
----------------
-
-Partition management.
-
-
-**Usage:**
-
-    **lmi** **partition-table** **list** [ \ *<device>*\  ...]
-
-    **lmi** **partition-table** **create** [ \ **--gpt**\  | \ **--msdos**\  ] \ *<device>*\  ...
-
-    **lmi** **partition-table** **show**  [ \ *<device>*\  ...]
-
-
-
-**Commands:**
-
-
-    **list**
-        List partition tables on given device.
-        If no devices are provided, all partition tables are listed.
+        List filesystems and and other data formats (RAID metadata, ...)
+        on given devices.
+        If no devices are provided, all filesystems are listed.
+        If --all option is set, all filesystem, including system ones
+        like tmpfs, cgroups, procfs, sysfs etc are listed.
 
 
     **create**
-        Create a partition table on given devices. The devices must be
-        empty, i.e. must not have any partitions on them. GPT partition
-        table is created by default.
+        Format device(s) with given filesystem.
+        If more devices are given, the filesystem will span
+        over these devices (currently supported only by btrfs).
+
+        For list of available filesystem types, see output of
+        lmi fs list-supported.
 
 
-    **show**
-        Show detailed information about partition table on given
-        devices. If no devices are provided, all of them are displayed.
+    **delete**
+        Delete given filesystem or data format (like partition table,
+        RAID metadata, LUKS, physical volume metadata etc)
+        on given devices.
+
+
+    **list-supported**
+        
+        List supported filesystems, which can be used as
+        lmi fs create <fstype> option.
 
 partition
 ---------
@@ -167,6 +121,40 @@ Partition management.
     **--extended**
         Override the automatic behavior and request extended partition.
 
+partition-table
+---------------
+
+Partition management.
+
+
+**Usage:**
+
+    **lmi** **partition-table** **list** [ \ *<device>*\  ...]
+
+    **lmi** **partition-table** **create** [ \ **--gpt**\  | \ **--msdos**\  ] \ *<device>*\  ...
+
+    **lmi** **partition-table** **show**  [ \ *<device>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List partition tables on given device.
+        If no devices are provided, all partition tables are listed.
+
+
+    **create**
+        Create a partition table on given devices. The devices must be
+        empty, i.e. must not have any partitions on them. GPT partition
+        table is created by default.
+
+
+    **show**
+        Show detailed information about partition table on given
+        devices. If no devices are provided, all of them are displayed.
+
 raid
 ----
 
@@ -203,43 +191,6 @@ MD RAID management.
     **show**
         Show detailed information about given MD RAID devices. If no
         devices are provided, all MD RAID devices are displayed.
-
-vg
---
-
-Volume Group management.
-
-
-**Usage:**
-
-    **lmi** **vg** list
-
-    **lmi** **vg** **create** [ \ **--extent-size**\ =\ *<size>*\  ] \ *<name>*\  \ *<device>*\  ...
-
-    **lmi** **vg** **delete** \ *<vg>*\  ...
-
-    **lmi** **vg** **show** [ \ *<vg>*\  ...]
-
-
-
-**Commands:**
-
-
-    **list**
-        List all volume groups on the system.
-
-
-    **create**
-        Create Volume Group with given name from list of devices.
-
-
-    **delete**
-        Delete given Volume Groups.
-
-
-    **show**
-        Show detailed information about given Volume Groups. If no
-        Volume Groups are provided, all of them are displayed.
 
 lv
 --
@@ -283,21 +234,21 @@ Logical Volume management.
         Show detailed information about given Logical Volumes. If no
         Logical Volumes are provided, all of them are displayed.
 
-fs
+vg
 --
 
-Filesystem and other data format management.
+Volume Group management.
 
 
 **Usage:**
 
-    **lmi** **fs** **list** [\ **--all**\ ] [ \ *<device>*\  ...]
+    **lmi** **vg** list
 
-    **lmi** **fs** **create** [ \ **--label**\ =\ *<label>*\  ] \ *<type>*\   \ *<device>*\  ...
+    **lmi** **vg** **create** [ \ **--extent-size**\ =\ *<size>*\  ] \ *<name>*\  \ *<device>*\  ...
 
-    **lmi** **fs** **delete** \ *<device>*\  ...
+    **lmi** **vg** **delete** \ *<vg>*\  ...
 
-    **lmi** **fs** list-supported
+    **lmi** **vg** **show** [ \ *<vg>*\  ...]
 
 
 
@@ -305,30 +256,26 @@ Filesystem and other data format management.
 
 
     **list**
-        List filesystems and and other data formats (RAID metadata, ...)
-        on given devices.
-        If no devices are provided, all filesystems are listed.
-        If --all option is set, all filesystem, including system ones
-        like tmpfs, cgroups, procfs, sysfs etc are listed.
+        List all volume groups on the system.
 
 
     **create**
-        Format device(s) with given filesystem.
-        If more devices are given, the filesystem will span
-        over these devices (currently supported only by btrfs).
-
-        For list of available filesystem types, see output of
-        lmi fs list-supported.
+        Create Volume Group with given name from list of devices.
 
 
     **delete**
-        Delete given filesystem or data format (like partition table,
-        RAID metadata, LUKS, physical volume metadata etc)
-        on given devices.
+        Delete given Volume Groups.
 
 
-    **list-supported**
-        
-        List supported filesystems, which can be used as
-        lmi fs create <type> option.
+    **show**
+        Show detailed information about given Volume Groups. If no
+        Volume Groups are provided, all of them are displayed.
+
+storage
+-------
+
+
+mount
+-----
+
 

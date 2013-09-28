@@ -6,6 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+COMMAND_NAME := storage
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -14,7 +15,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext cmdregen cmdline.generated
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -40,16 +41,25 @@ help:
 	@echo " "
 	@echo "  cmdregen   to regenerate cmdline.generate with actual content from installed lmi help"
 
-cmdregen:
+cmdregen: cmdline.generated
+
+cmdline.generated:
+	if ! python -c 'import lmi.scripts.$(COMMAND_NAME)' >/dev/null; then \
+	    echo "Please install install the command library first." >&2; \
+	    exit 1; \
+	fi
 	( \
-	echo "!!!!!!!!!"; \
-	echo ".. This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
-	echo "!!!!!!!!!"; \
-	echo ;\
-	for i in device partition-table partition raid vg lv fs; \
-		do lmi help $$i | python ../../../tools/help2rst $$i | tr -d '\033' |sed 's/..1034h//' ;  \
+	echo ".."; \
+	echo "    !!!!!!!!!"; \
+	echo "    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
+	echo "    !!!!!!!!!"; \
+	echo ; \
+	for i in `sed -n '/entry_points/,/)/p' ../setup.py | \
+			sed -n "s/\s*,\?['\"]\s*\([a-z-]\+\)\s*=.*/\1/p"`; do \
+		lmi help $$i | python ../../../tools/help2rst $$i | \
+			tr -d '\033' |sed 's/..1034h//';  \
 	done \
-	) > cmdline.generated
+	) > $@
 
 clean:
 	-rm -rf $(BUILDDIR)/*
