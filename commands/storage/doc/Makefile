@@ -50,9 +50,9 @@ cmdline.generated:
 	fi
 	( \
 	echo ".."; \
-	echo "    !!!!!!!!!"; \
-	echo "    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
-	echo "    !!!!!!!!!"; \
+	echo ""; \
+	echo ".. !!! This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
+	echo ""; \
 	echo ; \
 	for i in `sed -n '/entry_points/,/)/p' ../setup.py | \
 			sed -n "s/\s*,\?['\"]\s*\([a-z-]\+\)\s*=.*/\1/p"`; do \
