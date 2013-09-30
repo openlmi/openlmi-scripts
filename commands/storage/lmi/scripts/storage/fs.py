@@ -80,7 +80,7 @@ def _get_fs_id(ns, fsname):
     """
     service = ns.LMI_FileSystemConfigurationService.first_instance()
     values = service.LMI_CreateFileSystem.FileSystemTypeValues
-    fsid = values.values_dict.get(fsname.upper, None)
+    fsid = values.values_dict().get(fsname.upper(), None)
     if not fsid:
         raise LmiFailed("Unsupported filesystem name: %s" % fsname)
     return fsid
@@ -186,12 +186,12 @@ def create_fs(ns, devices, fs, label=None):
     fsid = _get_fs_id(ns, fs)
     service = ns.LMI_FileSystemConfigurationService.first_instance()
     args = {
-        'FyleSystemType': fsid,
+        'FileSystemType': fsid,
         'InExtents': devs,
     }
     if label:
         args['ElementName'] = label
-    (ret, outparams, err) = service.LMI_CreateFileSystem(**args)
+    (ret, outparams, err) = service.SyncLMI_CreateFileSystem(**args)
     if ret != 0:
         if err:
             raise LmiFailed("Cannot format the device %s: %s."
