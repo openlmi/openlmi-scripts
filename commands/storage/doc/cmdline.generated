@@ -1,7 +1,7 @@
 ..
-    !!!!!!!!!
-    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
-    !!!!!!!!!
+
+.. !!! This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
+
 
 fs
 --
@@ -274,8 +274,130 @@ Volume Group management.
 storage
 -------
 
+Basic storage device information.
+
+
+**Usage:**
+
+    **lmi** **storage** **list** [ \ *<device>*\  ...]
+
+    **lmi** **storage** **depends** [ \ **--deep**\  ] [ \ *<device>*\  ...]
+
+    **lmi** **storage** **provides** [ \ **--deep**\  ] [ \ *<device>*\  ...]
+
+    **lmi** **storage** **show** [ \ *<device>*\  ...]
+
+    **lmi** **storage** **tree** [ \ *<device>*\  ]
+
+
+
+**Commands:**
+
+
+    **list**
+        List short information about given device. If no devices
+        are given, all devices are listed.
+
+
+    **show**
+        Show detailed information about given devices. If no devices
+        are provided, all of them are displayed.
+
+
+    **provides**
+        Show devices, which are created from given devices
+        (= show children of the devices).
+
+        For example, if disk is provided, all partitions on it are
+        returned. If 'deep' is used, all RAIDs, Volume Groups and
+        Logical Volumes indirectly allocated from it are returned too.
+
+
+    **depends**
+        Show devices, which are required by given devices to operate
+        correctly (= show parents of the devices).
+
+        For example, if a Logical Volume is provided, its Volume Group
+        is returned. If 'deep' is used, also all Physical Volumes and
+        disk are returned.
+
+
+    **tree**
+        Show tree of devices, similar to lsblk.
+        (Note that the output is really crude and needs to be worked
+        on).
+
+        If no device is provided, all devices are shown, starting
+        with physical disks.
+
+        If a device is provided, tree starts with the device
+        and all dependent devices are shown.
 
 mount
 -----
 
+Mounting management functions.
+
+
+**Usage:**
+
+    **lmi** **mount** **list** [ \ **--all**\  ]
+
+    **lmi** **mount** **create** \ *<device>*\  \ *<mountpoint>*\  [ (\ **-t**\  \ *<fs_type>*\ ) (\ **-o**\  \ *<options>*\ ) (\ **-p**\  \ *<other_options>*\ ) ]
+
+    **lmi** **mount** **delete** \ *<target>*\ 
+
+    **lmi** **mount** **show** [ \ **--all**\  ]
+
+
+
+**Commands:**
+
+
+    **list**
+        List mounted filesystems with a device attached to them.
+        Optionally, show all mounted filesystems.
+
+
+    **create**
+        Mount a specified device on the path given by mountpoint.
+        Optionally, filesystem type, common options (filesystem
+        independent) and filesystem specific options can be provided. If no
+        filesystem type is specified, it is automatically detected.
+
+        Common options can be provided as a comma-separated string of
+        'option_name:value' items.  Possible option names are:
+
+        AllowExecution AllowMandatoryLock AllowSUID AllowUserMount
+        AllowWrite Auto Dump FileSystemCheckOrder InterpretDevices
+        OtherOptions Silent SynchronousDirectoryUpdates SynchronousIO
+        UpdateAccessTimes UpdateDirectoryAccessTimes UpdateFullAccessTimes
+        UpdateRelativeAccessTimes
+
+        Possible option values for all of the options except for
+        FileSystemCheckOrder are 't', 'true', 'f', 'false'. All of them are
+        case insensitive.
+        The FileSystemCheckOrder option's value is a number.
+
+        Other options can be specified as a string.
+
+        Examples:
+
+        create /dev/vda1 /mnt -t ext4 -o 'AllowWrite:F,InterpretDevices:false'
+
+        create /dev/vda2 /mnt -o 'FileSystemCheckOrder:2'
+
+        create /dev/vda3 /mnt -p 'user_xattr,barrier=0'
+
+        create /dev/vda4 /mnt -o 'Dump:t, AllowMandatoryLock:t' -p 'acl'
+
+
+    **delete**
+        Unmount a mounted filesystem. Can be specified either as a device
+        path or a mountpoint.
+
+
+    **show**
+        Show detailed information about mounted filesystems with a device
+        attached to them. Optionally, show all mounted filesystems.
 
