@@ -41,7 +41,7 @@ except IOError:
     long_description = ''
 
 setup(
-    name={name!r},
+    name='openlmi-scripts-{name}',
     version={version!r},
     {_description}description={description!r},
     long_description=long_description,
