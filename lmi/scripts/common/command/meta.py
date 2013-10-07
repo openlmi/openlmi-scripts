@@ -182,7 +182,7 @@ def _make_render_all_properties(bases):
             formatter.
             """
             column_names, values = [], []
-            for prop_name, value in inst.properties.items():
+            for prop_name, value in sorted(inst.properties_dict().iteritems()):
                 column_names.append(prop_name)
                 if value is None:
                     value = ''
