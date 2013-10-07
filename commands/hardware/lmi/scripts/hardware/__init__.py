@@ -24,3 +24,21 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of the FreeBSD Project.
+"""
+LMI hardware provider client library.
+"""
+
+def get_computer_system(ns):
+    """
+    :returns: Instance of ``Linux_ComputerSystem``.
+    """
+    if not hasattr(get_computer_system, 'instance'):
+        get_computer_system.instance = ns.Linux_ComputerSystem.first_instance()
+    return get_computer_system.instance
+
+def get_system_info(ns):
+    """
+    :returns: Tabular data from ``Linux_ComputerSystem`` instance.
+    """
+    cs = get_computer_system(ns)
+    return [("Hostname:", cs.Name)]
