@@ -28,17 +28,38 @@
 LMI hardware provider client library.
 """
 
-def get_computer_system(ns):
+def get_single_instance(ns, instance_name):
     """
-    :returns: Instance of ``Linux_ComputerSystem``.
+    Returns single instance of instance_name.
+
+    :param instance_name: Instance name
+    :type instance_name: String
+    :returns: Instance of instance_name
     """
-    if not hasattr(get_computer_system, 'instance'):
-        get_computer_system.instance = ns.Linux_ComputerSystem.first_instance()
-    return get_computer_system.instance
+    if not hasattr(get_single_instance, 'instances'):
+        get_single_instance.instances = {}
+    if not instance_name in get_single_instance.instances:
+        i = getattr(ns, instance_name)
+        get_single_instance.instances[instance_name] = i.first_instance()
+    return get_single_instance.instances[instance_name]
 
 def get_system_info(ns):
     """
     :returns: Tabular data from ``Linux_ComputerSystem`` instance.
     """
-    cs = get_computer_system(ns)
-    return [("Hostname:", cs.Name)]
+    i = get_single_instance(ns, 'Linux_ComputerSystem')
+    return [('Hostname:', i.Name)]
+
+def get_chassis_info(ns):
+    """
+    :returns: Tabular data from ``LMI_Chassis`` instance.
+    """
+    i = get_single_instance(ns, 'LMI_Chassis')
+    result = [
+          ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
+               i.ChassisPackageType)),
+          ('Manufacturer:', i.Manufacturer),
+          ('Model:', '%s (%s)' % (i.Model, i.ProductName)),
+          ('Serial Number:', i.SerialNumber),
+          ('Asset Tag:', i.Tag)]
+    return result

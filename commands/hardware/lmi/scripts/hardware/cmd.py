@@ -29,9 +29,11 @@ Display hardware information.
 
 Usage:
     %(cmd)s system
+    %(cmd)s chassis
 
 Commands:
     system    Display system hostname.
+    chassis   Display chassis information.
 """
 
 from lmi.scripts.common import command
@@ -40,8 +42,13 @@ class System(command.LmiLister):
     CALLABLE = "lmi.scripts.hardware:get_system_info"
     COLUMNS = ("", "")
 
+class Chassis(command.LmiLister):
+    CALLABLE = "lmi.scripts.hardware:get_chassis_info"
+    COLUMNS = ("", "")
+
 Hardware = command.register_subcommands(
         'Hardware', __doc__,
-        { 'system' : System
+        { 'system'  : System
+        , 'chassis' : Chassis
         }
     )
