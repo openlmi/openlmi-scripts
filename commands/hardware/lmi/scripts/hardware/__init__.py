@@ -43,6 +43,16 @@ def get_single_instance(ns, instance_name):
         get_single_instance.instances[instance_name] = i.first_instance()
     return get_single_instance.instances[instance_name]
 
+def get_all_info(ns):
+    """
+    :returns: Tabular data of all available info.
+    """
+    empty_line = ("", "")
+    result = get_system_info(ns)
+    result.append(empty_line)
+    result += get_chassis_info(ns)
+    return result
+
 def get_system_info(ns):
     """
     :returns: Tabular data from ``Linux_ComputerSystem`` instance.

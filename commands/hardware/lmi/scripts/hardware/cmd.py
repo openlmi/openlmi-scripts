@@ -28,27 +28,36 @@
 Display hardware information.
 
 Usage:
+    %(cmd)s all
     %(cmd)s system
     %(cmd)s chassis
 
 Commands:
+    all       Display all available information.
     system    Display system hostname.
     chassis   Display chassis information.
 """
 
 from lmi.scripts.common import command
 
+EMPTY_LINE = ("", "")
+
+class All(command.LmiLister):
+    CALLABLE = "lmi.scripts.hardware:get_all_info"
+    COLUMNS = EMPTY_LINE
+
 class System(command.LmiLister):
     CALLABLE = "lmi.scripts.hardware:get_system_info"
-    COLUMNS = ("", "")
+    COLUMNS = EMPTY_LINE
 
 class Chassis(command.LmiLister):
     CALLABLE = "lmi.scripts.hardware:get_chassis_info"
-    COLUMNS = ("", "")
+    COLUMNS = EMPTY_LINE
 
 Hardware = command.register_subcommands(
         'Hardware', __doc__,
-        { 'system'  : System
+        { 'all'     : All
+        , 'system'  : System
         , 'chassis' : Chassis
         }
     )
