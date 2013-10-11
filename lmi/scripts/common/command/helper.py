@@ -69,7 +69,8 @@ def make_list_command(func,
         props['transform_options'] = transform_func
     return LmiLister.__metaclass__(name, (LmiLister, ), props)
 
-def register_subcommands(command_name, usage, command_map):
+def register_subcommands(command_name, usage, command_map,
+        fallback_command=None):
     """
     Create a multiplexer command (a node in a tree of commands).
 
@@ -77,13 +78,18 @@ def register_subcommands(command_name, usage, command_map):
         be given on a command line.
     :param string usage: Usage string parseable by ``docopt``.
     :param dictionary command_map: Dictionary of subcommands. Associates
-        command names to their factories.
+        command names to their factories. It's assigned to ``COMMANDS``
+        property.
+    :param fallback_command: Command factory used when no command is given
+        on command line.
+    :type fallback_command: :py:class:`~.endpoint.LmiEndPointCommand`
     :returns: Subclass of :py:class:`~.multiplexer.LmiCommandMultiplexer`.
     :rtype: type
     """
-    props = { 'COMMANDS'   : command_map
-            , 'OWN_USAGE'  : True
-            , '__doc__'    : usage }
+    props = { 'COMMANDS'         : command_map
+            , 'OWN_USAGE'        : True
+            , '__doc__'          : usage
+            , 'FALLBACK_COMMAND' : fallback_command }
     return LmiCommandMultiplexer.__metaclass__(command_name,
             (LmiCommandMultiplexer, ), props)
 

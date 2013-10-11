@@ -57,9 +57,12 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
     Where ``Subcmd1`` and ``Subcmd2`` are some other ``LmiBaseCommand``
     subclasses. Documentation string must be parseable with ``docopt``.
 
-    ``COMMANDS`` property will be translated to
-    :py:meth:`LmiCommandMultiplexer.child_commands` class method by
-    :py:class:`~.meta.MultiplexerMetaClass`.
+    Recognized properties:
+
+        ``COMMANDS`` : ``dictionary``
+            property will be translated to
+            :py:meth:`LmiCommandMultiplexer.child_commands` class method by
+            :py:class:`~.meta.MultiplexerMetaClass`.
 
     Using metaclass: :py:class:`.meta.MultiplexerMetaClass`.
     """
@@ -78,6 +81,18 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         """
         raise NotImplementedError("child_commands must be implemented in"
                 " a subclass")
+
+    @classmethod
+    def fallback_command(cls):
+        """
+        This is overriden by :py:class:`~.meta.MultiplexerMetaClass` when
+        the ``FALLBACK_COMMAND`` gets processed.
+
+        :returns: Command factory invoked for missing command on command line.
+        :rtype: :py:class:`~.endpoint.LmiEndPointCommand`
+        """
+        return None
+
     @classmethod
     def is_end_point(cls):
         return False
@@ -128,4 +143,9 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         if options.pop('--help', False):
             self.app.stdout.write(self.get_usage())
             return 0
+        if (   self.fallback_command() is not None
+           and (not args or args[0] not in self.child_commands())):
+            cmd_cls = self.fallback_command()
+            cmd = cmd_cls(self.app, self.cmd_name, self.parent)
+            return cmd.run(args)
         return self.run_subcommand(args[0], args[1:])

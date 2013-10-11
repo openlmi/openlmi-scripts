@@ -411,6 +411,38 @@ def _handle_opt_preprocess(name, dcl):
 
         dcl['_preprocess_options'] = _new_preprocess_options
 
+def _handle_fallback_command(name, bases, dcl):
+    """
+    Process ``FALLBACK_COMMAND`` property of multiplexer command. It's turned
+    into a :py:meth:`~.multiplexer.LmiCommandMultiplexer.fallback_command`
+    class method. It needs to be called after the usage string is handled.
+
+    .. seealso::
+        :py:func:`_handle_usage`
+    """
+    fallback = dcl.pop('FALLBACK_COMMAND', None)
+    if fallback is not None:
+        if not issubclass(type(fallback), EndPointCommandMetaClass):
+            raise errors.LmiCommandInvalidProperty(dcl['__module__'], name,
+                    "FALLBACK_COMMAND must be a command class"
+                    " (subclass of LmiEndPointCommand) not %s" % repr(fallback))
+        if not fallback.has_own_usage():
+            usage_string = dcl.get('__doc__', None)
+            if not usage_string:
+                for base_cls in bases:
+                    if not issubclass(base_cls, base.LmiBaseCommand):
+                        continue
+                    cmd = base_cls
+                    while not cmd.has_own_usage() and cmd.parent is not None:
+                        cmd = cmd.parent
+                    usage_string = cmd.__doc__
+            if not usage_string:
+                errors.LmiCommandError(dcl['__module__'], name,
+                        "missing usage string")
+            fallback.__doc__ = usage_string
+            fallback.has_own_usage = lambda cls: True
+        dcl['fallback_command'] = staticmethod(lambda: fallback)
+
 class EndPointCommandMetaClass(abc.ABCMeta):
     """
     End point command does not have any subcommands. It's a leaf of
@@ -582,6 +614,10 @@ class MultiplexerMetaClass(abc.ABCMeta):
             Command names with assigned command classes. Each of them is a
             direct subcommands of command with this property. Mandatory
             property.
+
+        ``FALLBACK_COMMAND`` : :py:class:`~.endpoint.LmiEndPointCommand`
+            Command factory to use in case that no command is passed on command
+            line.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -621,5 +657,6 @@ class MultiplexerMetaClass(abc.ABCMeta):
                     dcl['__module__'], name)
 
             _handle_usage(name, dcl)
+            _handle_fallback_command(name, bases, dcl)
 
         return super(MultiplexerMetaClass, mcs).__new__(mcs, name, bases, dcl)

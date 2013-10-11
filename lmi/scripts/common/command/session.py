@@ -139,7 +139,7 @@ class LmiSessionCommand(LmiEndPointCommand):
         it just prints errors in a form of list.
 
         :param session: Session object.
-        :type session: :py:class:`lmi.scripts.common.session.Session`
+        :type session: :py:class:`lmi.scripts.common.command.session.Session`
         :param dictionary results: Dictionary of form: ::
 
                 { 'hostname' : (success_flag, result), ... }

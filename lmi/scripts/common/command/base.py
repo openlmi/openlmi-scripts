@@ -111,7 +111,6 @@ class LmiBaseCommand(object):
         raise NotImplementedError("child_commands() method must be overriden"
                 " in a subclass")
 
-
     def __init__(self, app, cmd_name, parent=None):
         if not isinstance(cmd_name, basestring):
             raise TypeError('cmd_name must be a string')

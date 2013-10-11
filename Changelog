@@ -1,4 +1,5 @@
-* Fixed rendering of instances when PROPERTIES are omitted.
+* allow to have a fallback command for command multiplexers
+* fixed rendering of instances when PROPERTIES are omitted
 
 0.2.2
 * double and single dash can now be used in usage strings
