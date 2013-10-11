@@ -28,7 +28,7 @@
 Display hardware information.
 
 Usage:
-    %(cmd)s all
+    %(cmd)s [all]
     %(cmd)s system
     %(cmd)s chassis
 
@@ -59,5 +59,6 @@ Hardware = command.register_subcommands(
         { 'all'     : All
         , 'system'  : System
         , 'chassis' : Chassis
-        }
+        },
+        fallback_command=All
     )
