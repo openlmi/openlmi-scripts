@@ -68,11 +68,13 @@ def get_all_info(ns):
     result += get_chassis_info(ns)
     result.append(empty_line)
     result += get_cpu_info(ns)
+    result.append(empty_line)
+    result += get_memory_info(ns)
     return result
 
 def get_system_info(ns):
     """
-    :returns: Tabular data from ``CIM_ComputerSystem`` instance.
+    :returns: Tabular data of system info.
     """
     i = get_single_instance(ns, 'CIM_ComputerSystem')
     return [('Hostname:', i.Name)]
@@ -93,7 +95,7 @@ def get_chassis_info(ns):
 
 def get_cpu_info(ns):
     """
-    :returns: Tabular data from ``LMI_Chassis`` instance.
+    :returns: Tabular data of processor info.
     """
     cpus = get_all_instances(ns, 'LMI_Processor')
     cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
@@ -104,9 +106,35 @@ def get_cpu_info(ns):
         threads += i.NumberOfHardwareThreads
     result = [
           ('CPU:', cpus[0].Name),
-          ('Topology:', "%d cpu(s), %d core(s), %d thread(s)" % \
+          ('Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
                 (len(cpus), cores, threads)),
-          ('Max Freq:', "%d MHz" % cpus[0].MaxClockSpeed),
-          ('Arch:', cpus[0].Architecture),
-          ]
+          ('Max Freq:', '%d MHz' % cpus[0].MaxClockSpeed),
+          ('Arch:', cpus[0].Architecture)]
+    return result
+
+def get_memory_info(ns):
+    """
+    :returns: Tabular data of memory info.
+    """
+    memory = get_single_instance(ns, 'LMI_Memory')
+    phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
+    memory_slots = get_all_instances(ns, 'LMI_MemorySlot')
+    slots = ''
+    if len(phys_memory):
+        slots += '%d' % len(phys_memory)
+    else:
+        slots += 'N/A'
+    slots += ' used, '
+    if len(memory_slots):
+        slots += '%d' % len(memory_slots)
+    else:
+        slots += 'N/A'
+    slots += ' total'
+    if memory.NumberOfBlocks >= 1073741824:
+        size = '%d GB' % (int(memory.NumberOfBlocks) / 1073741824)
+    else:
+        size = '%d MB' % (int(memory.NumberOfBlocks) / 1048576)
+    result = [
+          ('Memory:', size),
+          ('Slots:', slots)]
     return result

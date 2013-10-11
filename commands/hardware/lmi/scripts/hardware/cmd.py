@@ -32,12 +32,14 @@ Usage:
     %(cmd)s system
     %(cmd)s chassis
     %(cmd)s cpu
+    %(cmd)s memory
 
 Commands:
     all       Display all available information.
     system    Display system hostname.
     chassis   Display chassis information.
     cpu       Display processor information.
+    memory    Display memory information.
 """
 
 from lmi.scripts.common import command
@@ -60,12 +62,17 @@ class Cpu(command.LmiLister):
     CALLABLE = "lmi.scripts.hardware:get_cpu_info"
     COLUMNS = EMPTY_LINE
 
+class Memory(command.LmiLister):
+    CALLABLE = "lmi.scripts.hardware:get_memory_info"
+    COLUMNS = EMPTY_LINE
+
 Hardware = command.register_subcommands(
         'Hardware', __doc__,
         { 'all'     : All
         , 'system'  : System
         , 'chassis' : Chassis
         , 'cpu'     : Cpu
+        , 'memory'  : Memory
         },
         fallback_command=All
     )
