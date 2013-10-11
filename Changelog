@@ -1,3 +1,4 @@
+* made localhost a default host
 * allow to have a fallback command for command multiplexers
 * fixed rendering of instances when PROPERTIES are omitted
 
