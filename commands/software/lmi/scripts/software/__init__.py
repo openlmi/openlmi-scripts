@@ -93,11 +93,11 @@ from lmi.scripts.common import get_logger
 RE_NA  = re.compile(r'^(?P<name>.+)\.(?P<arch>[^.]+)$')
 # matches both nevra and nvra
 RE_NEVRA = re.compile(
-    r'^(?P<name>.+)-(?P<evra>((?P<epoch>\d+):)?(?P<version>[0-9.]+)'
-    r'-(?P<release>.+)\.(?P<arch>[^.]+))$')
+    r'^(?P<name>.+)-(?P<evra>(?:(?P<epoch>\d+):)?(?P<version>[\w.+{}]+)'
+    r'-(?P<release>[\w.+{}]+)\.(?P<arch>[^.]+))$')
 RE_ENVRA = re.compile(
-    r'^(?P<epoch>\d+):(?P<name>.+)-(?P<evra>(?P<version>[0-9.]+)'
-    r'-(?P<release>.+)\.(?P<arch>[^.]+))$')
+    r'^(?P<epoch>\d+):(?P<name>.+)-(?P<version>[\w.+{}]+)'
+    r'-(?P<release>[\w.+{}]+)\.(?P<arch>[^.]+)$')
 
 #: Array of file type names.
 FILE_TYPES = (
