@@ -289,6 +289,39 @@ them.
     class method by
     :py:class:`~lmi.scripts.common.command.meta.MultiplexerMetaClass`.
 
+``FALLBACK_COMMAND`` : :py:class:`lmi.scripts.common.command.endpoint.LmiEndPointCommand`
+    Command class used when no command defined in ``COMMANDS`` dictionary is
+    passed on command line.
+
+    Take for example this usage string: ::
+
+        
+        """
+        Display hardware information.
+
+        Usage:
+            %(cmd)s [all]
+            %(cmd)s system
+            %(cmd)s chassis
+        """
+
+    This suggests there are tree commands defined taking care of listing
+    hardware informations. Entry point definition could look like this: ::
+
+        class Hardware(command.LmiCommandMultiplexer):
+            OWN_USAGE = __doc__     # usage string from above
+            COMMANDS  = { 'all'     : All
+                        , 'system'  : System
+                        , 'chassis' : Chassis
+                        }
+            FALLBACK_COMMAND = All
+
+    Without the ``FALLBACK_COMMAND`` property, the multiplexer would not
+    handle the case when ``'all'`` argument is omitted as is suggested in
+    the usage string. Adding it to command properties causes this multiplexer
+    to behave exactly as ``All`` subcommand in case that no command
+    is given on command line.
+
 .. _lmi_lister_properties:
 
 ``LmiLister`` properties
