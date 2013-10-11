@@ -55,9 +55,9 @@ def get_all_info(ns):
 
 def get_system_info(ns):
     """
-    :returns: Tabular data from ``Linux_ComputerSystem`` instance.
+    :returns: Tabular data from ``CIM_ComputerSystem`` instance.
     """
-    i = get_single_instance(ns, 'Linux_ComputerSystem')
+    i = get_single_instance(ns, 'CIM_ComputerSystem')
     return [('Hostname:', i.Name)]
 
 def get_chassis_info(ns):
