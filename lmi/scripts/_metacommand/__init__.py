@@ -144,9 +144,8 @@ class MetaCommand(object):
         if self._session is None:
             if (   not self._options['--host']
                and not self._options['--hosts-file']):
-                LOG().critical(
-                        "missing one of (--host | --hosts-file) arguments")
-                sys.exit(1)
+                LOG().info('no hosts given, using "localhost"')
+                self._options['--host'] = ['localhost']
             hostnames = []
             # credentials loaded from file
             credentials = {}

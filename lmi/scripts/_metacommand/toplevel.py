@@ -70,6 +70,16 @@ Options:
                               processing. Defaults to table.
     --help                    Show this text and quite.
     --version                 Print version of '%(cmd)s' in use and quit.
+
+Handling hosts:
+    If no --host or --hosts-file given the "localhost" is tried. When running
+    under root with Pegasus CIMOM, this results in a connection over unix
+    socket (without the need for credentials).
+
+    Hosts may contain embedded credentials e.g.:
+        http://user:passwd@hostname:5988
+    Avoid supplying them on command line though since arguments are visible in
+    process table. Use --hosts-file option instead.
 """
 
 import docopt
