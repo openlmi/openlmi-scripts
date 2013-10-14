@@ -46,30 +46,30 @@ Usage:
     %(cmd)s (--help | --version)
 
 Options:
-    -c --config-file <config> Path to a user configuration file. Options
-                              specified here override any settings of global
-                              configuration file.
-    -h --host <host>          Hostname of target system.
-    --hosts-file <hosts>      Path to a file containing target hostnames.
-                              Each hostname must be listed on a single line.
-    --user <user>             Username used in connection to any target host.
-    --same-credentials        Use the first credentials given for all hosts.
-    -n --noverify             Do not verify cimom's ssl certificate.
-    -v                        Increase verbosity of output.
-    --trace                   Show tracebacks on errors.
-    --notrace                 Suppress tracebacks for exceptions.
-    -q --quiet                Supress output except for errors.
-    --log-file <log_file>     Output file for logging messages.
-    --namespace <namespace>   Default CIM namespace to use.
-    -N --no-headings          Don't print table headings.
-    -H --human-friendly       Print large values in human friendly units (i.e.
-                              MB, GB, TB etc.)
+    -c --config-file <config>  Path to a user configuration file. Options
+                               specified here override any settings of global
+                               configuration file.
+    -h --host <host>           Hostname of target system.
+    --hosts-file <hosts>       Path to a file containing target hostnames.
+                               Each hostname must be listed on a single line.
+    --user <user>              Username used in connection to any target host.
+    --same-credentials         Use the first credentials given for all hosts.
+    -n --noverify              Do not verify cimom's ssl certificate.
+    -v                         Increase verbosity of output.
+    --trace                    Show tracebacks on errors.
+    --notrace                  Suppress tracebacks for exceptions.
+    -q --quiet                 Supress output except for errors.
+    --log-file <log_file>      Output file for logging messages.
+    --namespace <namespace>    Default CIM namespace to use.
+    -N --no-headings           Don't print table headings.
+    -H --human-friendly        Print large values in human friendly units (i.e.
+                               MB, GB, TB etc.)
     -L --lister-format (table | csv)
-                              Print output of lister commands in CSV or table
-                              format. CSV format is more suitable for machine
-                              processing. Defaults to table.
-    --help                    Show this text and quite.
-    --version                 Print version of '%(cmd)s' in use and quit.
+                               Print output of lister commands in CSV or table
+                               format. CSV format is more suitable for machine
+                               processing. Defaults to table.
+    --help                     Show this text and quit.
+    --version                  Print version of '%(cmd)s' in use and quit.
 
 Handling hosts:
     If no --host or --hosts-file given the "localhost" is tried. When running
