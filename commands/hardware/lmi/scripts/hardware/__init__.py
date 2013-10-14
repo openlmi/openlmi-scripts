@@ -43,6 +43,21 @@ def get_single_instance(ns, instance_name):
         get_single_instance.instances[instance_name] = i.first_instance()
     return get_single_instance.instances[instance_name]
 
+def get_all_instances(ns, instance_name):
+    """
+    Returns all instances of instance_name.
+
+    :param instance_name: Instance name
+    :type instance_name: String
+    :returns: List of instances of instance_name
+    """
+    if not hasattr(get_all_instances, 'instances'):
+        get_all_instances.instances = {}
+    if not instance_name in get_all_instances.instances:
+        i = getattr(ns, instance_name)
+        get_all_instances.instances[instance_name] = i.instances()
+    return get_all_instances.instances[instance_name]
+
 def get_all_info(ns):
     """
     :returns: Tabular data of all available info.
@@ -51,13 +66,17 @@ def get_all_info(ns):
     result = get_system_info(ns)
     result.append(empty_line)
     result += get_chassis_info(ns)
+    result.append(empty_line)
+    result += get_cpu_info(ns)
+    result.append(empty_line)
+    result += get_memory_info(ns)
     return result
 
 def get_system_info(ns):
     """
-    :returns: Tabular data from ``Linux_ComputerSystem`` instance.
+    :returns: Tabular data of system info.
     """
-    i = get_single_instance(ns, 'Linux_ComputerSystem')
+    i = get_single_instance(ns, 'CIM_ComputerSystem')
     return [('Hostname:', i.Name)]
 
 def get_chassis_info(ns):
@@ -72,4 +91,50 @@ def get_chassis_info(ns):
           ('Model:', '%s (%s)' % (i.Model, i.ProductName)),
           ('Serial Number:', i.SerialNumber),
           ('Asset Tag:', i.Tag)]
+    return result
+
+def get_cpu_info(ns):
+    """
+    :returns: Tabular data of processor info.
+    """
+    cpus = get_all_instances(ns, 'LMI_Processor')
+    cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
+    cores = 0
+    threads = 0
+    for i in cpu_caps:
+        cores += i.NumberOfProcessorCores
+        threads += i.NumberOfHardwareThreads
+    result = [
+          ('CPU:', cpus[0].Name),
+          ('Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
+                (len(cpus), cores, threads)),
+          ('Max Freq:', '%d MHz' % cpus[0].MaxClockSpeed),
+          ('Arch:', cpus[0].Architecture)]
+    return result
+
+def get_memory_info(ns):
+    """
+    :returns: Tabular data of memory info.
+    """
+    memory = get_single_instance(ns, 'LMI_Memory')
+    phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
+    memory_slots = get_all_instances(ns, 'LMI_MemorySlot')
+    slots = ''
+    if len(phys_memory):
+        slots += '%d' % len(phys_memory)
+    else:
+        slots += 'N/A'
+    slots += ' used, '
+    if len(memory_slots):
+        slots += '%d' % len(memory_slots)
+    else:
+        slots += 'N/A'
+    slots += ' total'
+    if memory.NumberOfBlocks >= 1073741824:
+        size = '%d GB' % (int(memory.NumberOfBlocks) / 1073741824)
+    else:
+        size = '%d MB' % (int(memory.NumberOfBlocks) / 1048576)
+    result = [
+          ('Memory:', size),
+          ('Slots:', slots)]
     return result
