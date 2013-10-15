@@ -9,7 +9,7 @@ BUILDDIR         ?= _build
 PROJECTNAME       = OpenLMIScripts
 COMMANDS_PATH    ?= ../commands
 INCLUDE_COMMANDS ?= 0
-COMMANDS         ?= service software storage
+COMMANDS         ?= logicalfile service software storage
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -18,7 +18,9 @@ ALLSPHINXOPTS   = -n -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) 
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext commands.rst
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp \
+    devhelp epub latex latexpdf text man changes linkcheck doctest gettext \
+    commands.rst
 
 all: html epub latexpdf
 
@@ -63,7 +65,6 @@ ifneq ($(INCLUDE_COMMANDS), 0)
 	for cmd in $(COMMANDS); do \
 	    printf "    commands/$$cmd\n" >> $@; \
 	    ln -s ../$(COMMANDS_PATH)/$${cmd}/doc commands/$${cmd}_docdir; \
-	    make -C commands/$${cmd}_docdir html; \
 	    title="$${cmd^} library"; \
 	    length=`echo "$$title" | wc -c`; \
 	    ( \
@@ -117,7 +118,7 @@ figures:
 
 
 html: figures api.rst commands.rst
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	./build-with-sphinx.sh "$(COMMANDS)" -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
