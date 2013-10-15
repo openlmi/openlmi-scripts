@@ -44,26 +44,26 @@ Commands:
 
 from lmi.scripts.common import command
 
-EMPTY_LINE = ("", "")
+EMPTY_LINE = ('', '')
 
 class All(command.LmiLister):
-    CALLABLE = "lmi.scripts.hardware:get_all_info"
+    CALLABLE = 'lmi.scripts.hardware:get_all_info'
     COLUMNS = EMPTY_LINE
 
 class System(command.LmiLister):
-    CALLABLE = "lmi.scripts.hardware:get_system_info"
+    CALLABLE = 'lmi.scripts.hardware:get_system_info'
     COLUMNS = EMPTY_LINE
 
 class Chassis(command.LmiLister):
-    CALLABLE = "lmi.scripts.hardware:get_chassis_info"
+    CALLABLE = 'lmi.scripts.hardware:get_chassis_info'
     COLUMNS = EMPTY_LINE
 
 class Cpu(command.LmiLister):
-    CALLABLE = "lmi.scripts.hardware:get_cpu_info"
+    CALLABLE = 'lmi.scripts.hardware:get_cpu_info'
     COLUMNS = EMPTY_LINE
 
 class Memory(command.LmiLister):
-    CALLABLE = "lmi.scripts.hardware:get_memory_info"
+    CALLABLE = 'lmi.scripts.hardware:get_memory_info'
     COLUMNS = EMPTY_LINE
 
 Hardware = command.register_subcommands(
