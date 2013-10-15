@@ -35,6 +35,7 @@ def get_single_instance(ns, instance_name):
     :param instance_name: Instance name
     :type instance_name: String
     :returns: Instance of instance_name
+    :rtype: :py:class:`lmi.shell.LMIInstance`
     """
     if not hasattr(get_single_instance, 'instances'):
         get_single_instance.instances = {}
@@ -50,6 +51,7 @@ def get_all_instances(ns, instance_name):
     :param instance_name: Instance name
     :type instance_name: String
     :returns: List of instances of instance_name
+    :rtype: List of :py:class:`lmi.shell.LMIInstance`
     """
     if not hasattr(get_all_instances, 'instances'):
         get_all_instances.instances = {}
@@ -61,6 +63,7 @@ def get_all_instances(ns, instance_name):
 def get_all_info(ns):
     """
     :returns: Tabular data of all available info.
+    :rtype: List of tuples
     """
     empty_line = ("", "")
     result = get_system_info(ns)
@@ -75,6 +78,7 @@ def get_all_info(ns):
 def get_system_info(ns):
     """
     :returns: Tabular data of system info.
+    :rtype: List of tuples
     """
     i = get_single_instance(ns, 'CIM_ComputerSystem')
     return [('Hostname:', i.Name)]
@@ -82,6 +86,7 @@ def get_system_info(ns):
 def get_chassis_info(ns):
     """
     :returns: Tabular data from ``LMI_Chassis`` instance.
+    :rtype: List of tuples
     """
     i = get_single_instance(ns, 'LMI_Chassis')
     result = [
@@ -96,6 +101,7 @@ def get_chassis_info(ns):
 def get_cpu_info(ns):
     """
     :returns: Tabular data of processor info.
+    :rtype: List of tuples
     """
     cpus = get_all_instances(ns, 'LMI_Processor')
     cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
@@ -115,6 +121,7 @@ def get_cpu_info(ns):
 def get_memory_info(ns):
     """
     :returns: Tabular data of memory info.
+    :rtype: List of tuples
     """
     memory = get_single_instance(ns, 'LMI_Memory')
     phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
