@@ -1,6 +1,6 @@
 LMI command line reference
 ==========================
-..
-    Write some description here.
+
+This command can display various hardware information.
 
 .. include:: cmdline.generated

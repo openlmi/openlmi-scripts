@@ -1,0 +1,43 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
+    !!!!!!!!!
+
+hwinfo
+------
+
+Display hardware information.
+
+
+**Usage:**
+
+    **lmi** **hwinfo** [all]
+
+    **lmi** **hwinfo** system
+
+    **lmi** **hwinfo** chassis
+
+    **lmi** **hwinfo** cpu
+
+    **lmi** **hwinfo** memory
+
+
+
+**Commands:**
+
+
+    **all**
+        Display all available information.
+
+    **system**
+        Display system hostname.
+
+    **chassis**
+        Display chassis information.
+
+    **cpu**
+        Display processor information.
+
+    **memory**
+        Display memory information.
+
