@@ -20,10 +20,14 @@
 # Bash completion for LMI commands
 
 _lmi() {
+    local helpers_path="lmi-bash-completion"
+    if ! [[ -e "$helpers_path" ]]; then
+        helpers_path="/usr/libexec/$helpers_path"
+    fi
     local options=(-c --config-file -h --host --hosts-file --user -v --trace -q --quiet -n --noverify --same-credentials --help --version)
     local current="${COMP_WORDS[$COMP_CWORD]}"
     local previous="${COMP_WORDS[COMP_CWORD-1]}"
-    local commands=( $(helpers/print_possible_commands.sh) )
+    local commands=( $($helpers_path/print_possible_commands.sh) )
     local used_command=
 
     for (( i=1; i < ${#COMP_WORDS[@]} - 1 && i < $COMP_CWORD; i++ )); do
@@ -37,9 +41,9 @@ _lmi() {
 
     if [[ $used_command ]]; then
         # Check if we have completion executable for command
-        if [[ -x commands/"_$used_command" ]] ; then
+        if [[ -x $helpers_path/commands/"_$used_command" ]] ; then
             # pass the rest of words typed as parameters
-            COMPREPLY=( $(commands/_$used_command "${COMP_WORDS[@]:$((i+1))}") )
+            COMPREPLY=( $($helpers_path/commands/_$used_command "${COMP_WORDS[@]:$((i+1))}") )
         else
             # commands without completion - filename completion
             COMPREPLY=( $(compgen -f -- "$current") )
