@@ -1,24 +1,29 @@
+%global         commit bd21016ba88ba9f856e3e4bbb9b02b72fd96af3b
+%global         shortcommit %(c=%{commit}; echo ${c:0:7})
+%global         openlmi_scripts_version 0.2.3
 %global         commands logicalfile service software storage
 
 Name:           openlmi-scripts
-Version:        0.2.3
-Release:        1%{?dist}
+Version:        %{openlmi_scripts_version}
+Release:        4%{?dist}
 Summary:        Client-side python modules and command line utilities
 
 License:        BSD
 URL:            http://fedorahosted.org/openlmi
-Source0:        %{name}-%{version}.tar.gz
+Source0:        https://github.com/openlmi/%{name}/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
 BuildArch:      noarch
 
 BuildRequires:  python2-devel
 # For documentation
+BuildRequires:  python-docopt
 BuildRequires:  python-sphinx
 BuildRequires:  python-sphinx-theme-openlmi
-BuildRequires:  openlmi-tools
+BuildRequires:  openlmi-tools >= 0.8
 Requires:       python2
-Requires:       openlmi-python-base >= 0.1.1
+Requires:       openlmi-providers
+Requires:       openlmi-python-base >= 0.3.0
 Requires:       python-docopt >= 0.6.1
-Requires:       openlmi-tools
+Requires:       openlmi-tools >= 0.8
 
 %description
 Client-side python modules and command line utilities.
@@ -33,7 +38,7 @@ This package contains the documents for OpenLMI Scripts.
 %package        logicalfile
 Summary:        Client scripts for OpenLMI Logical File provider
 Version:        0.0.1
-Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    logicalfile
 This packages contains client side python library for OpenLMI Logical File
@@ -42,7 +47,7 @@ provider and command line wrapper.
 %package        service
 Summary:        Client scripts for OpenLMI Service provider
 Version:        0.1.0
-Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    service
 This packages contains client side python library for OpenLMI Service
@@ -51,7 +56,7 @@ provider and command line wrapper.
 %package        software
 Summary:        Client scripts for OpenLMI Software provider
 Version:        0.2.1
-Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    software
 This packages contains client side python library for OpenLMI Software
@@ -60,14 +65,14 @@ provider and command line wrapper.
 %package        storage
 Summary:        Client scripts for OpenLMI Storage provider
 Version:        0.0.2
-Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    storage
 This packages contains client side python library for OpenLMI Storage
 provider and command line wrapper.
 
 %prep
-%setup -q
+%setup -qn %{name}-%{commit}
 
 %build
 %{__python} setup.py build
@@ -117,18 +122,19 @@ install -m 644 README.md COPYING Changelog $RPM_BUILD_ROOT/%{_docdir}/%{name}
 %doc %{_docdir}/%{name}/COPYING
 %doc %{_docdir}/%{name}/Changelog
 %{_bindir}/lmi
+%dir %{_sysconfdir}/openlmi/scripts
 %config(noreplace) %{_sysconfdir}/openlmi/scripts/lmi.conf
-%config(noreplace) %{_sysconfdir}/bash_completion.d/lmi.bash
+%{_sysconfdir}/bash_completion.d/lmi.bash
 %dir %{_libexecdir}/lmi-bash-completion
 %dir %{_libexecdir}/lmi-bash-completion/commands
 %{_libexecdir}/lmi-bash-completion/*.sh
 %{_libexecdir}/lmi-bash-completion/commands/_help
 %dir %{python_sitelib}/lmi/scripts
-%{_mandir}/man1/lmi.1.gz
 %{python_sitelib}/lmi/scripts/__init__.py*
 %{python_sitelib}/lmi/scripts/common
 %{python_sitelib}/lmi/scripts/_metacommand
 %{python_sitelib}/openlmi_scripts-*
+%{_mandir}/man1/lmi.1.gz
 
 %files doc
 %{_docdir}/%{name}/html
@@ -158,6 +164,18 @@ install -m 644 README.md COPYING Changelog $RPM_BUILD_ROOT/%{_docdir}/%{name}
 %{python_sitelib}/openlmi_scripts_storage-*
 
 %changelog
+* Tue Oct 29 2013 Michal Minar <miminar@redhat.com> 0.2.3-4
+- Fixed build, installation problems and rpmlint errors.
+
+* Thu Oct 17 2013 Michal Minar <miminar@redhat.com> 0.2.3-3
+- Require python-docopt on build.
+- Do not make configs out of completion scripts.
+- Removed _isa macros.
+
+* Wed Oct 16 2013 Michal Minar <miminar@redhat.com> 0.2.3-2
+- Require openlmi-providers.
+- Own config directory.
+
 * Mon Oct 14 2013 Michal Minar <miminar@redhat.com> 0.2.3-1
 - Rebased to 0.2.3
 - Added bash completion.
