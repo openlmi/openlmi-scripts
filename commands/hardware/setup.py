@@ -9,8 +9,8 @@ except IOError:
     long_description = ''
 
 setup(
-    name='hardware',
-    version='0.0.1',
+    name='openlmi-hardware',
+    version='0.0.2',
     description='Hardware information available in OpenLMI hardware providers',
     long_description=long_description,
     author=u'Peter Schiffer',
