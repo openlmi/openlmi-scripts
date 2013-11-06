@@ -28,6 +28,8 @@
 LMI hardware provider client library.
 """
 
+from lmi.scripts.common import get_computer_system
+
 def get_single_instance(ns, instance_name):
     """
     Returns single instance of instance_name.
@@ -80,7 +82,7 @@ def get_system_info(ns):
     :returns: Tabular data of system info.
     :rtype: List of tuples
     """
-    i = get_single_instance(ns, 'CIM_ComputerSystem')
+    i = get_computer_system(ns)
     return [('Hostname:', i.Name)]
 
 def get_chassis_info(ns):
