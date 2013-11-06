@@ -34,6 +34,7 @@
 Logicalfile management functions.
 """
 
+from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common.formatter import command as fcmd
@@ -66,7 +67,7 @@ def get_directory_name_properties(ns, directory):
     :param directory: Full path to the directory.
     :rtype: LMIInstanceName
     """
-    system = ns.Linux_ComputerSystem.first_instance()
+    system = get_computer_system(ns)
     return {'CSCreationClassName':system.classname,
             'CSName':system.name,
             'CreationClassName':'LMI_UnixDirectory',
@@ -178,7 +179,7 @@ def lf_show(ns, target):
     :type target: string
     :param target: Full path to the target.
     """
-    system = ns.Linux_ComputerSystem.first_instance()
+    system = get_computer_system(ns)
     uf_name = ns.LMI_UnixFile.new_instance_name(
         {'CSCreationClassName':system.classname,
          'CSName':system.name,
