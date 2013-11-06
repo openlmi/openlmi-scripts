@@ -51,7 +51,7 @@ Regular expressions
 -------------------
 These may be used check, whether the given
 :abbr:`pkg_spec (package specification)`
-is valid and allows to get all the interesting parts out of it. 
+is valid and allows to get all the interesting parts out of it.
 
 .. py:data:: RE_NA
 
@@ -87,6 +87,7 @@ from lmi.shell import LMIMethod
 from lmi.shell import LMIUtil
 from lmi.shell import LMIExceptions
 from lmi.scripts.common.errors import LmiFailed
+from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
 
 # matches <name>.<arch>
@@ -121,7 +122,7 @@ def _wait_for_job_finished(job):
     """
     if not isinstance(job, LMIInstance):
         raise TypeError("job must be an LMIInstance")
-    LOG().debug('waiting for a job "%s" to finish', job.InstanceId)
+    LOG().debug('waiting for a job "%s" to finish', job.InstanceID)
     sleep_time = 0.5
     while not LMIJob.lmi_is_job_finished(job):
         # Sleep, a bit longer in every iteration
@@ -145,9 +146,8 @@ def get_package_nevra(package):
     """
     if not isinstance(package, (LMIInstanceName, LMIInstance)):
         raise TypeError("package must be an instance or instance name")
-    return (    package.path['InstanceId']
-           if   isinstance(package, LMIInstanceName)
-           else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
+    return (    package.ElementName if isinstance(package, LMIInstance)
+           else package.InstanceID[len('LMI:LMI_SoftwareIdentity:'):])
 
 def list_installed_packages(ns):
     """
@@ -155,7 +155,7 @@ def list_installed_packages(ns):
 
     :rtype: generator
     """
-    for identity in ns.Linux_ComputerSystem.first_instance().associators(
+    for identity in get_computer_system(ns).associators(
             Role="System",
             ResultRole="InstalledSoftware",
             AssocClass='LMI_InstalledSoftwareIdentity',
@@ -294,7 +294,7 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
     if repoid:
         repo_iname = ns.LMI_SoftwareIdentityResource.first_instance_name(
                 {'Name' : repoid})
-        opts['repository'] = repo_iname.path
+        opts['repository'] = repo_iname
     if 'envra' in kwargs:   # takes precedence over pkg_spec and nevra
         if not RE_ENVRA.match(kwargs['envra']):
             raise ValueError('invalid envra string "%s"' % kwargs['envra'])
@@ -348,7 +348,7 @@ def list_package_files(ns, package, file_type=None):
 
     :param package: Instance or instance name of ``LMI_SoftwareIdentity``.
     :type package: :py:class:`lmi.shell.LMIInstance`
-        or :py:class:`lmi.shell.LMIInstanceName` 
+        or :py:class:`lmi.shell.LMIInstanceName`
     :param file_type: Either an index to :py:data:`FILE_TYPES` array or one of:
         ``{ "all", "file", "directory", "symlink", "fifo", "device" }``.
     :type file_type: string, integer or ``None``
@@ -454,12 +454,11 @@ def install_package(ns, package, force=False, update=False):
     # we can not use synchronous invocation because the reference to a job is
     # needed
     results = service.InstallFromSoftwareIdentity(
-            Source=package.path,
-            Collection=ns.LMI_SystemSoftwareCollection.first_instance().path,
+            Source=package.path
+                if isinstance(package, LMIInstance) else package,
+            Collection=ns.LMI_SystemSoftwareCollection.first_instance_name(),
             InstallOptions=options)
-    nevra = (    package.path['InstanceId']
-            if   isinstance(package, LMIInstanceName)
-            else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
+    nevra = get_package_nevra(package)
     if results.rval != 4096:
         msg = 'failed to %s package "%s" (rval=%d)' % (
                 'update' if update else 'install', nevra, results.rval)
@@ -477,7 +476,7 @@ def install_package(ns, package, force=False, update=False):
         raise LmiFailed(msg)
     else:
         LOG().info('installed package "%s" on remote host "%s"',
-                nevra, ns.connection.hostname)
+                nevra, ns.connection.uri)
 
     installed = job.associators(
             Role='AffectingElement',
@@ -512,7 +511,7 @@ def install_from_uri(ns, uri, force=False, update=False):
         options.append(3) # Force Installation
     results = service.SyncInstallFromURI(
             URI=uri,
-            Target=ns.Linux_ComputerSystem.first_instance().path,
+            Target=get_computer_system(ns).path,
             InstallOptions=options)
     if results.rval != 0:
         msg = 'failed to %s package from uri (rval=%d)' % (
@@ -597,11 +596,10 @@ def verify_package(ns, package):
     # needed - for enumerating of affected software identities
     service = ns.LMI_SoftwareInstallationService.first_instance()
     results = service.VerifyInstalledIdentity(
-            Source=package.path,
-            Target=ns.Linux_ComputerSystem.first_instance().path)
-    nevra = (    package.path['InstanceId']
-            if   isinstance(package, LMIInstanceName)
-            else package.InstanceId)[len('LMI:LMI_SoftwareIdentity:'):]
+            Source=package.path
+                if isinstance(package, LMIInstance) else package,
+            Target=get_computer_system(ns).path)
+    nevra = get_package_nevra(package)
     if results.rval != 4096:
         msg = 'failed to verify package "%s (rval=%d)"' % (nevra, results.rval)
         if results.errorstr:
@@ -616,7 +614,7 @@ def verify_package(ns, package):
             msg += ': ' + job.ErrorDescription
         raise LmiFailed(msg)
     LOG().debug('verified package "%s" on remote host "%s"',
-            nevra, ns.connection.hostname)
+            nevra, ns.connection.uri)
 
     failed = job.associators(
             Role='AffectingElement',
@@ -624,6 +622,6 @@ def verify_package(ns, package):
             AssocClass="LMI_AffectedSoftwareJobElement",
             ResultClass='LMI_SoftwareIdentityFileCheck')
     LOG().debug('verified package "%s" on remote host "%s" with %d failures',
-            nevra, ns.connection.hostname, len(failed))
+            nevra, ns.connection.uri, len(failed))
 
     return failed
