@@ -9,7 +9,7 @@ except IOError:
     long_description = ''
 
 setup(
-    name='openlmi-hardware',
+    name='openlmi-scripts-hardware',
     version='0.0.2',
     description='Hardware information available in OpenLMI hardware providers',
     long_description=long_description,
