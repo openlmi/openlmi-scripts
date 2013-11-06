@@ -110,22 +110,11 @@ class Session(object):
         :rtype: :py:class:`lmi.shell.LMIConnection` or ``None``
         """
         username, password = self.get_credentials(hostname)
-        import inspect
-        # TODO: remove inspect magic and add dependency on particular
-        # version of openlmi-tools, when its released
-        kwargs = dict(interactive=interactive)
-        con_argspec = inspect.getargspec(connect)
-        if 'verify_server_cert' in con_argspec.args or con_argspec.keywords:
-            # newer name
-            kwargs['verify_server_cert'] = self._app.config.verify_server_cert
-        elif 'verify_certificate' in con_argspec.args:
-            # older one
-            kwargs['verify_certificate'] = self._app.config.verify_server_cert
-        # else: this must be very old and bearded shell
-
-        if (  len(self._connections) > 1 \
-           and (  'prompt_prefix' in con_argspec.args
-               or con_argspec.keywords)):
+        kwargs = {
+                'verify_server_cert' : self._app.config.verify_server_cert,
+                'interactive'        : interactive
+        }
+        if len(self._connections) > 1:
             kwargs['prompt_prefix'] = '[%s] ' % hostname
         connection = connect(hostname, username, password, **kwargs)
         if connection is not None:
