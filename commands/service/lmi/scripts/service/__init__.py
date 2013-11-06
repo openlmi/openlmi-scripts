@@ -34,6 +34,7 @@ LMI service provider client library.
 from lmi.shell import LMIInstance
 from lmi.shell import LMIInstanceName
 from lmi.scripts.common.errors import LmiFailed
+from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
@@ -153,12 +154,12 @@ def get_service(ns, service):
     :param string service: Service name.
     """
     if isinstance(service, basestring):
-        cs = ns.Linux_ComputerSystem.first_instance_name()
+        cs = get_computer_system(ns)
         iname = ns.LMI_Service.new_instance_name({
             "Name": service,
             "CreationClassName" : "LMI_Service",
-            "SystemName" : cs.path['Name'],
-            "SystemCreationClassName" : cs.path['CreationClassName']
+            "SystemName" : cs.Name,
+            "SystemCreationClassName" : cs.CreationClassName
         })
         inst = iname.to_instance()
         if inst is None:
