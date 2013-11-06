@@ -1,11 +1,11 @@
 %global         commit bd21016ba88ba9f856e3e4bbb9b02b72fd96af3b
 %global         shortcommit %(c=%{commit}; echo ${c:0:7})
-%global         openlmi_scripts_version 0.2.3
-%global         commands logicalfile service software storage
+%global         openlmi_scripts_version 0.2.4
+%global         commands logicalfile service software storage hardware
 
 Name:           openlmi-scripts
 Version:        %{openlmi_scripts_version}
-Release:        4%{?dist}
+Release:        1%{?dist}
 Summary:        Client-side python modules and command line utilities
 
 License:        BSD
@@ -18,12 +18,12 @@ BuildRequires:  python2-devel
 BuildRequires:  python-docopt
 BuildRequires:  python-sphinx
 BuildRequires:  python-sphinx-theme-openlmi
-BuildRequires:  openlmi-tools >= 0.8
+BuildRequires:  openlmi-tools >= 0.9
 Requires:       python2
-Requires:       openlmi-providers
+Requires:       openlmi-providers >= 0.4.0
 Requires:       openlmi-python-base >= 0.3.0
 Requires:       python-docopt >= 0.6.1
-Requires:       openlmi-tools >= 0.8
+Requires:       openlmi-tools >= 0.9
 
 %description
 Client-side python modules and command line utilities.
@@ -37,7 +37,7 @@ This package contains the documents for OpenLMI Scripts.
 
 %package        logicalfile
 Summary:        Client scripts for OpenLMI Logical File provider
-Version:        0.0.1
+Version:        0.0.2
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    logicalfile
@@ -46,7 +46,7 @@ provider and command line wrapper.
 
 %package        service
 Summary:        Client scripts for OpenLMI Service provider
-Version:        0.1.0
+Version:        0.1.1
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    service
@@ -55,7 +55,7 @@ provider and command line wrapper.
 
 %package        software
 Summary:        Client scripts for OpenLMI Software provider
-Version:        0.2.1
+Version:        0.2.4
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    software
@@ -141,29 +141,37 @@ install -m 644 README.md COPYING Changelog $RPM_BUILD_ROOT/%{_docdir}/%{name}
 
 %files logicalfile
 %doc commands/logicalfile/README.md COPYING
-%dir %{python_sitelib}/lmi/scripts/logicalfile
-%{python_sitelib}/lmi/scripts/logicalfile/*
+%{python_sitelib}/lmi/scripts/logicalfile/
 %{python_sitelib}/openlmi_scripts_logicalfile-*
 
 %files service
 %doc commands/service/README.md COPYING
-%dir %{python_sitelib}/lmi/scripts/service
-%{python_sitelib}/lmi/scripts/service/*
+%{python_sitelib}/lmi/scripts/service/
 %{python_sitelib}/openlmi_scripts_service-*
 
 %files software
 %doc commands/software/README.md COPYING
-%dir %{python_sitelib}/lmi/scripts/software
-%{python_sitelib}/lmi/scripts/software/*
+%{python_sitelib}/lmi/scripts/software/
 %{python_sitelib}/openlmi_scripts_software-*
 
 %files storage
 %doc commands/storage/README.md COPYING
-%dir %{python_sitelib}/lmi/scripts/storage
-%{python_sitelib}/lmi/scripts/storage/*
+%{python_sitelib}/lmi/scripts/storage/
+%{python_sitelib}/openlmi_scripts_storage-*
+
+%files hardware
+%doc commands/storage/README.md COPYING
+%{python_sitelib}/lmi/scripts/storage/
 %{python_sitelib}/openlmi_scripts_storage-*
 
 %changelog
+* Wed Nov 06 2013 Michal Minar <miminar@redhat.com> 0.2.4-1
+- New upstream version.
+- Require openlmi-tools 0.9.
+
+* Tue Oct 29 2013 Michal Minar <miminar@redhat.com> 0.2.3-5
+- Made the build dependency on openlmi-tools version specific.
+
 * Tue Oct 29 2013 Michal Minar <miminar@redhat.com> 0.2.3-4
 - Fixed build, installation problems and rpmlint errors.
 
