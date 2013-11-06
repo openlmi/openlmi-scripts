@@ -101,17 +101,17 @@ class LmiSessionCommand(LmiEndPointCommand):
                 result = self.take_action(connection, args, kwargs)
                 # result may be a generator which may throw in the following
                 # function
-                results[connection.hostname] = (True, result)
-                self.process_host_result(connection.hostname, True, result)
+                results[connection.uri] = (True, result)
+                self.process_host_result(connection.uri, True, result)
             except Exception as exc:
                 if self.app.config.trace:
                     LOG().exception('invocation failed for host "%s"',
-                            connection.hostname)
+                            connection.uri)
                 else:
                     LOG().error('invocation failed for host "%s": %s',
-                            connection.hostname, exc)
-                results[connection.hostname] = (False, exc)
-                self.process_host_result(connection.hostname, False, exc)
+                            connection.uri, exc)
+                results[connection.uri] = (False, exc)
+                self.process_host_result(connection.uri, False, exc)
         self.process_session_results(session, results)
         return all(r[0] for r in results.values())
 
