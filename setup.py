@@ -6,7 +6,7 @@ import sys
 from setuptools import setup, find_packages
 
 PROJECT = 'openlmi-scripts'
-VERSION = '0.2.3'
+VERSION = '0.2.4'
 
 long_description = ''
 try:

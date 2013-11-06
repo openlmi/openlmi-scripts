@@ -1,3 +1,8 @@
+0.2.4
+* add get_computer_system() utility function
+* require at least lmi shell v0.8
+* correct support for lmi shell v0.8 and above
+
 0.2.3
 * made localhost a default host
 * allow to have a fallback command for command multiplexers
