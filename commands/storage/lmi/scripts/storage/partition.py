@@ -66,7 +66,7 @@ def get_disk_partitions(ns, disk):
             cls = ns.LMI_DiskPartition
             if part.PartitionType == cls.PartitionTypeValues.Extended:
                 for logical in part.associators(
-                        "CIM_BasedOn", Role="Antecedent"):
+                        AssocClass="CIM_BasedOn", Role="Antecedent"):
                     yield logical
 
 
