@@ -205,7 +205,7 @@ def str2size(size, additional_unit_size=None, additional_unit_suffix=None):
     if not m:
         if (additional_unit_suffix and suffix.upper()
                 == additional_unit_suffix.upper()):
-            m = additional_unit_size
+            m = int(additional_unit_size)
         else:
             # Sort the units by their size
             units = multipliers.items()
