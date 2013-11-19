@@ -59,7 +59,7 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import lvm, show
 from lmi.scripts.storage.common import str2size, size2str, str2device, str2vg
 from lmi.scripts.common import formatter
-
+from lmi.scripts.common.formatter import command as fcmd
 
 class Lister(command.LmiLister):
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size")
