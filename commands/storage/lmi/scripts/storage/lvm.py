@@ -145,6 +145,7 @@ def create_vg(ns, devices, name, extent_size=None):
                 raise LmiFailed("Cannot create setting for the volume group:" \
                         " %s." % (vals.value_name(ret),))
             goal = outparams['Setting']
+            goal = goal.to_instance()
             goal.ExtentSize = extent_size
             (ret, outparams, err) = goal.push()
             if ret != 0:
