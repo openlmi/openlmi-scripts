@@ -144,7 +144,7 @@ class Create(command.LmiCheckResult):
 
 
 class Delete(command.LmiCheckResult):
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
