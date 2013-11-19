@@ -242,6 +242,7 @@ def get_partition_tables(ns, devices=None):
             yield table.Antecedent.to_instance(), table.Dependent.to_instance()
     else:
         for device in devices:
+            device = common.str2device(ns, device)
             table = get_disk_partition_table(ns, device)
             if table:
                 yield device, table
