@@ -447,6 +447,14 @@ These pages provide more details of some aspects:
     command-classes
     command-properties
 
+Tutorial
+--------
+
+.. toctree::
+    :maxdepth: 2
+
+    script-tutorial
+
 -------------------------------------------------------------------------------
 
 .. seealso::
@@ -456,6 +464,8 @@ These pages provide more details of some aspects:
     :ref:`command_classes`
 
     :ref:`command_properties`
+
+    :ref:`script_tutorial`
 
 -------------------------------------------------------------------------------
 
