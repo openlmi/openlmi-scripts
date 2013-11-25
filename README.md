@@ -45,7 +45,7 @@ Dependencies
 Code base is written for `python 2.7`.
 There are following python dependencies:
 
- * openlmi-tools
+ * openlmi-tools ([PyPI][])
  * python-docopt
 
 ### Uploading to PyPI
@@ -66,6 +66,12 @@ Use standard `setuptools` script for installation:
 This installs just the *lmi meta-command* and client-side library. To install
 subcommands, you need to do the same procedure for each particular command
 under `commands/` directory.
+
+Script eggs are also available on *PyPI*, install them with:
+
+    $ pip install --user openlmi-scripts
+    $ # add any provider you want to interact with
+    $ pip install --user openlmi-scripts-service openlmi-scripts-software
 
 Usage
 -----
@@ -152,3 +158,4 @@ meta-command.
 [git]:           https://github.com/openlmi/openlmi-scripts                 "openlmi-scripts"
 [providers-git]: https://fedorahosted.org/openlmi/browser/openlmi-providers "openlmi-providers"
 [pythonhosted]:  http://pythonhosted.org/openlmi-scripts/index.html         "python hosted"
+[PyPI]:          https://pypi.python.org/pypi/openlmi-tools                 "PyPI"
