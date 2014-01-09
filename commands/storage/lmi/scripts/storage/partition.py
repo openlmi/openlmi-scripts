@@ -66,7 +66,7 @@ def get_disk_partitions(ns, disk):
             cls = ns.LMI_DiskPartition
             if part.PartitionType == cls.PartitionTypeValues.Extended:
                 for logical in part.associators(
-                        "CIM_BasedOn", Role="Antecedent"):
+                        AssocClass="CIM_BasedOn", Role="Antecedent"):
                     yield logical
 
 
@@ -242,6 +242,7 @@ def get_partition_tables(ns, devices=None):
             yield table.Antecedent.to_instance(), table.Dependent.to_instance()
     else:
         for device in devices:
+            device = common.str2device(ns, device)
             table = get_disk_partition_table(ns, device)
             if table:
                 yield device, table

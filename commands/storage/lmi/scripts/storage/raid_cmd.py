@@ -82,7 +82,7 @@ class Create(command.LmiCheckResult):
         """
         Implementation of 'raid create' command.
         """
-        raid.create_raid(ns, devices, level, _name)
+        raid.create_raid(ns, devices, int(level), _name)
 
 
 class Delete(command.LmiCheckResult):

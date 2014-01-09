@@ -127,7 +127,8 @@ class Formatter(object):
             ``line`` argument.
         :param dictionary kwargs: Keyword arguments to ``format()`` function.
         """
-        self.out.write(' ' * self.padding + line.format(*args, **kwargs))
+        line = ' ' * self.padding + line.format(*args, **kwargs)
+        self.out.write(line.encode(self.encoding))
         self.out.write("\n")
         self.line_counter += 1
 

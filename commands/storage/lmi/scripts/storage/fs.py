@@ -214,7 +214,7 @@ def delete_format(ns, fmt):
         return
 
     service = ns.LMI_FileSystemConfigurationService.first_instance()
-    (ret, _outparams, err) = service.DeleteFileSystem(TheFileSystem=fmt)
+    (ret, _outparams, err) = service.SyncDeleteFileSystem(TheFileSystem=fmt)
     if ret != 0:
         if err:
             raise LmiFailed("Cannot delete the format: %s." % err)

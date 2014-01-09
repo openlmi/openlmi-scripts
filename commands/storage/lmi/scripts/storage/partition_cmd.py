@@ -79,6 +79,7 @@ from lmi.scripts.common import command
 from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import str2size, str2device, size2str
 from lmi.scripts.common import formatter
+from lmi.scripts.common.formatter import command as fcmd
 
 class Lister(command.LmiLister):
     COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
@@ -130,18 +131,20 @@ class Create(command.LmiCheckResult):
         Implementation of 'partition create' command.
         """
         device = str2device(ns, device)
-        size = str2size(size)
+        if size:
+            size = str2size(size)
         ptype = None
         if _extended:
             ptype = partition.PARTITION_TYPE_EXTENDED
         elif _logical:
             ptype = partition.PARTITION_TYPE_LOGICAL
         p = partition.create_partition(ns, device, size, ptype)
+        p = p.to_instance()
         print "Partition %s, with DeviceID %s created." % (p.Name, p.DeviceID)
 
 
 class Delete(command.LmiCheckResult):
-    EXPECT = 0
+    EXPECT = None
 
     def transform_options(self, options):
         """
