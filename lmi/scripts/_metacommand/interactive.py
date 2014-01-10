@@ -57,6 +57,7 @@ class Interactive(cmd.Cmd):
         cmd.Cmd.__init__(self,
                 stdin=parent_app.stdin, stdout=parent_app.stdout)
         self.prompt = prompt
+        self._last_exit_code = 0
 
     @property
     def command_manager(self):
@@ -89,7 +90,11 @@ class Interactive(cmd.Cmd):
         line_parts = shlex.split(line)
         try:
             # let's try to run registered subcommand
-            return self.run_subcommand(line_parts)
+            retval = self.run_subcommand(line_parts)
+            if isinstance(retval, bool) or not isinstance(retval, (int, long)):
+                retval = 0 if bool(retval) or retval is None else 1
+            self._last_exit_code = retval
+            return retval
         except errors.LmiCommandNotFound:
             return cmd.Cmd.default(self, line)
         except docopt.DocoptExit as err:
@@ -152,7 +157,7 @@ class Interactive(cmd.Cmd):
         """
         Exit on End-Of-File.
         """
-        return True
+        raise errors.LmiTerminate(self._last_exit_code)
 
     def get_names(self):
         """
@@ -161,4 +166,16 @@ class Interactive(cmd.Cmd):
         """
         return [  n for n in cmd.Cmd.get_names(self)
                if not n.startswith('do__')]
+
+    def postcmd(self, stop, _line):
+        """
+        This is called after the ``do_*`` command to postprocess its result and
+        decide whether to stop the shell. We want to stop only when
+        :py:class:`lmi.scripts.common.errors.LmiError` is raised. This
+        exception is catched upwards in call chain.
+
+        :returns: Whether to stop the shell.
+        :rtype: bool
+        """
+        return False
 
