@@ -219,7 +219,7 @@ class MetaCommand(object):
         """
         cmd = TopLevelCommand(self)
         try:
-            return cmd.run(argv)
+            retval = cmd.run(argv)
         except Exception as exc:
             trace = True if self.config is None else self.config.trace
             if isinstance(exc, errors.LmiError) or not trace:
@@ -227,6 +227,9 @@ class MetaCommand(object):
             else:
                 LOG().exception("fatal")
             return 1
+        if isinstance(retval, bool) or not isinstance(retval, (int, long)):
+            return 0 if bool(retval) or retval is None else 1
+        return retval
 
 def main(argv=sys.argv[1:]):
     """

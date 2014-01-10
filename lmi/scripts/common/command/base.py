@@ -234,7 +234,9 @@ class LmiBaseCommand(object):
         :param list args: Arguments passed to the command line that were
             not yet parsed. It's the contents of ``sys.argv`` (if in
             non-interactive mode) from the current command on.
-        :returns: Exit code of application.
+        :returns: Exit code of application. This maybe also be a boolean value
+            or ``None``. ``None`` and ``True`` are treated as a success causing
+            exit code to be 0.
         :rtype: integer
         """
         raise NotImplementedError("run method must be overriden in subclass")

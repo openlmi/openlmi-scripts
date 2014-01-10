@@ -202,5 +202,5 @@ class LmiSessionCommand(LmiEndPointCommand):
         return self.execute(connection, *args, **kwargs)
 
     def run_with_args(self, args, kwargs):
-        self.process_session(self.app.session, args, kwargs)
+        return self.process_session(self.app.session, args, kwargs)
 
