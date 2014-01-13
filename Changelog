@@ -1,3 +1,7 @@
+0.2.5
+* terminate with exit code of the last executed command 
+* exit interactive mode only on user request
+
 0.2.4
 * add get_computer_system() utility function
 * require at least lmi shell v0.8
