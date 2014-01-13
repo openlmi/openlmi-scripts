@@ -1,6 +1,6 @@
 %global         commit bd21016ba88ba9f856e3e4bbb9b02b72fd96af3b
 %global         shortcommit %(c=%{commit}; echo ${c:0:7})
-%global         openlmi_scripts_version 0.2.4
+%global         openlmi_scripts_version 0.2.4a
 %global         commands logicalfile service software storage hardware
 
 Name:           openlmi-scripts
@@ -69,6 +69,15 @@ Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    storage
 This packages contains client side python library for OpenLMI Storage
+provider and command line wrapper.
+
+%package        hardware
+Summary:        Client scripts for OpenLMI Hardware provider
+Version:        0.0.2
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
+
+%description    hardware
+This packages contains client side python library for OpenLMI Hardware
 provider and command line wrapper.
 
 %prep
@@ -160,11 +169,14 @@ install -m 644 README.md COPYING Changelog $RPM_BUILD_ROOT/%{_docdir}/%{name}
 %{python_sitelib}/openlmi_scripts_storage-*
 
 %files hardware
-%doc commands/storage/README.md COPYING
-%{python_sitelib}/lmi/scripts/storage/
-%{python_sitelib}/openlmi_scripts_storage-*
+%doc commands/hardware/README.md COPYING
+%{python_sitelib}/lmi/scripts/hardware/
+%{python_sitelib}/openlmi_scripts_hardware-*
 
 %changelog
+* Mon Jan 13 2014 Michal Minar <miminar@redhat.com> 0.2.4a-1
+- Added hardware library.
+
 * Wed Nov 06 2013 Michal Minar <miminar@redhat.com> 0.2.4-1
 - New upstream version.
 - Require openlmi-tools 0.9.
