@@ -1,3 +1,6 @@
+0.2.6
+* allow digits in command names and options
+
 0.2.5
 * terminate with exit code of the last executed command 
 * exit interactive mode only on user request

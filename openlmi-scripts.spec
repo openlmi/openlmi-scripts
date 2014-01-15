@@ -1,11 +1,11 @@
 %global         commit bd21016ba88ba9f856e3e4bbb9b02b72fd96af3b
 %global         shortcommit %(c=%{commit}; echo ${c:0:7})
-%global         openlmi_scripts_version 0.2.5
-%global         commands logicalfile service software storage hardware
+%global         openlmi_scripts_version 0.2.6
+%global         commands logicalfile service software storage hardware networking
 
 Name:           openlmi-scripts
 Version:        %{openlmi_scripts_version}
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Client-side python modules and command line utilities
 
 License:        BSD
@@ -78,6 +78,15 @@ Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    hardware
 This packages contains client side python library for OpenLMI Hardware
+provider and command line wrapper.
+
+%package        networking
+Summary:        Client scripts for OpenLMI Networking provider
+Version:        0.0.1
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
+
+%description    networking
+This packages contains client side python library for OpenLMI Networking
 provider and command line wrapper.
 
 %prep
@@ -173,7 +182,15 @@ install -m 644 README.md COPYING Changelog $RPM_BUILD_ROOT/%{_docdir}/%{name}
 %{python_sitelib}/lmi/scripts/hardware/
 %{python_sitelib}/openlmi_scripts_hardware-*
 
+%files networking
+%doc commands/networking/README.md COPYING
+%{python_sitelib}/lmi/scripts/networking/
+%{python_sitelib}/openlmi_scripts_networking-*
+
 %changelog
+* Wed Jan 15 2014 Michal Minar <miminar@redhat.com> 0.2.6-3
+- Added networking library.
+
 * Mon Jan 13 2014 Michal Minar <miminar@redhat.com> 0.2.5-2
 - Added hardware library.
 - New upstream version.
