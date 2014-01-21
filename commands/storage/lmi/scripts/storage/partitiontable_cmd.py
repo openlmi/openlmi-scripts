@@ -55,9 +55,11 @@ from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import size2str, str2device
 from lmi.scripts.common import formatter
 from lmi.scripts.common.formatter import command as fcmd
+from lmi.scripts.common import get_logger
+LOG = get_logger(__name__)
 
 class Lister(command.LmiLister):
-    COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Largest free region')
+    COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Type', 'Largest free region')
 
     def transform_options(self, options):
         """
@@ -70,14 +72,23 @@ class Lister(command.LmiLister):
         """
         Implementation of 'partition-table list' command.
         """
-        for (device, _table) in partition.get_partition_tables(ns, devices):
+        cls = ns.LMI_DiskPartitionConfigurationCapabilities
+        for (device, table) in partition.get_partition_tables(ns, devices):
+            LOG().debug("Examining %s", device.Name)
             largest_size = partition.get_largest_partition_size(ns, device)
             largest_size = size2str(largest_size,
                     self.app.config.human_friendly)
 
+            if table.PartitionStyle == cls.PartitionStyleValues.MBR:
+                table_type = "MS-DOS"
+            else:
+                table_type = cls.PartitionStyleValues.value_name(
+                        table.PartitionStyle)
+
             yield (device.DeviceID,
                     device.Name,
                     device.ElementName,
+                    table_type,
                     largest_size
                     )
 
