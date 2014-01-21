@@ -55,7 +55,7 @@ function test_raid() {
 	    rlRun "ls -l /dev/md/$name"
 	    rlRun -s "mdadm -D /dev/md/$name"
 	    for part in $parts; do
-	        rlAssertGrep "active.*$part" $rlRun_LOG
+	        rlAssertGrep "(active|rebuilding).*$part" $rlRun_LOG -E
 	    done
 	    rm $rlRun_LOG
 
@@ -94,7 +94,7 @@ function test_raid() {
         rm $rlRun_LOG
 
         rlLogInfo "Check lmi raid show output"
-        rlRun -s "$LMI -NHL csv raid show $name"
+        rlRun -s "$LMI -NHL csv raid show $name" 1
         rlAssertNotGrep "\"DeviceID\",\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
         rlAssertNotGrep "\"Name\",\"/dev/md/$name\"" $rlRun_LOG
     rlPhaseEnd
