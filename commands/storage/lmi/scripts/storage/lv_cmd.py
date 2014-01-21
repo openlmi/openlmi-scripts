@@ -46,13 +46,22 @@ Commands:
 
     create      Create a logical volume on given volume group.
 
-                Size can be specified as number of extents using 'e' suffix,
-                e.g. '100e' is 100 extents.
-
     delete      Delete given logical volume.
 
     show        Show detailed information about given Logical Volumes. If no
                 Logical Volumes are provided, all of them are displayed.
+
+Options:
+    vg          Name of the volume group, with or without `/dev/` prefix.
+
+    size        Size of the new logical volume, by default in bytes.
+                'T', 'G', 'M' or 'K' suffix can be used to use specify other
+                units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
+                (= 1024 bytes).
+                The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+                'E' suffix can be used to specify number of volume group
+                extents, '100e' means 100 extents.
 """
 
 from lmi.scripts.common import command
