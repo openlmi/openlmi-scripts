@@ -108,7 +108,8 @@ class ListSupported(command.LmiLister):
         caps = ns.LMI_FileSystemConfigurationCapabilities.first_instance()
         cls = ns.LMI_FileSystemConfigurationCapabilities
         for fstype in caps.SupportedActualFileSystemTypes:
-            yield [cls.SupportedActualFileSystemTypesValues.value_name(fstype)]
+            fsname = cls.SupportedActualFileSystemTypesValues.value_name(fstype)
+            yield [fsname.lower()]
 
 
 class Create(command.LmiCheckResult):
