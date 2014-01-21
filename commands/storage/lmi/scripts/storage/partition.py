@@ -160,7 +160,6 @@ def create_partition(ns, device, size=None, partition_type=None):
                         "partition: %d." % ret)
             args['Goal'] = setting
 
-        print args
         service = ns.LMI_DiskPartitionConfigurationService.first_instance()
         (ret, outparams, err) = service.SyncLMI_CreateOrModifyPartition(**args)
         if ret != 0:
