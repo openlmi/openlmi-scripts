@@ -31,7 +31,7 @@
 #
 
 """
-Logicalfile management functions.
+File and directory management functions.
 
 Usage:
     %(cmd)s list <directory> [ <depth> ]
