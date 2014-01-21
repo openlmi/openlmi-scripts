@@ -170,9 +170,11 @@ def mount_create(ns, device, mountpoint, fs_type=None, options=None, other_optio
                                                       FileSystem=filesystem.path,
                                                       MountPoint=mountpoint,
                                                       FileSystemSpec=device)
-    msg = '%s on %s (%s, %s)' % (device, mountpoint, options, other_options)
+    msg = '%s on %s' % (device, mountpoint)
     if ret != 0:
-        raise LmiFailed('Cannot create mount: %s.' % msg)
+        errname = service.SyncCreateMount.CreateMountValues.value_name(ret)
+        raise LmiFailed('Cannot create mount: %s: %s.' % (
+                msg, errname))
 
     LOG().info('Successfully created mount: %s', msg)
 
