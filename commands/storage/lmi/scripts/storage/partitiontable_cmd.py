@@ -31,7 +31,7 @@
 #
 
 """
-Partition management.
+Partition table management.
 
 Usage:
     %(cmd)s list [ <device> ...]

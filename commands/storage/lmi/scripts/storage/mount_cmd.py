@@ -31,7 +31,7 @@
 #
 
 """
-Mounting management functions.
+Mount management.
 
 Usage:
     %(cmd)s list [ --all ]
