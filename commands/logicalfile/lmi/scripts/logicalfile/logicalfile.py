@@ -189,8 +189,8 @@ def lf_show(ns, target):
          'LFName':target})
     try:
         uf = uf_name.to_instance()
-    except:
-        raise LmiFailed("Could not get target: %s" % target)
+    except Exception as err:
+        raise LmiFailed('Could not get target "%s": %s' % (target, err))
 
     ident = uf.associators(AssocClass='LMI_FileIdentity')[0]
 
