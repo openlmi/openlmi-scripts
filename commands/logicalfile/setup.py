@@ -40,7 +40,7 @@ setup(
 
     entry_points={
         'lmi.scripts.cmd': [
-            'lf = lmi.scripts.logicalfile.lf_cmd:Lf',
+            'file = lmi.scripts.logicalfile.lf_cmd:Lf',
             ],
         },
     )

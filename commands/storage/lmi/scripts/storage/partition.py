@@ -160,7 +160,6 @@ def create_partition(ns, device, size=None, partition_type=None):
                         "partition: %d." % ret)
             args['Goal'] = setting
 
-        print args
         service = ns.LMI_DiskPartitionConfigurationService.first_instance()
         (ret, outparams, err) = service.SyncLMI_CreateOrModifyPartition(**args)
         if ret != 0:
@@ -279,6 +278,11 @@ def get_largest_partition_size(ns, device):
     if not cap:
         raise LmiFailed("Cannot find partition table on %s" % device.name)
     (ret, outparams, err) = cap.FindPartitionLocation(Extent=device)
+
+    if ret == cap.FindPartitionLocation.FindPartitionLocationValues\
+                 .NotEnoughFreeSpace:
+        return 0
+
     if ret != 0:
         if err:
             LOG().warning("Cannot find largest partition size: %s." % err)

@@ -52,7 +52,7 @@ rlPhaseStartTest
 
         rlLogInfo "Test fs list"
         # the last column is lower-case filesystem type in double quotes
-        fstype=$(cat $rlRun_LOG | cut -f 4 -d ',' | tr '[a-z]' '[A-Z]')
+        fstype=$(cat $rlRun_LOG | cut -f 4 -d ',' )
         rlAssertEquals "Checking fs $fsname is present on $part" "\"$fsname\"" $fstype
         rm $rlRun_LOG
 

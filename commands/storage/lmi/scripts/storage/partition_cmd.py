@@ -70,7 +70,29 @@ Commands:
                 partitions are provided, all of them are displayed.
 
 Options:
-    size        Size of the partition in sectors.
+    size        Size of the new partition volume, by default in sectors.
+                'T', 'G', 'M' or 'K' suffix can be used to use specify other
+                units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
+                (= 1024 bytes).
+                The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+    device,
+    partition   Identifier of the device/partition. Either one of:
+
+                * DeviceID of appropriate CIM_StorageExtent object. This is
+                  internal OpenLMI ID of the device and it should be stable
+                  across system reboots.
+
+                * Device name directly in /dev directory, such as '/dev/sda'.
+                  This device name is available as Name property of
+                  CIM_StorageExtent object.
+
+                * Name of MD RAID or logical volume. This method cannot be used
+                  when the name is not unique, for example when there are two
+                  logical volumes with the same name, allocated from different
+                  volume groups. This name is available as ElementName
+                  property of CIM_StorageExtent object.
+
     --logical   Override the automatic behavior and request logical partition.
     --extended  Override the automatic behavior and request extended partition.
 """

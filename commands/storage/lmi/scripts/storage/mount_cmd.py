@@ -29,15 +29,14 @@
 #
 # Authors: Jan Synacek <jsynacek@redhat.com>
 #
-
 """
-Mounting management functions.
+Mount management.
 
 Usage:
-    %(cmd)s list [ --all ]
+    %(cmd)s list [ --all ] [ <device> ... ]
     %(cmd)s create <device> <mountpoint> [ (-t <fs_type>) (-o <options>) (-p <other_options>) ]
     %(cmd)s delete <target>
-    %(cmd)s show [ --all ]
+    %(cmd)s show [ --all ] [ <device> ... ]
 
 Commands:
     list     List mounted filesystems with a device attached to them.
@@ -85,20 +84,45 @@ from lmi.scripts.common import command, get_logger
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common.formatter import command as fcmd
 from lmi.scripts.storage import mount
+from lmi.scripts.storage.common import str2device
 
+def get_mounts_for_devices(ns, devices):
+    """
+    Return list of LMI_MountedFilesystem instances for given devices.
+    """
+    mounts = []
+    for device in devices:
+        device = str2device(ns, device)
+        filesystems = device.associators(AssocClass="LMI_ResidesOnExtent",
+                Role="Antecedent")
+        for fs in filesystems:
+            mounts += fs.associators(ResultClass="LMI_MountedFileSystem")
+    return mounts
 
 class Lister(command.LmiLister):
     COLUMNS = ('FileSystemSpec', 'FileSystemType', 'MountPointPath', 'Options', 'OtherOptions')
     OPT_NO_UNDERSCORES = True
 
-    def execute(self, ns, all=None):
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability.
+        """
+        options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, all=None, devices=None):
         """
         Implementation of 'mount list' command.
         """
+        if devices:
+            mounts = get_mounts_for_devices(ns, devices)
+        else:
+            mounts = mount.get_mounts(ns)
+
         if all is False:
             transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
 
-        for mnt in mount.get_mounts(ns):
+        for mnt in mounts:
             # treat root specially (can be mounted twice - as a rootfs and with
             # a device)
             if mnt.FileSystemSpec == 'rootfs':
@@ -122,15 +146,28 @@ class Show(command.LmiLister):
     COLUMNS = ('Name', 'Value')
     OPT_NO_UNDERSCORES = True
 
-    def execute(self, ns, all=None):
+    def transform_options(self, options):
+        """
+        Rename 'device' option to 'devices' parameter name for better
+        readability.
+        """
+        options['<devices>'] = options.pop('<device>')
+
+
+    def execute(self, ns, all=None, devices=None):
         """
         Implementation of 'mount show' command.
         """
+        if devices:
+            mounts = get_mounts_for_devices(ns, devices)
+        else:
+            mounts = mount.get_mounts(ns)
+
         if all is False:
             transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
 
         yield fcmd.NewTableCommand('Mounted filesystems')
-        for mnt in mount.get_mounts(ns):
+        for mnt in mounts:
             # treat root specially (can be mounted twice - as a rootfs and with
             # a device)
             if mnt.FileSystemSpec == 'rootfs':
@@ -153,6 +190,14 @@ class Show(command.LmiLister):
 class Create(command.LmiCheckResult):
     EXPECT = None
 
+    def transform_options(self, options):
+        """
+        There is only one <device> option, but docopt passes it as array
+        (because in other commands it is used with '...'). So let's
+        transform it to scalar.
+        """
+        options['<device>'] = options.pop('<device>')[0]
+
     def execute(self, ns, device, mountpoint, fs_type=None, options=None, other_options=None):
         """
         Implementation of 'mount create' command.
@@ -161,6 +206,14 @@ class Create(command.LmiCheckResult):
 
 class Delete(command.LmiCheckResult):
     EXPECT = None
+
+    def transform_options(self, options):
+        """
+        There is only one <device> option, but docopt passes it as array
+        (because in other commands it is used with '...'). So let's
+        transform it to scalar.
+        """
+        options['<device>'] = options.pop('<device>')[0]
 
     def execute(self, ns, target):
         """

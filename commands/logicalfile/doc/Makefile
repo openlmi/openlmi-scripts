@@ -52,7 +52,7 @@ cmdline.generated:
 	echo "    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
 	echo "    !!!!!!!!!"; \
 	echo ; \
-	for i in lf; \
+	for i in file; \
 		do lmi help $$i | python ../../../tools/help2rst $$i | tr -d '\033' |sed 's/..1034h//' ;  \
 	done \
 	) > $@

@@ -3,21 +3,21 @@
     This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
     !!!!!!!!!
 
-lf
---
+file
+----
 
 Logicalfile management functions.
 
 
 **Usage:**
 
-    **lmi** **lf** **list** \ *<directory>*\  [ \ *<depth>*\  ]
+    **lmi** **file** **list** \ *<directory>*\  [ \ *<depth>*\  ]
 
-    **lmi** **lf** **createdir** \ *<directory>*\ 
+    **lmi** **file** **createdir** \ *<directory>*\ 
 
-    **lmi** **lf** **deletedir** \ *<directory>*\ 
+    **lmi** **file** **deletedir** \ *<directory>*\ 
 
-    **lmi** **lf** **show** \ *<target>*\ 
+    **lmi** **file** **show** \ *<target>*\ 
 
 
 

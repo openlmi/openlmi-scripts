@@ -48,6 +48,25 @@ Commands:
 
     show        Show detailed information about given MD RAID devices. If no
                 devices are provided, all MD RAID devices are displayed.
+
+Options:
+    device      Identifier of the device. Either one of:
+
+                * DeviceID of appropriate CIM_StorageExtent object. This is
+                  internal OpenLMI ID of the device and it should be stable
+                  across system reboots.
+
+                * Device name directly in /dev directory, such as '/dev/sda'.
+                  This device name is available as Name property of
+                  CIM_StorageExtent object.
+
+                * Name of MD RAID or logical volume. This method cannot be used
+                  when the name is not unique, for example when there are two
+                  logical volumes with the same name, allocated from different
+                  volume groups. This name is available as ElementName
+                  property of CIM_StorageExtent object.
+
+    level       RAID level. Supported levels are: 0, 1, 4, 5, 6, 10.
 """
 
 from lmi.scripts.common import command

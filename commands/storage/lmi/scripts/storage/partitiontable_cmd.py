@@ -31,7 +31,7 @@
 #
 
 """
-Partition management.
+Partition table management.
 
 Usage:
     %(cmd)s list [ <device> ...]
@@ -48,6 +48,26 @@ Commands:
 
     show        Show detailed information about partition table on given
                 devices. If no devices are provided, all of them are displayed.
+
+Options:
+    device      Identifier of the device. Either one of:
+
+                * DeviceID of appropriate CIM_StorageExtent object. This is
+                  internal OpenLMI ID of the device and it should be stable
+                  across system reboots.
+
+                * Device name directly in /dev directory, such as '/dev/sda'.
+                  This device name is available as Name property of
+                  CIM_StorageExtent object.
+
+                * Name of MD RAID or logical volume. This method cannot be used
+                  when the name is not unique, for example when there are two
+                  logical volumes with the same name, allocated from different
+                  volume groups. This name is available as ElementName
+                  property of CIM_StorageExtent object.
+
+    --gpt       Create GPT partition table (default).
+    --msdos     Create MS-DOS partition table.
 """
 
 from lmi.scripts.common import command
@@ -55,9 +75,11 @@ from lmi.scripts.storage import partition, show
 from lmi.scripts.storage.common import size2str, str2device
 from lmi.scripts.common import formatter
 from lmi.scripts.common.formatter import command as fcmd
+from lmi.scripts.common import get_logger
+LOG = get_logger(__name__)
 
 class Lister(command.LmiLister):
-    COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Largest free region')
+    COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Type', 'Largest free region')
 
     def transform_options(self, options):
         """
@@ -70,14 +92,23 @@ class Lister(command.LmiLister):
         """
         Implementation of 'partition-table list' command.
         """
-        for (device, _table) in partition.get_partition_tables(ns, devices):
+        cls = ns.LMI_DiskPartitionConfigurationCapabilities
+        for (device, table) in partition.get_partition_tables(ns, devices):
+            LOG().debug("Examining %s", device.Name)
             largest_size = partition.get_largest_partition_size(ns, device)
             largest_size = size2str(largest_size,
                     self.app.config.human_friendly)
 
+            if table.PartitionStyle == cls.PartitionStyleValues.MBR:
+                table_type = "MS-DOS"
+            else:
+                table_type = cls.PartitionStyleValues.value_name(
+                        table.PartitionStyle)
+
             yield (device.DeviceID,
                     device.Name,
                     device.ElementName,
+                    table_type,
                     largest_size
                     )
 
