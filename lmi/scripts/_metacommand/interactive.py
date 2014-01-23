@@ -170,6 +170,7 @@ class Interactive(cmd.Cmd):
         """
         Exit on End-Of-File.
         """
+        self._parent.stdout.write('\n')
         raise errors.LmiTerminate(self._last_exit_code)
 
     def get_names(self):
