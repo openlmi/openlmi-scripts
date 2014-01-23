@@ -147,7 +147,7 @@ def process_commands_line(line):
     elif line.startswith(" "*4):
         # it is start of new option
         line = line.lstrip()
-        tokens = line.partition(" ")
+        tokens = line.partition("  ")
         print
         print " "*4 + "**" + tokens[0] + "**"
         print " "*8 + " ".join(tokens[1:]).lstrip()
