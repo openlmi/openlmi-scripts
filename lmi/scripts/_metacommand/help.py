@@ -32,7 +32,11 @@
 Module containing help command.
 """
 
+from lmi.scripts.common import errors
+from lmi.scripts.common import get_logger
 from lmi.scripts.common.command import LmiEndPointCommand
+
+LOG = get_logger(__name__)
 
 class Help(LmiEndPointCommand):
     """
@@ -45,11 +49,17 @@ class Help(LmiEndPointCommand):
 
     def execute(self, subcommand):
         mgr = self.app.command_manager
+
         if subcommand is not None:
             # print the details of given command
-            cmd = mgr[subcommand](self.app, subcommand,
-                    parent=self.parent)
-            self.app.stdout.write(cmd.get_usage(True))
+            try:
+                cmd = mgr[subcommand](self.app, subcommand,
+                        parent=self.parent)
+                self.app.stdout.write(cmd.get_usage(True))
+            except errors.LmiCommandNotFound:
+                LOG().error('no such command "%s"', subcommand)
+                return 1
+
         else:
             # let's print the summary of available commands
             self.app.stdout.write("Commands:\n")

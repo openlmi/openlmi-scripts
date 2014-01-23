@@ -176,7 +176,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         :returns: Exit code of application.
         :rtype: integer
         """
-        self.execute(*args, **kwargs)
+        return self.execute(*args, **kwargs)
 
     @property
     def formatter(self):

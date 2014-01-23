@@ -144,7 +144,8 @@ class Interactive(cmd.Cmd):
             # Dispatch to the underlying help command,
             # which knows how to provide help for extension
             # commands.
-            self.run_subcommand(["help", arg])
+            self._last_exit_code = self.run_subcommand(["help", arg])
+            return self._last_exit_code
         else:
             cmd.Cmd.do_help(self, arg)
             cmd_names = sorted(self.command_manager)
