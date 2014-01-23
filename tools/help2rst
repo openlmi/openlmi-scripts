@@ -106,12 +106,12 @@ def process_usage_line(line):
     # by [a-z] character.
     # I.e. 'partition-table' should be skipped, while '--option' should
     # match.
-    line = re.sub(r'(?<![a-zA-Z])(-[\-a-zA-Z]+)', r'\\ **\1**\\ ', line)
+    line = re.sub(r'(?<![a-zA-Z0-9])(-[\-a-zA-Z0-9]+)', r'\\ **\1**\\ ', line)
     # '<arg>' is italics
     line = re.sub(r'(<[^>]*>)', r'\\ *\1*\\ ', line)
     # words alone are bold, they can also contain a dash ('partition-table')
-    line = re.sub(r'\s([a-zA-Z][a-zA-Z-]*)\s', r' **\1** ', line)
-    line = re.sub(r'\s([a-zA-Z][a-zA-Z-]*)\s', r' **\1** ', line)
+    line = re.sub(r'\s([a-zA-Z0-9][a-zA-Z0-9-]*)\s', r' **\1** ', line)
+    line = re.sub(r'\s([a-zA-Z0-9][a-zA-Z0-9-]*)\s', r' **\1** ', line)
 
     # There must be one line space before the option
     print
