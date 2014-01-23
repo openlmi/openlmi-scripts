@@ -34,6 +34,8 @@
 Logicalfile management functions.
 """
 
+from pywbem import CIMError
+
 from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.errors import LmiFailed
@@ -189,7 +191,7 @@ def lf_show(ns, target):
          'LFName':target})
     try:
         uf = uf_name.to_instance()
-    except Exception as err:
+    except CIMError as err:
         raise LmiFailed('Could not get target "%s": %s' % (target, err))
 
     ident = uf.associators(AssocClass='LMI_FileIdentity')[0]
