@@ -33,6 +33,7 @@ Usage:
     %(cmd)s enslave <master_caption> <device_name>
     %(cmd)s address add <caption> <address> <prefix> [<gateway>]
     %(cmd)s address remove <caption> <address>
+    %(cmd)s address replace <caption> <address> <prefix> [<gateway>]
 
 Commands:
     list             Prints a list of devices or settings.
@@ -45,6 +46,7 @@ Commands:
     address          Manipulate the list of IP addresses on given setting.
     address add      Add IP address to the existing list of addresses.
     address remove   Remove given IP address from the list of addresses.
+    address replace  Replace all IP address with new address.
 
 Options:
     --ethernet  Create ethernet setting [default].
@@ -363,9 +365,26 @@ class RemoveAddress(command.LmiCheckResult):
         if '<caption>' in options and len(options['<caption>']) > 0:
             options['<caption>'] = options['<caption>'][0]
 
+class ReplaceAddress(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address, prefix, gateway):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return replace_ip_address(ns, setting, address, prefix, gateway)
+
+    def transform_options(self, options):
+        """
+        ReplaceAddress takes only one caption, get only one element
+        from the list for better readability.
+        """
+        if '<caption>' in options and len(options['<caption>']) > 0:
+            options['<caption>'] = options['<caption>'][0]
+
+
 class Address(command.LmiCommandMultiplexer):
     """ Manage the list of IP addresses. """
-    COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress }
+    COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress, 'replace': ReplaceAddress }
 
 Networking = command.register_subcommands(
     'Networking', __doc__,

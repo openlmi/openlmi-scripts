@@ -426,3 +426,58 @@ def remove_ip_address(ns, setting, address):
     if not found:
         raise LmiInvalidOptions("Can't remove IP address from setting: invalid setting type or address doesn't exist")
     return 0
+
+def replace_ip_address(ns, setting, address, prefix, gateway=None):
+    '''
+    Remove all IP addresses from given static setting and add new IP address.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    :param int prefix: network prefix.
+    :param gateway: default gateway or None
+    :type gateway: str or None
+    '''
+    # Check the IP address
+    try:
+        address_int, version = IPy.parseAddress(address)
+    except ValueError:
+        raise LmiInvalidOptions("Invalid IP address: %s" % address)
+    address = IPy.intToIp(address_int, version)
+
+    # Check the prefix
+    try:
+        prefix_int = int(prefix)
+    except ValueError:
+        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
+    if (version == 4 and prefix_int > 32) or (version == 6 and prefix_int > 128):
+        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
+    prefix = str(prefix_int)
+
+    # Check the gateway
+    if gateway:
+        try:
+            gateway_int, gateway_version = IPy.parseAddress(gateway)
+        except ValueError:
+            raise LmiInvalidOptions("Invalid gateway: %s" % gateway)
+        if gateway_version != version:
+            raise LmiInvalidOptions("Invalid gateway, should be IPv%d: %s" % (version, gateway))
+        gateway = IPy.intToIp(gateway_int, version)
+
+    protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
+    found = False
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
+        if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
+            settingData.IPAddresses = [address]
+            if version == 4:
+                settingData.SubnetMasks = [IPy.IP("0.0.0.0/%s" % prefix).netmask().strFullsize()]
+            else:
+                settingData.IPv6SubnetPrefixLengths = [prefix]
+            if gateway:
+                settingData.GatewayAddresses = [gateway]
+            else:
+                settingData.GatewayAddresses = [""]
+            found = True
+            settingData.push()
+    if not found:
+        raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type")
+    return 0
