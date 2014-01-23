@@ -70,5 +70,9 @@ class Help(LmiEndPointCommand):
                 self.app.stdout.write(cmd_line
                         % (cmd, mgr[cmd].get_description()
                             .strip().split("\n", 1)[0]))
+            self.app.stdout.write(
+                    "\nFor more informations about particular command type:\n"
+                    "    help <command>\n")
+
         return exit.EXIT_CODE_SUCCESS
 
