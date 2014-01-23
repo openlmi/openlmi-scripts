@@ -15,8 +15,8 @@ setup(
     long_description=long_description,
     author=u'Radek Novacek',
     author_email='rnovacek@redhat.com',
-    url='https://github.com/openlmi/openlmi-networking',
-    download_url='https://github.com/openlmi/openlmi-networking/tarball/master',
+    url='https://github.com/openlmi/openlmi-scripts',
+    download_url='https://github.com/openlmi/openlmi-scripts/tarball/master',
     platforms=['Any'],
     license="BSD",
     classifiers=[

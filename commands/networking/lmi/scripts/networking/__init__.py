@@ -65,7 +65,7 @@ def get_mac(ns, device):
     lan = device.first_associator(AssocClass="LMI_EndpointForIPNetworkConnection", ResultClass="LMI_LANEndpoint")
     return lan.MACAddress if lan.MACAddress is not None else "00:00:00:00:00:00"
 
-def get_ip_adresses(ns, device):
+def get_ip_addresses(ns, device):
     for endpoint in device.associators(AssocClass="LMI_NetworkSAPSAPDependency", ResultClass="LMI_IPProtocolEndpoint"):
         if endpoint.ProtocolIFType == ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv4:
             yield (endpoint.IPv4Address, endpoint.SubnetMask)
@@ -147,7 +147,7 @@ def get_applicable_devices(ns, setting):
     return setting.associators(AssocClass="LMI_IPElementSettingData")
 
 
-def activate(ns, setting, device):
+def activate(ns, setting, device=None):
     """
     Activate network setting on given device
 
@@ -164,7 +164,7 @@ def activate(ns, setting, device):
             Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32768)
     return 0
 
-def deactivate(ns, setting, device):
+def deactivate(ns, setting, device=None):
     """
     Deactivate network setting
 
@@ -193,7 +193,7 @@ def delete_setting(ns, setting):
     setting.delete()
     return 0
 
-def add_ip_address(ns, setting, address, prefix, gateway):
+def add_ip_address(ns, setting, address, prefix, gateway=None):
     # Check the IP address
     try:
         address_int, version = IPy.parseAddress(address)
