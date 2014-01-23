@@ -37,12 +37,34 @@ import IPy
 LOG = get_logger(__name__)
 
 def get_device_by_name(ns, device_name):
+    '''
+    Get instance of LMI_IPNetworkConnection class by the device name.
+
+    :param str device_name: Name of the device.
+    :return: LMI_IPNetworkConnection representing the device.
+    :rtype: ``LMI_IPNetworkConnection`` or ``None`` if not found
+    '''
     return ns.LMI_IPNetworkConnection.first_instance({ 'ElementName': device_name })
 
 def get_setting_by_caption(ns, caption):
+    '''
+    Get instance of LMI_IPAssignmentSettingData class by the caption.
+
+    :param str caption: Caption of the setting.
+    :return: LMI_IPAssignmentSettingData representing the setting.
+    :rtype: ``LMI_IPAssignmentSettingData`` or ``None`` if not found
+    '''
     return ns.LMI_IPAssignmentSettingData.first_instance({ 'Caption': caption })
 
 def list_devices(ns, device_names=None):
+    '''
+    Get a list of network devices.
+
+    :param device_name: List of device names that will be used as filter for devices.
+    :type device_name: list of str
+    :return: List of instances of LMI_IPNetworkConnection
+    :rtype: list of LMI_IPNetworkConnection
+    '''
     for s in sorted(ns.LMI_IPNetworkConnection.instances(),
                     key=lambda i: i.ElementName):
         if device_names:
@@ -52,6 +74,14 @@ def list_devices(ns, device_names=None):
             yield s
 
 def list_settings(ns, captions=None):
+    '''
+    Get a list of network settings.
+
+    :param captions: List of setting captions that will be used as filter for settings.
+    :type captions: list of str
+    :return: Settings that matches given captions
+    :rtype: list of LMI_IPAssignmentSettingData
+    '''
     for s in sorted(ns.LMI_IPAssignmentSettingData.instances(),
                     key=lambda i: i.Caption):
         if s.AddressOrigin == ns.LMI_IPAssignmentSettingData.AddressOriginValues.cumulativeconfiguration:
@@ -62,10 +92,24 @@ def list_settings(ns, captions=None):
                 yield s
 
 def get_mac(ns, device):
+    '''
+    Get a MAC address for given device.
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: MAC address of given device or 00:00:00:00:00:00 when no MAC is found.
+    :rtype: str
+    '''
     lan = device.first_associator(AssocClass="LMI_EndpointForIPNetworkConnection", ResultClass="LMI_LANEndpoint")
     return lan.MACAddress if lan.MACAddress is not None else "00:00:00:00:00:00"
 
 def get_ip_addresses(ns, device):
+    '''
+    Get a list of IP addresses assigned to given device
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: IP addresses with subnet masks (IPv4) or prefixes (IPv6) that is assigned to the device.
+    :rtype: list of tuple (IPAddress, SubnetMask/Prefix)
+    '''
     for endpoint in device.associators(AssocClass="LMI_NetworkSAPSAPDependency", ResultClass="LMI_IPProtocolEndpoint"):
         if endpoint.ProtocolIFType == ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv4:
             yield (endpoint.IPv4Address, endpoint.SubnetMask)
@@ -73,12 +117,25 @@ def get_ip_addresses(ns, device):
             yield (endpoint.IPv6Address, endpoint.IPv6SubnetPrefixLength)
 
 def get_default_gateways(ns, device):
+    '''
+    Get a list of default gateways assigned to given device
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: Default gateways assigned to the device
+    :rtype: list of str
+    '''
     for rsap in device.associators(AssocClass="LMI_NetworkRemoteAccessAvailableToElement", ResultClass="LMI_NetworkRemoteServiceAccessPoint"):
         if rsap.AccessContext == ns.LMI_NetworkRemoteServiceAccessPoint.AccessContextValues.DefaultGateway:
             yield rsap.AccessInfo
 
 def get_dns_servers(ns, device):
-    # TODO: check if this is not actually a bug
+    '''
+    Get a list of DNS servers assigned to given device
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: DNS servers assigned to the device
+    :rtype: list of str
+    '''
     # There might be more links to RemoteServiceAccessPoint, filter them
     d = {}
     for ipendpoint in device.associators(AssocClass="LMI_NetworkSAPSAPDependency", ResultClass="LMI_IPProtocolEndpoint"):
@@ -89,28 +146,70 @@ def get_dns_servers(ns, device):
     return d.values()
 
 def get_available_settings(ns, device):
+    '''
+    Get a list of settings that can be applied to given device
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: Settings applicable to the device
+    :rtype: list of LMI_IPAssignmentSettingData
+    '''
     for setting in device.associators(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPAssignmentSettingData"):
         yield setting
 
 def get_active_settings(ns, device):
+    '''
+    Get a list of settings that are currently active on the device
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: Settings that are active on the device
+    :rtype: list of LMI_IPAssignmentSettingData
+    '''
     for elementsettingdata in device.references(ResultClass="LMI_IPElementSettingData"):
         if elementsettingdata.IsCurrent == ns.LMI_IPElementSettingData.IsCurrentValues.IsCurrent:
             yield elementsettingdata.SettingData.to_instance()
 
 SETTING_IP_METHOD_DISABLED = 0
+''' Disabled IP configuration '''
+
 SETTING_IP_METHOD_STATIC = 3
+''' Static IP address configuration '''
+
 SETTING_IP_METHOD_DHCP = 4
+''' IP configuration obtained from DHCP server '''
+
 SETTING_IP_METHOD_DHCPv6 = 7
+''' IP configuration obtained from DHCPv6 server '''
+
 SETTING_IP_METHOD_STATELESS = 9
+''' Stateless IPv6 configuration '''
+
 
 SETTING_TYPE_UNKNOWN = 0
+''' Unknown type of setting '''
+
 SETTING_TYPE_ETHERNET = 1
+''' Configuration for ethernet '''
+
 SETTING_TYPE_BRIDGE_MASTER = 4
+''' Configuration for bridge master '''
+
 SETTING_TYPE_BRIDGE_SLAVE = 40
+''' Configuration for bridge slave'''
+
 SETTING_TYPE_BOND_MASTER = 5
+''' Configuration for bond master '''
+
 SETTING_TYPE_BOND_SLAVE = 50
+''' Configuration for bond slave '''
 
 def get_setting_type(ns, setting):
+    '''
+    Get type of the setting
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :return: type of setting
+    :rtype: SETTING_TYPE_* constant
+    '''
     if setting.classname == "LMI_BondingSlaveSettingData":
         return SETTING_TYPE_BOND_SLAVE
     elif setting.classname == "LMI_BondingMasterSettingData":
@@ -123,6 +222,13 @@ def get_setting_type(ns, setting):
         return SETTING_TYPE_ETHERNET
 
 def get_setting_ip4_method(ns, setting):
+    '''
+    Get method of obtaining IPv4 configuration on given setting
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :return: IPv4 method
+    :rtype: SETTING_IP_METHOD_* constant
+    '''
     if setting.IPv4Type == ns.LMI_IPAssignmentSettingData.IPv4TypeValues.DHCP:
         return SETTING_IP_METHOD_DHCP
     elif setting.IPv4Type == ns.LMI_IPAssignmentSettingData.IPv4TypeValues.Static:
@@ -131,6 +237,13 @@ def get_setting_ip4_method(ns, setting):
         return SETTING_IP_METHOD_DISABLED
 
 def get_setting_ip6_method(ns, setting):
+    '''
+    Get method of obtaining IPv6 configuration on given setting
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :return: IPv6 method
+    :rtype: SETTING_IP_METHOD_* constant
+    '''
     if setting.IPv6Type == ns.LMI_IPAssignmentSettingData.IPv6TypeValues.Static:
         return SETTING_IP_METHOD_STATIC
     elif setting.IPv6Type == ns.LMI_IPAssignmentSettingData.IPv6TypeValues.DHCPv6:
@@ -141,19 +254,33 @@ def get_setting_ip6_method(ns, setting):
         return SETTING_IP_METHOD_DISABLED
 
 def get_sub_setting(ns, setting):
+    '''
+    Get list of detailed configuration setting for each part of the setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :return: detailed setting
+    :rtype: list of LMI_IPAssignmentSettingData subclasses
+    '''
     return setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent")
 
 def get_applicable_devices(ns, setting):
+    '''
+    Get list of network devices that this setting can be applied to.
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :return: devices that the setting can be applied to
+    :rtype: list of LMI_IPNetworkConnection
+    '''
     return setting.associators(AssocClass="LMI_IPElementSettingData")
 
-
 def activate(ns, setting, device=None):
-    """
+    '''
     Activate network setting on given device
 
-    :param setting: (``LMI_IPAssignmentSettingData``) Setting to be activated.
-    :param device: (``LMI_IPNetworkConnection``) Device to activate the setting on.
-    """
+    :param LMI_IPAssignmentSettingData setting: Setting to be activated.
+    :param device: Device to activate the setting on or None for autodetection
+    :type device: LMI_IPNetworkConnection or None
+    '''
     if device is None:
         device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
         if device is None:
@@ -165,12 +292,13 @@ def activate(ns, setting, device=None):
     return 0
 
 def deactivate(ns, setting, device=None):
-    """
-    Deactivate network setting
+    '''
+    Deactivate network setting.
 
-    :param setting: (``LMI_IPAssignmentSettingData``) Setting to deactivate.
-    :param device: (``LMI_IPNetworkConnection`` or None) Device to deactivate the setting on
-    """
+    :param LMI_IPAssignmentSettingData setting: Setting to deactivate.
+    :param device: Device to deactivate the setting on
+    :type device: LMI_IPNetworkConnection or None
+    '''
     if device is None:
         device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
         if device is None:
@@ -181,6 +309,18 @@ def deactivate(ns, setting, device=None):
             Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
 
 def create_setting(ns, caption, device, type, ipv4method, ipv6method):
+    '''
+    Create new network setting.
+
+    :param str caption: Caption for the new setting.
+    :param LMI_IPNetworkConnection device: Device for which the setting will be.
+    :param type: Type of the setting.
+    :type type: SETTING_TYPE_* constant
+    :param ipv4method: Method for obtaining IPv4 address.
+    :type ipv4method: SETTING_IP_METHOD_* constant
+    :param ipv4method: Method for obtaining IPv6 address.
+    :type ipv6method: SETTING_IP_METHOD_* constant
+    '''
     capability = device.first_associator(ResultClass="LMI_IPNetworkConnectionCapabilities",
                                          AssocClass="LMI_IPNetworkConnectionElementCapabilities")
     result = capability.LMI_CreateIPSetting(Caption=caption,
@@ -190,10 +330,24 @@ def create_setting(ns, caption, device, type, ipv4method, ipv6method):
     return 0
 
 def delete_setting(ns, setting):
+    '''
+    Delete existing network setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    '''
     setting.delete()
     return 0
 
 def add_ip_address(ns, setting, address, prefix, gateway=None):
+    '''
+    Add an IP address to the given static setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    :param int prefix: network prefix.
+    :param gateway: default gateway or None
+    :type gateway: str or None
+    '''
     # Check the IP address
     try:
         address_int, version = IPy.parseAddress(address)
@@ -240,7 +394,13 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
     return 0
 
 def remove_ip_address(ns, setting, address):
-        # Check the IP address
+    '''
+    Remove the IP address from given static setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
     try:
         address_int, version = IPy.parseAddress(address)
     except ValueError:
