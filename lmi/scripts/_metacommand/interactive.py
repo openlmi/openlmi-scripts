@@ -106,6 +106,14 @@ class Interactive(cmd.Cmd):
             LOG().warn("wrong options given: %s", line.strip())
             self.stdout.write(str(err))
             self.stdout.write("\n")
+            return exit.EXIT_CODE_FAILURE
+        except errors.LmiError as err:
+            LOG().error(str(err))
+            return exit.EXIT_CODE_FAILURE
+        except KeyboardInterrupt as err:
+            LOG().debug('%s: %s', err.__class__.__name__, str(err))
+            self._last_exit_code = exit.EXIT_CODE_KEYBOARD_INTERRUPT
+            return self._last_exit_code
 
     def empty_line(self):   #pylint: disable=R0201
         """ Do nothing for empty line. """
@@ -149,6 +157,7 @@ class Interactive(cmd.Cmd):
             # commands.
             self._last_exit_code = self.run_subcommand(["help", arg])
             return self._last_exit_code
+
         else:
             cmd.Cmd.do_help(self, arg)
             cmd_names = sorted(self.command_manager)

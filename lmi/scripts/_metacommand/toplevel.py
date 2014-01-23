@@ -125,10 +125,14 @@ class TopLevelCommand(base.LmiBaseCommand):
         """ Run the command line loop of interactive application. """
         self.app.command_manager.add_command("exit", exit.Exit)
         iapp = Interactive(self.app, self.cmd_name + "> ")
-        try:
-            return iapp.cmdloop()
-        except errors.LmiTerminate as err:
-            return err.args[0]
+        while True:
+            try:
+                return iapp.cmdloop()
+            except errors.LmiTerminate as err:
+                return err.args[0]
+            except KeyboardInterrupt as err:
+                LOG().debug('%s: %s', err.__class__.__name__, str(err))
+                self.app.stdout.write('\n')
 
     def run(self, args):
         """
