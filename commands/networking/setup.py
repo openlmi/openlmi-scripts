@@ -30,7 +30,7 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts'],
+    install_requires=['openlmi-scripts', 'IPy'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=['lmi', 'lmi.scripts', 'lmi.scripts.networking'],
