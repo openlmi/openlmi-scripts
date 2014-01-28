@@ -159,6 +159,14 @@ class CommandManager(object):
             return self._commands[cmd_name].load()
         except KeyError:
             raise errors.LmiCommandNotFound(cmd_name)
+        except ImportError as err:
+            cmd_path = self._commands[cmd_name].module_name.rsplit(':', 1)
+            if len(cmd_path) < 2:
+                cmd_path[0:0] = ['']*(2 - len(cmd_path))
+            LOG().debug('failed to import command "%s"', cmd_name, exc_info=err)
+            raise errors.LmiCommandError(
+                    cmd_path[0], cmd_path[1],
+                    'failed to import command "%s"' % cmd_name)
 
     def reload_commands(self, keep_custom=True):
         """
