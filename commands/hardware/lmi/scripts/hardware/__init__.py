@@ -73,6 +73,23 @@ def get_all_instances(ns, class_name):
     """
     return _cache_replies(ns, class_name, 'instances')
 
+def format_memory_size(size):
+    """
+    Returns formatted memory size.
+
+    :param size: Size in bytes
+    :type size: Number
+    :returns: Formatted size string.
+    :rtype: String
+    """
+    if not size:
+        return 'N/A GB'
+    if size >= 1073741824:
+        sizestr = '%d GB' % (int(size) / 1073741824)
+    else:
+        sizestr = '%d MB' % (int(size) / 1048576)
+    return sizestr
+
 def get_all_info(ns):
     """
     :returns: Tabular data of all available info.
@@ -147,6 +164,9 @@ def get_memory_info(ns):
     memory = get_single_instance(ns, 'LMI_Memory')
     phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
     memory_slots = get_all_instances(ns, 'LMI_MemorySlot')
+
+    size = format_memory_size(memory.NumberOfBlocks)
+
     slots = ''
     if len(phys_memory):
         slots += '%d' % len(phys_memory)
@@ -158,11 +178,30 @@ def get_memory_info(ns):
     else:
         slots += 'N/A'
     slots += ' total'
-    if memory.NumberOfBlocks >= 1073741824:
-        size = '%d GB' % (int(memory.NumberOfBlocks) / 1073741824)
-    else:
-        size = '%d MB' % (int(memory.NumberOfBlocks) / 1048576)
-    result = [
-          ('Memory:', size),
-          ('Slots:', slots)]
+
+    modules = []
+    for m in phys_memory:
+        module = format_memory_size(m.Capacity)
+        if m.MemoryType:
+            module += ', %s' % ns.LMI_PhysicalMemory.MemoryTypeValues.value_name(
+                m.MemoryType)
+            if m.FormFactor:
+                module += ' (%s)' % ns.LMI_PhysicalMemory.FormFactorValues.value_name(
+                    m.FormFactor)
+        if m.ConfiguredMemoryClockSpeed:
+            module += ', %d MHz' % m.ConfiguredMemoryClockSpeed
+        if m.Manufacturer:
+            module += ', %s' % m.Manufacturer
+        if m.BankLabel:
+            module += ', %s' % m.BankLabel
+        if not modules:
+            modules.append(('Modules:', module))
+        else:
+            modules.append(('', module))
+    if not modules:
+        modules.append(('Modules:', 'N/A'))
+
+    result = [('Memory:', size)]
+    result += modules
+    result.append(('Slots:', slots))
     return result
