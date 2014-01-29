@@ -78,7 +78,7 @@ def get_all_info(ns):
     :returns: Tabular data of all available info.
     :rtype: List of tuples
     """
-    empty_line = ("", "")
+    empty_line = ('', '')
     result = get_system_info(ns)
     result.append(empty_line)
     result += get_chassis_info(ns)
@@ -102,11 +102,19 @@ def get_chassis_info(ns):
     :rtype: List of tuples
     """
     i = get_single_instance(ns, 'LMI_Chassis')
+    if i.Model and i.ProductName:
+        model = '%s (%s)' % (i.Model, i.ProductName)
+    elif i.Model:
+        model = i.Model
+    elif i.ProductName:
+        model = i.ProductName
+    else:
+        model = 'N/A'
     result = [
           ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
                i.ChassisPackageType)),
           ('Manufacturer:', i.Manufacturer),
-          ('Model:', '%s (%s)' % (i.Model, i.ProductName)),
+          ('Model:', model),
           ('Serial Number:', i.SerialNumber),
           ('Asset Tag:', i.Tag)]
     return result
