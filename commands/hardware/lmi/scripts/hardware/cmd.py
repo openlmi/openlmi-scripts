@@ -30,14 +30,12 @@ Display hardware information.
 Usage:
     %(cmd)s [all]
     %(cmd)s system
-    %(cmd)s chassis
     %(cmd)s cpu
     %(cmd)s memory
 
 Commands:
     all       Display all available information.
-    system    Display system hostname.
-    chassis   Display chassis information.
+    system    Display system information.
     cpu       Display processor information.
     memory    Display memory information.
 """
@@ -53,10 +51,7 @@ class All(HwBase):
 class System(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_system_info'
 
-class Chassis(HwBase):
-    CALLABLE = 'lmi.scripts.hardware:get_chassis_info'
-
-class Cpu(HwBase):
+class Cpu(command.LmiLister):
     CALLABLE = 'lmi.scripts.hardware:get_cpu_info'
 
 class Memory(HwBase):
@@ -66,7 +61,6 @@ Hardware = command.register_subcommands(
         'Hardware', __doc__,
         { 'all'     : All
         , 'system'  : System
-        , 'chassis' : Chassis
         , 'cpu'     : Cpu
         , 'memory'  : Memory
         },

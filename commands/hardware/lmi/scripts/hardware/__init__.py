@@ -30,6 +30,10 @@ LMI hardware provider client library.
 
 from lmi.scripts.common import get_computer_system
 
+EMPTY_LINE = ('', '')
+# GLOBAL variable - modified in get_all_info(), accessed in init_result()
+STANDALONE = True
+
 def _cache_replies(ns, class_name, method):
     """
     Get the reply from cimom and cache it. Cache is cleared
@@ -73,6 +77,28 @@ def get_all_instances(ns, class_name):
     """
     return _cache_replies(ns, class_name, 'instances')
 
+def get_hostname(ns):
+    """
+    :returns: Tabular data of system hostname.
+    :rtype: List of tuples
+    """
+    i = get_computer_system(ns)
+    return [('Hostname:', i.Name)]
+
+def init_result(ns):
+    """
+    Returns initialized result list.
+
+    :returns: Initialized result list.
+    :rtype: List
+    """
+    if STANDALONE:
+        result = get_hostname(ns)
+        result.append(EMPTY_LINE)
+    else:
+        result = []
+    return result
+
 def format_memory_size(size):
     """
     Returns formatted memory size.
@@ -95,27 +121,21 @@ def get_all_info(ns):
     :returns: Tabular data of all available info.
     :rtype: List of tuples
     """
-    empty_line = ('', '')
-    result = get_system_info(ns)
-    result.append(empty_line)
-    result += get_chassis_info(ns)
-    result.append(empty_line)
+    global STANDALONE
+    STANDALONE = False
+    result = get_hostname(ns)
+    result.append(EMPTY_LINE)
+    result += get_system_info(ns)
+    result.append(EMPTY_LINE)
     result += get_cpu_info(ns)
-    result.append(empty_line)
+    result.append(EMPTY_LINE)
     result += get_memory_info(ns)
+    STANDALONE = True
     return result
 
 def get_system_info(ns):
     """
-    :returns: Tabular data of system info.
-    :rtype: List of tuples
-    """
-    i = get_computer_system(ns)
-    return [('Hostname:', i.Name)]
-
-def get_chassis_info(ns):
-    """
-    :returns: Tabular data from ``LMI_Chassis`` instance.
+    :returns: Tabular data of system info, from the ``LMI_Chassis`` instance.
     :rtype: List of tuples
     """
     i = get_single_instance(ns, 'LMI_Chassis')
@@ -127,7 +147,8 @@ def get_chassis_info(ns):
         model = i.ProductName
     else:
         model = 'N/A'
-    result = [
+    result = init_result(ns)
+    result += [
           ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
                i.ChassisPackageType)),
           ('Manufacturer:', i.Manufacturer),
@@ -148,7 +169,8 @@ def get_cpu_info(ns):
     for i in cpu_caps:
         cores += i.NumberOfProcessorCores
         threads += i.NumberOfHardwareThreads
-    result = [
+    result = init_result(ns)
+    result += [
           ('CPU:', cpus[0].Name),
           ('Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
                 (len(cpus), cores, threads)),
@@ -201,7 +223,8 @@ def get_memory_info(ns):
     if not modules:
         modules.append(('Modules:', 'N/A'))
 
-    result = [('Memory:', size)]
+    result = init_result(ns)
+    result.append(('Memory:', size))
     result += modules
     result.append(('Slots:', slots))
     return result
