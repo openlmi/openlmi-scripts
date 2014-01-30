@@ -127,6 +127,8 @@ def get_all_info(ns):
     result.append(EMPTY_LINE)
     result += get_system_info(ns)
     result.append(EMPTY_LINE)
+    result += get_motherboard_info(ns)
+    result.append(EMPTY_LINE)
     result += get_cpu_info(ns)
     result.append(EMPTY_LINE)
     result += get_memory_info(ns)
@@ -155,6 +157,27 @@ def get_system_info(ns):
           ('Model:', model),
           ('Serial Number:', i.SerialNumber),
           ('Asset Tag:', i.Tag)]
+    return result
+
+def get_motherboard_info(ns):
+    """
+    :returns: Tabular data of motherboard info.
+    :rtype: List of tuples
+    """
+    i = get_single_instance(ns, 'LMI_Baseboard')
+    model = ''
+    manufacturer = ''
+    if i:
+        model = i.Model
+        manufacturer = i.Manufacturer
+    if not model:
+        model = 'N/A'
+    if not manufacturer:
+        manufacturer = 'N/A'
+    result = init_result(ns)
+    result += [
+          ('Motherboard:', model),
+          ('Manufacturer:', manufacturer)]
     return result
 
 def get_cpu_info(ns):
