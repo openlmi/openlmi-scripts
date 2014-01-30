@@ -1,0 +1,49 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
+    !!!!!!!!!
+
+power
+-----
+
+System power state management.
+
+
+**Usage:**
+
+    **lmi** **power** list
+
+    **lmi** **power** suspend
+
+    **lmi** **power** hibernate
+
+    **lmi** **power** **reboot** [\ **--force**\ ]
+
+    **lmi** **power** **poweroff** [\ **--force**\ ]
+
+
+
+**Commands:**
+
+
+    **list**
+        Prints a list of available power states.
+
+    **suspend**
+        Suspend the system (suspend to RAM).
+
+    **hibernate**
+        Hibernate the system (suspend to disk).
+
+    **reboot**
+        Shutdown and reboot the system (--force will skip shutdown of running services).
+
+    **poweroff**
+        Shutdown the system (--force will skip shutdown of running services).
+
+**Options:**
+
+
+    **--force**
+        Skip shutting down services first
+

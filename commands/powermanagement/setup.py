@@ -9,9 +9,9 @@ except IOError:
     long_description = ''
 
 setup(
-    name='openlmi-scripts-networking',
+    name='openlmi-scripts-powermanagement',
     version='0.0.1',
-    description='LMI command for network administration.',
+    description='LMI command for power management.',
     long_description=long_description,
     author=u'Radek Novacek',
     author_email='rnovacek@redhat.com',
@@ -30,15 +30,15 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts', 'IPy'],
+    install_requires=['openlmi-scripts'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
-    packages=['lmi', 'lmi.scripts', 'lmi.scripts.networking'],
+    packages=['lmi', 'lmi.scripts', 'lmi.scripts.powermanagement'],
     include_package_data=True,
 
     entry_points={
         'lmi.scripts.cmd': [
-                'net = lmi.scripts.networking.cmd:Networking',
+                'power = lmi.scripts.powermanagement.cmd:PowerManagement',
             ],
         },
     )

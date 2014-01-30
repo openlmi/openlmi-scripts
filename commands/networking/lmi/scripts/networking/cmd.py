@@ -31,29 +31,30 @@ Usage:
     %(cmd)s create <caption> <device_name> [--ethernet | --bridging | --bonding] [--ipv4 <ipv4_method>]  [--ipv6 <ipv6_method>]
     %(cmd)s delete <caption>
     %(cmd)s enslave <master_caption> <device_name>
-    %(cmd)s address add <caption> <address> <prefix> [gateway]
+    %(cmd)s address add <caption> <address> <prefix> [<gateway>]
     %(cmd)s address remove <caption> <address>
+    %(cmd)s address replace <caption> <address> <prefix> [<gateway>]
 
 Commands:
-    list            Prints a list of devices or settings.
-    show            Show detailed information about device or setting.
-    activate        Activates setting on given network device.
-    deactivate      Deactivates the setting.
-    create          Create new setting.
-    delete          Delete existing setting.
-    enslave         Create new slave setting.
-    address         Manipulate the list of IP addresses on given setting.
+    list             Prints a list of devices or settings.
+    show             Show detailed information about device or setting.
+    activate         Activates setting on given network device.
+    deactivate       Deactivates the setting.
+    create           Create new setting.
+    delete           Delete existing setting.
+    enslave          Create new slave setting.
+    address          Manipulate the list of IP addresses on given setting.
+    address add      Add IP address to the existing list of addresses.
+    address remove   Remove given IP address from the list of addresses.
+    address replace  Replace all IP address with new address.
 
 Options:
-    --all       List all services available.
-    --disabled  List only disabled services.
-    --oneshot   List only oneshot services.
     --ethernet  Create ethernet setting [default].
     --bridging  Create bridging master setting.
     --bonding   Create bonding master setting.
-    -4 --ipv4 (disabled | static | dhcp)
+    --ipv4 (disabled | static | dhcp)
                 IPv4 method [default: dhcp].
-    -6 --ipv6 (disabled | static | dhcpv6 | stateless)
+    --ipv6 (disabled | static | dhcpv6 | stateless)
                 IPv6 method [default: stateless].
 """
 
@@ -183,7 +184,7 @@ def cmd_show_settings(ns, captions=None):
                     gateway = subsetting.GatewayAddresses[i] if i < len(subsetting.GatewayAddresses) else None
 
                     if i < len(subsetting.GatewayAddresses) and len(subsetting.GatewayAddresses[i]) > 0:
-                        yield ("%s Address/Netmask Gateway" % version, "%s/%s %s" % (version, subsetting.IPAddresses[i], mask, subsetting.GatewayAddresses[i]))
+                        yield ("%s Address/Netmask Gateway" % version, "%s/%s %s" % (subsetting.IPAddresses[i], mask, subsetting.GatewayAddresses[i]))
                     else:
                         yield ("%s Address" % version, "%s/%s" % (subsetting.IPAddresses[i], mask))
 
@@ -364,9 +365,26 @@ class RemoveAddress(command.LmiCheckResult):
         if '<caption>' in options and len(options['<caption>']) > 0:
             options['<caption>'] = options['<caption>'][0]
 
+class ReplaceAddress(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address, prefix, gateway):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return replace_ip_address(ns, setting, address, prefix, gateway)
+
+    def transform_options(self, options):
+        """
+        ReplaceAddress takes only one caption, get only one element
+        from the list for better readability.
+        """
+        if '<caption>' in options and len(options['<caption>']) > 0:
+            options['<caption>'] = options['<caption>'][0]
+
+
 class Address(command.LmiCommandMultiplexer):
     """ Manage the list of IP addresses. """
-    COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress }
+    COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress, 'replace': ReplaceAddress }
 
 Networking = command.register_subcommands(
     'Networking', __doc__,
