@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'OpenLMI Scripts'
-copyright = u'2013, Michal Minář'
+copyright = u'2013-2014, Red Hat, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
