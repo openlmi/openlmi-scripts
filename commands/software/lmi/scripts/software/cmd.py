@@ -184,7 +184,7 @@ class FileLister(command.LmiInstanceLister):
     def execute(self, ns, package, _type=None):
         properties = [
                 ('Name'),
-                ('Type', lambda i: 
+                ('Type', lambda i:
                          software.FILE_TYPES[i.FileType]
                     if   i.FileExists
                     else 'Missing'),
@@ -257,7 +257,7 @@ def for_each_package_specs(ns, pkg_specs, info, func,
     """
     Iterate over package specification strings, find them on remote host,
     make them into ``LMI_SoftwareIdentity``, and pass them to given function.
-    
+
     :param pkg_specs: (``list``) List of package specification strings.
     :param info: (``str``) What is done with package. This is used in log
         messages.
@@ -408,7 +408,7 @@ class ChangeEnabledState(command.LmiCheckResult):
     @property
     def enable(self):
         """ Whether to enable or disable repository. """
-        return True 
+        return True
 
     def check_result(self, options, result):
         if options['<repository_array>'] != result:
