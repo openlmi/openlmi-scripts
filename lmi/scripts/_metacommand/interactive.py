@@ -247,6 +247,45 @@ class Interactive(cmd.Cmd):
     # *************************************************************************
     # Public methods
     # *************************************************************************
+    def complete(self, text, state):
+        """
+        Overrides parent's method so that registered commands can be also
+        completed.
+        """
+        if state == 0:
+            import readline
+            origline = readline.get_line_buffer()
+            line = origline.lstrip()
+            stripped = len(origline) - len(line)
+            begidx = readline.get_begidx() - stripped
+            endidx = readline.get_endidx() - stripped
+            command, _, _ = self.parseline(line)
+            compfunc = self.completedefault
+            if command and hasattr(self, 'complete_' + command):
+                compfunc = getattr(self, 'complete_' + command)
+            try:
+                self.completion_matches = compfunc(text, line, begidx, endidx)
+            except Exception as err:
+                LOG().exception(err)
+        try:
+            return self.completion_matches[state]
+        except IndexError:
+            return None
+
+    def completedefault(self, text, line, *_args, **_kwargs):
+        """
+        Tab-completion for commands known to the command manager and subcommands
+        in current command namespace. Does not handle command options.
+        """
+        if line.startswith(':'):
+            commands = BUILT_INS
+        else:
+            commands = set(self.completenames(text))
+            commands.update(set(get_subcommand_names(self.app.active_command)))
+        completions = sorted(n for n in commands
+                if not text or n.startswith(text))
+        return completions
+
     def default(self, line):
         """
         This is run, when line contains unknown command to ``cmd.Cmd``. It
