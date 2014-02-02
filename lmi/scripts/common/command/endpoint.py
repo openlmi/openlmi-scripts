@@ -258,7 +258,7 @@ class LmiEndPointCommand(base.LmiBaseCommand):
 
         .. _docopt: http://docopt.org/
         """
-        full_args = self.cmd_name_args[1:] + args
+        full_args = self.get_cmd_name_parts(for_docopt=True) + args
         options = docopt(self.get_usage(), full_args, help=False)
         self._preprocess_options(options)
 

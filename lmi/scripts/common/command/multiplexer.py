@@ -130,14 +130,16 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
         """
         if not isinstance(args, (list, tuple)):
             raise TypeError("args must be a list")
-        full_args = self.cmd_name_args[1:] + args
-        # check the --help ourselves (the default docopt behaviour checks
-        # also for --version)
+        full_args = self.get_cmd_name_parts(for_docopt=True) + args
         docopt_kwargs = {
-                'help' : False,
-                # let's ignore options following first command for generated
-                # usage string
-                'options_first' : not self.has_own_usage()
+            # check the --help ourselves (the default docopt behaviour checks
+            # also for --version)
+            'help' : False,
+            # let's ignore options following first command for generated
+            # usage string and when a height of this branch is > 2
+            'options_first' : not self.has_own_usage()
+                    or any(   not cmd.is_end_point()
+                          for cmd in self.child_commands().values())
         }
         options = docopt(self.get_usage(), full_args, **docopt_kwargs)
         if options.pop('--help', False):

@@ -89,6 +89,7 @@ class MetaCommand(object):
         self.config = None
         # dictionary of not yet processed options, it's created in setup()
         self._options = None
+        self._active_command = None
 
     def _configure_logging(self):
         """
@@ -173,6 +174,15 @@ class MetaCommand(object):
             self._session = Session(self, hostnames, credentials,
                     same_credentials=self._options['--same-credentials'])
         return self._session
+
+    @property
+    def active_command(self):
+        return self._active_command
+    @active_command.setter
+    def active_command(self, cmd):
+        if not isinstance(cmd, LmiBaseCommand):
+            raise TypeError("cmd must be an instance of LmiBaseCommand")
+        self._active_command = cmd
 
     def print_version(self):
         """ Print version of this egg to stdout. """

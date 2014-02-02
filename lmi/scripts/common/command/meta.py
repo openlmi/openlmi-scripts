@@ -644,7 +644,7 @@ class MultiplexerMetaClass(abc.ABCMeta):
                             'COMMANDS dictionary must be composed of'
                             ' LmiCommandBase subclasses, failed class: "%s"'
                             % cmd.__name__)
-                if not cmd.is_end_point():
+                if not cmd.is_end_point() and not cmd.has_own_usage():
                     cmd.__doc__ = dcl['__doc__']
             def _new_child_commands(_cls):
                 """ Returns list of subcommands. """

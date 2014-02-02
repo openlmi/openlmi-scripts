@@ -110,8 +110,8 @@ class TopLevelCommand(base.LmiBaseCommand):
     def __init__(self, app, cmd_name='lmi'):
         base.LmiBaseCommand.__init__(self, app, cmd_name)
 
-    def get_usage(self, _proper=False):
-        return USAGE_STRING % { 'cmd' : self.cmd_full_name }
+    def get_usage(self, proper=False):
+        return USAGE_STRING % { 'cmd' : " ".join(self.cmd_name_parts) }
 
     def run_subcommand(self, cmd_name, args):
         """
@@ -124,7 +124,7 @@ class TopLevelCommand(base.LmiBaseCommand):
     def start_interactive_mode(self):
         """ Run the command line loop of interactive application. """
         self.app.command_manager.add_command("exit", exit.Exit)
-        iapp = Interactive(self.app, self.cmd_name + "> ")
+        iapp = Interactive(self)
         while True:
             try:
                 return iapp.cmdloop()

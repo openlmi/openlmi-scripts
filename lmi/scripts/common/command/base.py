@@ -136,45 +136,48 @@ class LmiBaseCommand(object):
         return self._cmd_name
 
     @property
-    def cmd_full_name(self):
+    def cmd_name_parts(self):
         """
-        Name of this subcommand with all prior commands included.
-        It's the sequence of commands as given on command line up to this
-        subcommand without any options present. In interactive mode
-        this won't contain the name of binary (``sys.argv[0]``).
-
-        :returns:  Concatenation of all preceding commands with
-            :py:attr:`cmd_name`.
-        :rtype: string
-        """
-        return ' '.join(self.cmd_name_args)
-
-    @property
-    def cmd_name_args(self):
-        """
-        The same as :py:attr:`cmd_full_name`, except the result is a list of
-        subcommands.
-
-        :returns: List of command strings as given on command line up to this
-            command.
-        :rtype: list
-        """
-        if self.parent is not None:
-            return self.parent.cmd_name_args + [self.cmd_name]
-        return [self._cmd_name]
-
-    @property
-    def docopt_cmd_name_args(self):
-        """
-        Arguments array for docopt parser. Similar to
-        :py:meth:`LmiBaseCommand.cmd_name_args` except for the leading binary
-        name, which is omitted here.
+        Convenience property calling :py:meth:`get_cmd_name_parts` to obtain
+        command path as a list of all preceding command names.
 
         :rtype: list
         """
-        if self.app.interactive_mode:
-            return self.cmd_name_args
-        return self.cmd_name_args[1:]
+        return self.get_cmd_name_parts()
+
+    def get_cmd_name_parts(self, all_parts=False, demand_own_usage=True,
+            for_docopt=False):
+        """
+        Get name of this command as a list composed of names of all preceding
+        commands since the top level one. When in interactive mode, only
+        commands following the active one will be present.
+
+        :param boolean full: Take no heed to the active command or interactive
+            mode. Return all command names since top level node inclusive. This
+            is overriden with *for_docopt* flag.
+        :param boolean demand_own_usage: Wether to continue the upward
+            traversal through command hieararchy past the active command until
+            the command with its own usage is found. This is the default behaviour.
+        :param boolean for_docopt: Docopt parser needs to be given arguments list
+            without the first item compared to command names in usage string
+            it receives. Thus this option causes skipping the first item that would
+            be otherwise included.
+        :returns: Command path. Returned list will always contain at least the
+            name of this command.
+        :rtype: list
+        """
+        parts = [self.cmd_name]
+        cmd = self
+        own_usage = cmd.has_own_usage()
+        while (   cmd.parent is not None
+              and (all_parts or self.app.active_command not in (cmd, cmd.parent))
+              or  (demand_own_usage and not own_usage)):
+            cmd = cmd.parent
+            parts.append(cmd.cmd_name)
+            own_usage = own_usage or cmd.has_own_usage()
+        if for_docopt and parts:
+            parts.pop()
+        return list(reversed(parts))
 
     def get_usage(self, proper=False):
         """
@@ -196,14 +199,23 @@ class LmiBaseCommand(object):
             while not cmd.has_own_usage() and cmd.parent is not None:
                 cmd = cmd.parent
             if cmd.__doc__ is None:
-                docstr = "Usage: %s\n" % self.cmd_full_name
+                docstr = "Usage: %s\n" % " ".join(self.cmd_name_parts)
             else:
                 docstr = ( ( cmd.__doc__.rstrip()
-                           % {'cmd' : cmd.cmd_full_name }
-                           ) + "\n")
+                           % {'cmd' : " ".join(cmd.cmd_name_parts)}
+                           ))
+
                 match = RE_LSPACES.match(docstr)
-                if match:   # strip leading spaces
+                if match:   # strip leading newlines
                     docstr = docstr[match.end(0):]
+
+                match = re.match(r'^ +', docstr)
+                if match:   # unindent help message
+                    re_lspaces = re.compile(r'^ {%s}' % match.end(0))
+                    docstr = "\n".join(re_lspaces.sub('', l)
+                                for l in docstr.splitlines())
+                docstr += "\n"
+
         else:
             # generate usage string from what is known, applies to nodes
             # without own usage
@@ -213,7 +225,7 @@ class LmiBaseCommand(object):
                 hlp.append("")
             hlp.append("Usage:")
             hlp.append("    %s (--help | <command> [<args> ...])"
-                    % self.cmd_full_name)
+                    % " ".join(self.cmd_name_parts))
             hlp.append("")
             hlp.append("Commands:")
             cmd_max_len = max(len(c) for c in self.child_commands())
@@ -221,6 +233,7 @@ class LmiBaseCommand(object):
                 hlp.append(("  %%-%ds %%s" % cmd_max_len)
                         % (name, cmd.get_description()))
             docstr = "\n".join(hlp) + "\n"
+
         return docstr
 
     @abc.abstractmethod
