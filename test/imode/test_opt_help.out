@@ -1,0 +1,6 @@
+Test command for lmi-metacommand.
+
+Usage:
+    test list <cmd> [<args> ...]
+    test show pkg <name>
+    test show repo <name>

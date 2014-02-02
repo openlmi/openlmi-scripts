@@ -1,0 +1,9 @@
+Test command for lmi-metacommand.
+
+Usage:
+    test list <cmd> [<args> ...]
+    test show pkg <name>
+    test show repo <name>
+
+To get help for built-in commands, type:
+    :help

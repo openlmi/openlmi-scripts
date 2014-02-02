@@ -1,0 +1,15 @@
+Built-ins.
+
+Usage:
+    : cd [<path>]
+    : ..
+    : pwd
+    : (help | -h | --help)
+
+Description:
+    cd    Nest to a subcommand. Accepts a sequence of subcommands separated
+          with "/". If "/" is given, top-level command becomes the active one.
+          Other supported special symbols are ".." and ".".
+    ..    Make parent command the active one. Same as issuing ":cd ..".
+    pwd   Print current command path.
+    help  Show this help.

@@ -1,0 +1,37 @@
+#!/usr/bin/expect -f
+
+set timeout 1
+
+expect_after {
+    timeout { exit -1 }
+}
+
+set LMI lmi
+if {[info exists env(LMI)]} {
+    set LMI $env(LMI)
+}
+spawn {*}$LMI
+expect "lmi> "
+send   ":	"
+expect "..    cd    help  pwd"
+expect "lmi> :"
+send   ".	"
+expect "."
+send   ""
+send   "p	"
+expect "wd"
+send   "c	"
+expect "d"
+send   " test\r"
+expect ">test> "
+send   " : 	"
+expect "..    cd    help  pwd"
+send   "h	"
+expect "elp"
+send   ""
+expect ">test> "
+send   "EOF\r"
+expect "lmi> "
+send   "EOF\r"
+catch wait result
+exit [lindex $result 3]

@@ -1,0 +1,14 @@
+ERROR: no such command "foo"
+
+Static commands
+===============
+EOF  exit  help
+
+Application commands (type help <topic>):
+=========================================
+test
+
+Built-in commands (type :help):
+===============================
+:..  :cd  :pwd  :help
+
