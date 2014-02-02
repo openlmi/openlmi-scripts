@@ -66,7 +66,7 @@ class LmiInvalidOptions(LmiError):
 class LmiCommandNotFound(LmiError):
     """ Raised, when user requests not registered command. """
     def __init__(self, cmd_name):
-        LmiError.__init__(self, 'failed to find command "%s"' % cmd_name)
+        LmiError.__init__(self, 'no such command "%s"' % cmd_name)
 
 class LmiNoConnections(LmiError):
     """ Raised, when no connection to remote hosts could be made. """
