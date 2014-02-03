@@ -80,7 +80,7 @@ def cmd_show_devices(ns, device_names=None):
         yield fcmd.NewTableCommand(title="Device %s" % device.ElementName)
         yield ("Operating Status", ns.LMI_IPNetworkConnection.OperatingStatusValues.value_name(device.OperatingStatus))
         yield ("MAC Address", get_mac(ns, device))
-        for ip, prefix_or_mask in get_ip_adresses(ns, device):
+        for ip, prefix_or_mask in get_ip_addresses(ns, device):
             yield ("IP Address", "%s/%s" % (ip, prefix_or_mask))
         for gw in get_default_gateways(ns, device):
             yield ("Default Gateway", gw)
