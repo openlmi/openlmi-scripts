@@ -142,8 +142,8 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
                           for cmd in self.child_commands().values())
         }
         options = docopt(self.get_usage(), full_args, **docopt_kwargs)
-        if options.pop('--help', False):
-            self.app.stdout.write(self.get_usage())
+        if options.pop('--help', False) or (args and args[0] == '--help'):
+            self.app.stdout.write(self.get_usage(proper=True))
             return 0
         if (   self.fallback_command() is not None
            and (not args or args[0] not in self.child_commands())):

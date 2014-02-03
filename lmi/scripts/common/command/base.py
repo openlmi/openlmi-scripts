@@ -224,7 +224,7 @@ class LmiBaseCommand(object):
                 hlp.append(self.get_description())
                 hlp.append("")
             hlp.append("Usage:")
-            hlp.append("    %s (--help | <command> [<args> ...])"
+            hlp.append("    %s <command> [<args> ...]"
                     % " ".join(self.cmd_name_parts))
             hlp.append("")
             hlp.append("Commands:")

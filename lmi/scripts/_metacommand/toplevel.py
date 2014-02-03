@@ -107,6 +107,10 @@ class TopLevelCommand(base.LmiBaseCommand):
     def child_commands(cls):
         return []
 
+    @classmethod
+    def is_end_point(cls):
+        return False
+
     def __init__(self, app, cmd_name='lmi'):
         base.LmiBaseCommand.__init__(self, app, cmd_name)
 
@@ -161,8 +165,16 @@ class TopLevelCommand(base.LmiBaseCommand):
         self.app.setup(options)
         if options['<command>'] is None:
             return self.start_interactive_mode()
-        else:
+
+        try:
             LOG().debug('running command "%s"', options['<command>'])
-            return self.run_subcommand(
-                    options['<command>'], options['<args>'])
+            return self.run_subcommand(options['<command>'], options['<args>'])
+        except docopt.DocoptExit as err:
+            if '--help' in args:
+                cmd_args = options['<args>']
+                cmd_args = cmd_args[:cmd_args.index('--help')]
+                return self.run_subcommand(
+                        'help', [options['<command>']] + cmd_args)
+            raise
+
 

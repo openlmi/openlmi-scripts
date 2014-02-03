@@ -35,6 +35,7 @@ Module containing help command.
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.command import LmiEndPointCommand
+from lmi.scripts._metacommand import cmdutil
 from lmi.scripts._metacommand import exit
 
 LOG = get_logger(__name__)
@@ -44,35 +45,50 @@ class Help(LmiEndPointCommand):
     Print the list of supported commands with short description.
     If a subcommand is given, its detailed help will be printed.
 
-    Usage: %(cmd)s [<subcommand>]
+    Usage: %(cmd)s [<subcommand>...]
     """
     OWN_USAGE = True
 
     def execute(self, subcommand):
         mgr = self.app.command_manager
+        node = self.app.active_command
+        toplevel = self
+        while toplevel.parent is not None:
+            toplevel = toplevel.parent
 
-        if subcommand is not None:
-            # print the details of given command
-            try:
-                cmd = mgr[subcommand](self.app, subcommand,
-                        parent=self.parent)
-                self.app.stdout.write(cmd.get_usage(True))
-            except errors.LmiCommandNotFound:
-                LOG().error('no such command "%s"', subcommand)
-                return exit.EXIT_CODE_FAILURE
+        if node or subcommand:
+            # Help for some subcommand will be printed.
+            if node is None:
+                node = toplevel
+            if subcommand:
+                index = 0
+                try:
+                    while index < len(subcommand) and not node.is_end_point():
+                        cmd_factory = cmdutil.get_subcommand_factory(node,
+                                subcommand[index])
+                        node = cmd_factory(self.app, subcommand[index], node)
+                        index += 1
+                except errors.LmiCommandNotFound as err:
+                    LOG().error(str(err))
+            if node is not toplevel:
+                self.app.stdout.write(node.get_usage(True))
+                if node is self.app.active_command:
+                    # show additional information only when no command given
+                    self.app.stdout.write('\nTo get help for built-in commands,'
+                            ' type:\n    :help\n')
+                return exit.EXIT_CODE_SUCCESS
 
-        else:
-            # let's print the summary of available commands
-            self.app.stdout.write("Commands:\n")
-            max_cmd_len = max(len(n) for n in mgr)
-            cmd_line = "  %%-%ds - %%s\n" % max_cmd_len
-            for cmd in sorted(mgr):
-                self.app.stdout.write(cmd_line
-                        % (cmd, mgr[cmd].get_description()
-                            .strip().split("\n", 1)[0]))
-            self.app.stdout.write(
-                    "\nFor more informations about particular command type:\n"
-                    "    help <command>\n")
+        # let's print the summary of available commands
+        self.app.stdout.write("Commands:\n")
+        max_cmd_len = max(len(n) for n in mgr)
+        cmd_line = "  %%-%ds - %%s\n" % max_cmd_len
+        for cmd in sorted(mgr):
+            self.app.stdout.write(cmd_line
+                    % (cmd, mgr[cmd].get_description()
+                        .strip().split("\n", 1)[0]))
+        self.app.stdout.write(
+                "\nFor more informations about particular command type:\n"
+                "    help <command>\n")
 
         return exit.EXIT_CODE_SUCCESS
 

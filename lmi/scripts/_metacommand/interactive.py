@@ -40,6 +40,7 @@ import shlex
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.command import LmiBaseCommand, LmiCommandMultiplexer
+from lmi.scripts._metacommand import cmdutil
 from lmi.scripts._metacommand import exit
 
 LOG = get_logger(__name__)
@@ -71,36 +72,6 @@ class LmiBuiltInError(errors.LmiError):
 class LmiCanNotNest(LmiBuiltInError):
     """ Raised upon invalid use of *cd* built-in command. """
     pass
-
-def get_subcommand_names(command):
-    """
-    :param command: Either a multiplexer command or top-level one.
-    :returns: Names of children commands.
-    :rtype: list
-    """
-    if not isinstance(command, LmiBaseCommand):
-        raise TypeError("command must be an instance of LmiBaseCommand")
-    if isinstance(command, LmiCommandMultiplexer):
-        return command.child_commands().keys()
-    if command.parent is None:  # top level command
-        return command.app.command_manager.command_names
-    raise ValueError("command must be either multiplexer or top-level command")
-
-def get_subcommand_factory(command, name):
-    """
-    :param command: Either a multiplexer command or top-level one.
-    :returns: Callable returning an instance of
-        :py:class:`~lmi.scripts.common.command.multiplexer.LmiCommandMultiplexer`
-    :rtype: callable
-    """
-    if isinstance(command, LmiCommandMultiplexer):
-        try:
-            return command.child_commands()[name]
-        except KeyError:
-            raise errors.LmiCommandNotFound(name)
-    if command.parent is None:  # top level command
-        return command.app.command_manager.find_command(name)
-    raise ValueError("command must be either multiplexer or top-level command")
 
 class Interactive(cmd.Cmd):
     """
@@ -184,10 +155,10 @@ class Interactive(cmd.Cmd):
                 cur_node = (  cur_node.parent
                            if cur_node.parent is not None else cur_node)
             elif subcmd and subcmd != '.':
-                if not subcmd in get_subcommand_names(cur_node):
+                if not subcmd in cmdutil.get_subcommand_names(cur_node):
                     raise LmiCanNotNest('no such subcommand "%s"' %
                             "/".join(cmd_chain))
-                cmd_cls = get_subcommand_factory(cur_node, subcmd)
+                cmd_cls = cmdutil.get_subcommand_factory(cur_node, subcmd)
                 if not issubclass(cmd_cls, LmiCommandMultiplexer):
                     raise LmiCanNotNest('can not nest to subcommand "%s" which'
                             " is not a multiplexer" % "/".join(cmd_chain))
@@ -196,7 +167,7 @@ class Interactive(cmd.Cmd):
                             ' lacks any help message' % "/".join(cmd_chain))
                 cur_node = cmd_cls(self.app, subcmd, cur_node)
         self.app.active_command = cur_node
-        return 0
+        return exit.EXIT_CODE_SUCCESS
 
     def _do_built_in_cmd(self, args):
         """
@@ -216,7 +187,7 @@ class Interactive(cmd.Cmd):
                         all_parts=True)) + "\n")
         elif options['help'] or options['-h'] or options['--help']:
             self.app.stdout.write(BUILT_INS_USAGE[1:])
-        return 0
+        return exit.EXIT_CODE_SUCCESS
 
     def _execute_line_parts(self, line_parts):
         """
@@ -241,7 +212,6 @@ class Interactive(cmd.Cmd):
                 retval = (    exit.EXIT_CODE_SUCCESS
                          if   bool(retval) or retval is None
                          else exit.EXIT_CODE_FAILURE)
-            self._last_exit_code = retval
             return retval
 
     # *************************************************************************
@@ -281,7 +251,7 @@ class Interactive(cmd.Cmd):
             commands = BUILT_INS
         else:
             commands = set(self.completenames(text))
-            commands.update(set(get_subcommand_names(self.app.active_command)))
+            commands.update(set(cmdutil.get_subcommand_names(self.app.active_command)))
         completions = sorted(n for n in commands
                 if not text or n.startswith(text))
         return completions
@@ -305,31 +275,35 @@ class Interactive(cmd.Cmd):
         except docopt.DocoptExit as err:
             # command found, but options given to it do not comply with its
             # usage string
+            if '--help' in line_parts:
+                return self.do_help(" ".join(
+                    line_parts[:line_parts.index('--help')]))
             LOG().warn("wrong options given: %s", line.strip())
             self.stdout.write(str(err))
-            if (   line_parts[0] in get_subcommand_names(
+            if (   line_parts[0] in cmdutil.get_subcommand_names(
                     self.app.active_command)
-               and get_subcommand_factory(self.app.active_command,
+               and cmdutil.get_subcommand_factory(self.app.active_command,
                     line_parts[0]).is_end_point()):
                 self.stdout.write("\n\nTo see a full usage string, type:\n"
                         "    help %s\n" % line_parts[0])
             else:
                 self.stdout.write("\n\nTo see a list of available commands,"
                         " type:\n    help\n")
-            return exit.EXIT_CODE_FAILURE
+            self._last_exit_code = exit.EXIT_CODE_FAILURE
 
         except errors.LmiCommandNotFound as err:
             LOG().error(str(err))
-            return exit.EXIT_CODE_COMMAND_NOT_FOUND
+            self._last_exit_code = exit.EXIT_CODE_COMMAND_NOT_FOUND
 
         except errors.LmiError as err:
             LOG().error(str(err))
-            return exit.EXIT_CODE_FAILURE
+            self._last_exit_code = exit.EXIT_CODE_FAILURE
 
         except KeyboardInterrupt as err:
             LOG().debug('%s: %s', err.__class__.__name__, str(err))
             self._last_exit_code = exit.EXIT_CODE_KEYBOARD_INTERRUPT
-            return self._last_exit_code
+
+        return self._last_exit_code
 
     def do_EOF(self, _arg):     #pylint: disable=C0103,R0201
         """
@@ -354,22 +328,7 @@ class Interactive(cmd.Cmd):
 
     def do_help(self, arg):
         """ Handle help subcommand. """
-        if (   not self.on_top_level_node
-           and (not arg or not self.completenames(arg))):
-            if arg and arg in self.app.active_command.child_commands():
-                cmd_factory = self.app.active_command.child_commands()[arg]
-                node = cmd_factory(self.app, arg, self.app.active_command)
-            else:
-                node = self.app.active_command
-            self.app.stdout.write(node.get_usage(True))
-            if node is self.app.active_command:
-                # show additional information only when no arg given
-                self.app.stdout.write('\nTo get help for built-in commands,'
-                        ' type:\n    :help\n')
-
-        elif arg:
-            # Check if the arg is a builtin command or something coming from
-            # the command manager
+        if arg:
             try:
                 arg_parts = shlex.split(arg)
             except ValueError as err:
@@ -380,17 +339,20 @@ class Interactive(cmd.Cmd):
                 itertools.chain(['do'],
                     itertools.takewhile(lambda x: not x.startswith('-'),
                                         arg_parts)))
-            # Have the command manager version of the help command produce the
-            # help text since cmd and cmd2 do not provide help for "help"
             if hasattr(self, method_name):
                 return cmd.Cmd.do_help(self, arg)
-            # Dispatch to the underlying help command, which knows how to
-            # provide help for extension commands.
-            self._last_exit_code = self.run_subcommand(["help", arg])
-            return self._last_exit_code
-
         else:
-            cmd.Cmd.do_help(self, arg)
+            arg_parts = []
+
+        if (   self.on_top_level_node
+           and (  not arg
+               or (   len(arg_parts) == 1
+                  and arg not in self.app.command_manager.command_names))):
+            if not self.completenames(arg):
+                LOG().error(str(errors.LmiCommandNotFound(arg)))
+                cmd.Cmd.do_help(self, '')
+            else:
+                cmd.Cmd.do_help(self, arg)
             cmd_names = set(self.command_manager)
             cmd_names.difference_update(set(self.completenames('')))
             self.print_topics(
@@ -399,6 +361,9 @@ class Interactive(cmd.Cmd):
             self.print_topics(
                     "Built-in commands (type :help):",
                     [':'+bi for bi in BUILT_INS], 15, 80)
+            return exit.EXIT_CODE_SUCCESS
+
+        return self.run_subcommand(['help'] + arg_parts)
 
     def emptyline(self):   #pylint: disable=R0201
         """ Do nothing for empty line. """
@@ -406,13 +371,25 @@ class Interactive(cmd.Cmd):
 
     def help_exit(self):
         """ Provide help for exit command. """
-        return self.run_subcommand(["help", "exit"])
+        cur_node = self.app.active_command
+        # temporarily change to top level command where help cmd is registered
+        self.app.active_command = self._top_level_cmd
+        try:
+            return self.run_subcommand(["help", "exit"])
+        finally:
+            self.app.active_command = cur_node
 
     def help_help(self):
         """
         Use the command manager to get instructions for "help".
         """
-        return self.run_subcommand(["help", "help"])
+        cur_node = self.app.active_command
+        # temporarily change to top level command where help cmd is registered
+        self.app.active_command = self._top_level_cmd
+        try:
+            return self.run_subcommand(["help", "help"])
+        finally:
+            self.app.active_command = cur_node
 
     def postcmd(self, stop, _line):
         """
@@ -439,7 +416,7 @@ class Interactive(cmd.Cmd):
         if len(args) < 1:
             raise ValueError("args must not be empty")
         try:
-            cmd_factory = get_subcommand_factory(
+            cmd_factory = cmdutil.get_subcommand_factory(
                     self.app.active_command, args[0])
             parent = self.app.active_command
         except errors.LmiCommandNotFound:
