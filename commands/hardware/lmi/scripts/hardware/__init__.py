@@ -30,6 +30,10 @@ LMI hardware provider client library.
 
 from lmi.scripts.common import get_computer_system
 
+GREEN_COLOR = 1
+YELLOW_COLOR = 2
+RED_COLOR = 3
+
 EMPTY_LINE = ('', '')
 # GLOBAL variable - modified in get_all_info(), accessed in init_result()
 STANDALONE = True
@@ -110,11 +114,35 @@ def format_memory_size(size):
     """
     if not size:
         return 'N/A GB'
-    if size >= 1073741824:
-        sizestr = '%d GB' % (int(size) / 1073741824)
-    else:
+    if size >= 1099511627776:
+        sizestr = '%.1f TB' % (float(size) / 1099511627776.0)
+    elif size >= 1073741824:
+        sizestr = '%.1f GB' % (float(size) / 1073741824.0)
+    elif size >= 1048576:
         sizestr = '%d MB' % (int(size) / 1048576)
+    elif size >= 1024:
+        sizestr = '%d KB' % (int(size) / 1024)
+    else:
+        sizestr = '%d B' % int(size)
     return sizestr
+
+def get_colored_string(msg, color):
+    """
+    Returns colored message with ANSI escape sequences for terminal.
+
+    :param msg: Message to be colored.
+    :type msg: String
+    :param color: Color of the message [GREEN_COLOR, YELLOW_COLOR, RED_COLOR].
+    :type color: Integer
+    :returns: Colored message.
+    :rtype: String
+    """
+    colors = {
+        GREEN_COLOR: '\033[92m',
+        YELLOW_COLOR: '\033[93m',
+        RED_COLOR: '\033[91m',}
+    ENDC = '\033[0m'
+    return '%s%s%s' % (colors[color], msg, ENDC)
 
 def get_all_info(ns):
     """
@@ -132,6 +160,8 @@ def get_all_info(ns):
     result += get_cpu_info(ns)
     result.append(EMPTY_LINE)
     result += get_memory_info(ns)
+    result.append(EMPTY_LINE)
+    result += get_disks_info(ns)
     STANDALONE = True
     return result
 
@@ -228,10 +258,11 @@ def get_memory_info(ns):
     for m in phys_memory:
         module = format_memory_size(m.Capacity)
         if m.MemoryType:
-            module += ', %s' % ns.LMI_PhysicalMemory.MemoryTypeValues.value_name(
-                m.MemoryType)
+            module += ', %s' % \
+                ns.LMI_PhysicalMemory.MemoryTypeValues.value_name(m.MemoryType)
             if m.FormFactor:
-                module += ' (%s)' % ns.LMI_PhysicalMemory.FormFactorValues.value_name(
+                module += ' (%s)' % \
+                    ns.LMI_PhysicalMemory.FormFactorValues.value_name(
                     m.FormFactor)
         if m.ConfiguredMemoryClockSpeed:
             module += ', %d MHz' % m.ConfiguredMemoryClockSpeed
@@ -250,4 +281,110 @@ def get_memory_info(ns):
     result.append(('Memory:', size))
     result += modules
     result.append(('Slots:', slots))
+    return result
+
+def get_disks_info(ns):
+    """
+    :returns: Tabular data of disk info.
+    :rtype: List of tuples
+    """
+    result = init_result(ns)
+    result.append(('Disks:', ''))
+
+    hdds = get_all_instances(ns, 'LMI_DiskDrive')
+    if not hdds:
+        result.append((' N/A', ''))
+        return result
+
+    first_disk = True
+
+    for hdd in hdds:
+        phys_hdds = hdd.associators(ResultClass='LMI_DiskPhysicalPackage')
+        manufacturer = ''
+        model = ''
+        if phys_hdds:
+            manufacturer = phys_hdds[0].Manufacturer
+            model = phys_hdds[0].Model
+        if not manufacturer:
+            manufacturer = 'N/A'
+        if not model:
+            model = 'N/A'
+
+        form_factor_dict = {
+            3: '5.25"',
+            4: '3.5"',
+            5: '2.5"',
+            6: '1.8"',}
+        if hdd.FormFactor in form_factor_dict:
+            form_factor = form_factor_dict[hdd.FormFactor]
+        else:
+            form_factor = 'N/A'
+
+        if hdd.RPM != 0xffffffff:
+            rpm = hdd.RPM
+        else:
+            rpm = 'N/A'
+
+        if hdd.DiskType == 2:
+            disk_type = 'HDD'
+        elif hdd.DiskType == 3:
+            disk_type = 'SSD'
+        else:
+            disk_type = 'N/A'
+
+        port_type = ''
+        port_speed_current = ''
+        port_speed_max = ''
+        hdd_endpoints = hdd.associators(
+            ResultClass='LMI_DiskDriveATAProtocolEndpoint')
+        if hdd_endpoints:
+            hdd_ports = hdd_endpoints[0].associators(
+                ResultClass='LMI_DiskDriveATAPort')
+            if hdd_ports:
+                if hdd_ports[0].PortType:
+                    port_type = ns.LMI_DiskDriveATAPort.PortTypeValues.value_name(
+                        hdd_ports[0].PortType)
+                if hdd_ports[0].Speed:
+                    port_speed_current = '%.1f Gb/s' % \
+                        (float(hdd_ports[0].Speed) / 1000000000.0)
+                if hdd_ports[0].MaxSpeed:
+                    port_speed_max = '%.1f Gb/s' % \
+                        (float(hdd_ports[0].MaxSpeed) / 1000000000.0)
+        if not port_type:
+            port_type = 'N/A'
+        if not port_speed_current:
+            port_speed_current = 'N/A Gb/s'
+        if not port_speed_max:
+            port_speed_max = 'N/A Gb/s'
+
+        status_to_color = {
+            'OK': GREEN_COLOR,
+            'Unknown': YELLOW_COLOR,
+            'Predictive Failure': RED_COLOR,}
+        if hdd.OperationalStatus:
+            smart = ns.LMI_DiskDrive.OperationalStatusValues.value_name(
+                hdd.OperationalStatus[0])
+            smart = get_colored_string(smart, status_to_color[smart])
+        else:
+            smart = get_colored_string('Unknown', YELLOW_COLOR)
+
+        if not first_disk:
+            result.append(EMPTY_LINE)
+        else:
+            first_disk = False
+
+        if hdd.DeviceID != hdd.Name:
+            result.append(('  %s' % hdd.DeviceID, hdd.Name))
+        else:
+            result.append(('  %s' % hdd.DeviceID, ''))
+        result += [('    Manufacturer:', manufacturer),
+            ('    Model:', model),
+            ('    Capacity:', format_memory_size(hdd.Capacity)),
+            ('    Form Factor:', form_factor),
+            ('    HDD/SSD:', disk_type),
+            ('    RPM:', rpm),
+            ('    Port Type:', port_type),
+            ('    Port Speed:', '%s current, %s max' % \
+                (port_speed_current, port_speed_max)),
+            ('    SMART Status:', smart)]
     return result
