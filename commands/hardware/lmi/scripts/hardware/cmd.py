@@ -33,6 +33,7 @@ Usage:
     %(cmd)s motherboard
     %(cmd)s cpu
     %(cmd)s memory
+    %(cmd)s disks
 
 Commands:
     all          Display all available information.
@@ -40,6 +41,7 @@ Commands:
     motherboard  Display motherboard information.
     cpu          Display processor information.
     memory       Display memory information.
+    disks        Display disks information.
 """
 
 from lmi.scripts.common import command
@@ -63,6 +65,10 @@ class Cpu(command.LmiLister):
 class Memory(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_memory_info'
 
+class Disks(command.LmiLister):
+    CALLABLE = 'lmi.scripts.hardware:get_disks_info'
+    COLUMNS = EMPTY_LINE
+
 Hardware = command.register_subcommands(
         'Hardware', __doc__,
         { 'all'          : All
@@ -70,6 +76,7 @@ Hardware = command.register_subcommands(
         , 'motherboard'  : Motherboard
         , 'cpu'          : Cpu
         , 'memory'       : Memory
+        , 'disks'        : Disks
         },
         fallback_command=All
     )
