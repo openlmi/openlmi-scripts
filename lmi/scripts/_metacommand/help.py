@@ -35,6 +35,7 @@ Module containing help command.
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.command import LmiEndPointCommand
+from lmi.scripts._metacommand import exit
 
 LOG = get_logger(__name__)
 
@@ -58,7 +59,7 @@ class Help(LmiEndPointCommand):
                 self.app.stdout.write(cmd.get_usage(True))
             except errors.LmiCommandNotFound:
                 LOG().error('no such command "%s"', subcommand)
-                return 1
+                return exit.EXIT_CODE_FAILURE
 
         else:
             # let's print the summary of available commands
@@ -69,5 +70,5 @@ class Help(LmiEndPointCommand):
                 self.app.stdout.write(cmd_line
                         % (cmd, mgr[cmd].get_description()
                             .strip().split("\n", 1)[0]))
-        return 0
+        return exit.EXIT_CODE_SUCCESS
 

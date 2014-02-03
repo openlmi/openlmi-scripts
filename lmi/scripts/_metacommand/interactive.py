@@ -38,6 +38,7 @@ import shlex
 
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
+from lmi.scripts._metacommand import exit
 
 LOG = get_logger(__name__)
 
@@ -57,7 +58,7 @@ class Interactive(cmd.Cmd):
         cmd.Cmd.__init__(self,
                 stdin=parent_app.stdin, stdout=parent_app.stdout)
         self.prompt = prompt
-        self._last_exit_code = 0
+        self._last_exit_code = exit.EXIT_CODE_SUCCESS
 
     @property
     def command_manager(self):
@@ -92,7 +93,9 @@ class Interactive(cmd.Cmd):
             # let's try to run registered subcommand
             retval = self.run_subcommand(line_parts)
             if isinstance(retval, bool) or not isinstance(retval, (int, long)):
-                retval = 0 if bool(retval) or retval is None else 1
+                retval = (    exit.EXIT_CODE_SUCCESS
+                         if   bool(retval) or retval is None
+                         else exit.EXIT_CODE_FAILURE)
             self._last_exit_code = retval
             return retval
         except errors.LmiCommandNotFound:
@@ -106,7 +109,7 @@ class Interactive(cmd.Cmd):
 
     def empty_line(self):   #pylint: disable=R0201
         """ Do nothing for empty line. """
-        return 0
+        return exit.EXIT_CODE_SUCCESS
 
     def completedefault(self, text, *_args, **_kwargs):
         """
@@ -152,7 +155,7 @@ class Interactive(cmd.Cmd):
             self.print_topics(
                     "Application commands (type help <topic>):",
                     cmd_names, 15, 80)
-        return
+        return exit.EXIT_CODE_SUCCESS
 
     def do_EOF(self, _arg):     #pylint: disable=C0103,R0201
         """

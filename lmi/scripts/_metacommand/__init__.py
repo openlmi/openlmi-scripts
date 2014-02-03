@@ -38,6 +38,7 @@ import sys
 from lmi.scripts import common
 from lmi.scripts.common import errors
 from lmi.scripts._metacommand import util
+from lmi.scripts._metacommand import exit
 from lmi.scripts._metacommand.help import Help
 from lmi.scripts._metacommand.manager import CommandManager
 from lmi.scripts._metacommand.interactive import Interactive
@@ -217,6 +218,7 @@ class MetaCommand(object):
         :param argv: (``list``) Input arguments and options.
             Contains all arguments but the application name.
         """
+        retval = exit.EXIT_CODE_FAILURE
         cmd = TopLevelCommand(self)
         try:
             retval = cmd.run(argv)
@@ -226,9 +228,11 @@ class MetaCommand(object):
                 LOG().error(exc)
             else:
                 LOG().exception("fatal")
-            return 1
+
         if isinstance(retval, bool) or not isinstance(retval, (int, long)):
-            return 0 if bool(retval) or retval is None else 1
+            return (    exit.EXIT_CODE_SUCCESS if bool(retval) or retval is None
+                   else exit.EXIT_CODE_FAILURE)
+
         return retval
 
 def main(argv=sys.argv[1:]):

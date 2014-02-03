@@ -84,9 +84,9 @@ Handling hosts:
 
 import docopt
 
+from lmi.scripts._metacommand import exit
 from lmi.scripts._metacommand import util
 from lmi.scripts._metacommand import Interactive
-from lmi.scripts._metacommand.exit import Exit
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common.command import base
@@ -123,7 +123,7 @@ class TopLevelCommand(base.LmiBaseCommand):
 
     def start_interactive_mode(self):
         """ Run the command line loop of interactive application. """
-        self.app.command_manager.add_command("exit", Exit)
+        self.app.command_manager.add_command("exit", exit.Exit)
         iapp = Interactive(self.app, self.cmd_name + "> ")
         try:
             return iapp.cmdloop()
@@ -144,16 +144,16 @@ class TopLevelCommand(base.LmiBaseCommand):
                     version=util.get_version(), help=False, options_first=True)
         except docopt.DocoptLanguageError as exc:
             self.app.stderr.write("%s\n" % str(exc))
-            return 1
+            return exit.EXIT_CODE_FAILURE
         if options.pop('--help', False):
             self.app.stdout.write(self.get_usage())
             self.app.stdout.write("\nCommands:\n")
             self.app.stdout.write("    %s\n" % " ".join(
                 n for n in sorted(self.app.command_manager)))
-            return 0
+            return exit.EXIT_CODE_SUCCESS
         if options.pop('--version', False):
             self.app.print_version()
-            return 0
+            return exit.EXIT_CODE_SUCCESS
         self.app.setup(options)
         if options['<command>'] is None:
             return self.start_interactive_mode()
