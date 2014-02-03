@@ -115,7 +115,7 @@ class TopLevelCommand(base.LmiBaseCommand):
         base.LmiBaseCommand.__init__(self, app, cmd_name)
 
     def get_usage(self, proper=False):
-        return USAGE_STRING % { 'cmd' : " ".join(self.cmd_name_parts) }
+        return USAGE_STRING[1:] % { 'cmd' : " ".join(self.cmd_name_parts) }
 
     def run_subcommand(self, cmd_name, args):
         """
