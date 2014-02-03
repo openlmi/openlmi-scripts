@@ -1,0 +1,5 @@
+Commands:
+  help - Print the list of supported commands with short description.
+
+For more informations about particular command type:
+    help <command>
