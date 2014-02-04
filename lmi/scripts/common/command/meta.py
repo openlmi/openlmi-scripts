@@ -642,19 +642,17 @@ class MultiplexerMetaClass(abc.ABCMeta):
                 if not issubclass(cmd, base.LmiBaseCommand):
                     raise errors.LmiCommandError(module_name, name,
                             'COMMANDS dictionary must be composed of'
-                            ' LmiCommandBase subclasses, failed class: "%s"'
+                            ' LmiBaseCommand subclasses, failed class: "%s"'
                             % cmd.__name__)
                 if not cmd.is_end_point() and not cmd.has_own_usage():
+                    LOG().warn('Command "%s.%s" is missing usage string.'
+                            ' It will be inherited from parent command.',
+                            cmd.__module__, cmd.__name__)
                     cmd.__doc__ = dcl['__doc__']
             def _new_child_commands(_cls):
                 """ Returns list of subcommands. """
                 return cmds
             dcl['child_commands'] = classmethod(_new_child_commands)
-
-            # check documentation
-            if dcl.get('__doc__', None) is None:
-                LOG().warn('Command "%s.%s" is missing description string.',
-                    dcl['__module__'], name)
 
             _handle_usage(name, dcl)
             _handle_fallback_command(name, bases, dcl)
