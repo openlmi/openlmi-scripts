@@ -31,13 +31,9 @@
 System software management.
 
 Usage:
-    %(cmd)s list pkgs
-        [(--available | --all) [--repoid <repository>]]
-        [--allow-duplicates] [<package> ...]
-    %(cmd)s list repos [--disabled | --all]
-    %(cmd)s list files [-t <file_type>] <package>
-    %(cmd)s show pkg [(--repoid <repository>) | --installed] <package>
-    %(cmd)s show repo <repository>
+    %(cmd)s search [(--repoid <repository)] [--allow-duplicates] <package>...
+    %(cmd)s list (--help | <what> [<args>...])
+    %(cmd)s show (--help | <what> [<args>...])
     %(cmd)s install [--force] [--repoid <repository>] <package> ...
     %(cmd)s install --uri <uri>
     %(cmd)s update [--force] [--repoid <repository>] <package> ...
@@ -81,9 +77,8 @@ Options:
                    searched for.
     --uri <uri>    Operate upon an rpm package available on remote system
                    through http or ftp service.
-    -t --type (file | directory | device | symlink | fifo)
-                   List only particular file type.
     --installed    Limit the query only on installed packages.
+    --help         Get a detailed help for subcommand.
 
 Specifying <package>:
     Package can be given in one of following notations:
@@ -97,120 +92,30 @@ Specifying <package>:
     Bottom most notations allow to precisely identify particular package.
 """
 
-import itertools
-
 from lmi.scripts import software
 from lmi.scripts.common import command
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.formatter import command as fcmd
+from lmi.scripts.software.cmd_list import Lister
 
 LOG = get_logger(__name__)
 
-class PkgLister(command.LmiInstanceLister):
-    DYNAMIC_PROPERTIES = True
-    ARG_ARRAY_SUFFIX = '_array'
+class Search(command.LmiInstanceLister):
+    ARRAY_SUFFIX = '_array'
+    PROPERTIES = (
+            ('NEVRA', 'ElementName'),
+            ('Installed', lambda i: i.InstallDate is not None),
+            ('Summary', 'Caption'))
 
-    def execute(self, ns,
-            _available=False,
-            _all=False,
-            _repoid=None,
-            _allow_duplicates=False,
-            package_array=None):
-        properties = (
-                ('NEVRA', 'ElementName'),
-                ('Summary', 'Caption'))
-        if package_array:
-            package_generators = []
-            for pkg_spec in package_array:
-                exact_match = any(reg.match(pkg_spec) for reg in (
-                        software.RE_ENVRA, software.RE_NEVRA, software.RE_NA))
-                generator = (   i.to_instance()
-                            for i in software.find_package(ns,
-                                    pkg_spec=pkg_spec,
-                                    allow_duplicates=_allow_duplicates,
-                                    exact_match=exact_match))
-                if _available and not _repoid:
-                    # filter out installed packages
-                    # if repoid is given, there's no need to filter them out
-                    generator = (i for i in generator if i.InstallDate is None)
-                elif not _all and not _available:
-                    # filter out not installed packages
-                    generator = (  i for i in generator
-                                if i.InstallDate is not None)
-                # else: # _all is given - no need to filter
-                package_generators.append(generator)
-            instances = itertools.chain(*package_generators)
-
-        elif _all or _available:
-            instances = software.list_available_packages(ns,
-                    allow_installed=_all,
+    def execute(self, ns, package_array,
+            _allow_duplicates=False):
+        for pkg_spec in package_array:
+            for pkg in software.find_package(ns,
                     allow_duplicates=_allow_duplicates,
-                    repoid=_repoid)
-
-        else:
-            instances = software.list_installed_packages(ns)
-
-        return (properties, instances)
-
-class RepoLister(command.LmiInstanceLister):
-    DYNAMIC_PROPERTIES = True
-
-    def execute(self, ns, _all, _disabled):
-        if _all:
-            properties = (
-                    ('Repo id', 'Name'),
-                    ('Name', 'Caption'),
-                    ('Enabled', lambda i: i.EnabledState == 2))
-            enabled = None
-        else:
-            properties = (
-                    ('Repo id', 'Name'),
-                    ('Name', 'Description'))
-            enabled = not _disabled
-
-        return (properties, software.list_repositories(ns, enabled))
-
-class FileLister(command.LmiInstanceLister):
-    DYNAMIC_PROPERTIES = True
-
-    def verify_options(self, options):
-        file_types = { 'all', 'file', 'directory', 'symlink', 'fifo', 'device'}
-        if (   options['--type'] is not None
-           and options['--type'] not in file_types):
-            raise errors.LmiInvalidOptions(
-                    'invalid file type given, must be one of %s' % file_types)
-
-    def execute(self, ns, package, _type=None):
-        properties = [
-                ('Name'),
-                ('Type', lambda i:
-                         software.FILE_TYPES[i.FileType]
-                    if   i.FileExists
-                    else 'Missing'),
-                ('FileSize', lambda i: i.FileSize),
-                ('Passed', lambda i: len(i.FailedFlags) < 1)]
-        if _type is not None:
-            del properties[1]
-
-        pkgs = list(software.find_package(ns, pkg_spec=package[0]))
-        if len(pkgs) < 1:
-            raise errors.LmiFailed(
-                    'no package matching "%s" found' % package[0])
-        if len(pkgs) > 1:
-            LOG().warn('more than one package found for "%s": %s',
-                    package[0], ', '.join(p.ElementName for p in pkgs))
-
-        return ( properties
-               , software.list_package_files(ns, pkgs[-1], file_type=_type))
-
-class Lister(command.LmiCommandMultiplexer):
-    """ List information about packages, repositories or files. """
-    COMMANDS = {
-            'pkgs' : PkgLister,
-            'repos' : RepoLister,
-            'files' : FileLister
-    }
+                    exact_match=False,
+                    pkg_spec=pkg_spec):
+                yield pkg
 
 class PkgInfo(command.LmiShowInstance):
     DYNAMIC_PROPERTIES = True
@@ -222,17 +127,19 @@ class PkgInfo(command.LmiShowInstance):
                 'Version',
                 'Release',
                 ('Summary', 'Caption'),
+                ('Installed', lambda i: 'no' if i.InstallDate is None
+                    else i.InstallDate.datetime.strftime('%a %b %d/%Y  %H:%M')),
                 'Description']
         pkgs = [   p.to_instance()
                for p in software.find_package(ns,
-                        pkg_spec=package[0],
+                        pkg_spec=package,
                         repoid=_repoid)]
         pkgs = [p for p in pkgs if not _installed or bool(p.InstallDate)]
         if len(pkgs) < 1:
-            raise errors.LmiFailed('no such package "%s" found' % package[0])
+            raise errors.LmiFailed('no such package "%s" found' % package)
         if len(pkgs) > 1:
             LOG().warn('more than one package found for "%s" : %s',
-                    package[0], ', '.join(p.ElementName for p in pkgs))
+                    package, ', '.join(p.ElementName for p in pkgs))
 
         return (properties, pkgs[-1])
 
@@ -246,11 +153,24 @@ class RepoInfo(command.LmiShowInstance):
             'Description')
 
     def transform_options(self, options):
-        options['repoid'] = options.pop('<repository>')[0]
+        options['repoid'] = options.pop('<repository>')
 
 class Show(command.LmiCommandMultiplexer):
-    """ Show information about packages or repositories. """
+    """
+    Show details of package or repository.
+
+    Usage:
+        %(cmd)s pkg [--installed | --repoid <repository>] <package>
+        %(cmd)s repo <repository>
+
+    Options:
+        --installed            Do not search available packages. This speeds up
+                               the operation when only installed packages shall
+                               be queried.
+        --repoid <repository>  Search just this repository.
+    """
     COMMANDS = { 'pkg' : PkgInfo, 'repo' : RepoInfo }
+    OWN_USAGE = True
 
 def for_each_package_specs(ns, pkg_specs, info, func,
         repoid=None, just_on_installed=True):
@@ -437,6 +357,7 @@ class DisableRepository(ChangeEnabledState):
 Software = command.register_subcommands(
         'Software', __doc__,
         { 'list'    : Lister
+        , 'search'  : Search
         , 'show'    : Show
         , 'install' : Install
         , 'update'  : Update
