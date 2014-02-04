@@ -373,7 +373,7 @@ def get_disks_info(ns):
         else:
             first_disk = False
 
-        if hdd.DeviceID != hdd.Name:
+        if hdd.Name != hdd.DeviceID and hdd.Name != model:
             result.append(('  %s' % hdd.DeviceID, hdd.Name))
         else:
             result.append(('  %s' % hdd.DeviceID, ''))
