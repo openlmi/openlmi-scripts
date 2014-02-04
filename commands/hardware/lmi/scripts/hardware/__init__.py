@@ -30,7 +30,28 @@ LMI hardware provider client library.
 
 from lmi.scripts.common import get_computer_system
 
-def get_single_instance(ns, instance_name):
+def _cache_replies(ns, class_name, method):
+    """
+    Get the reply from cimom and cache it. Cache is cleared
+    once the namespace object changes.
+
+    :param str class_name: Name of class to operate on.
+    :param str method_name: Name of method to invoke on lmi class object.
+    :returns: Whatever the requested method returns.
+    """
+    if not hasattr(_cache_replies, 'cache'):
+        _cache_replies.cache = (ns, {})
+    old_ns, cache = _cache_replies.cache
+    if old_ns is not ns:
+        # keep the cache until namespace object changes
+        cache.clear()
+        _cache_replies.cache = (ns, cache)
+    if not (class_name, method) in cache:
+        i = getattr(ns, class_name)
+        cache[(class_name, method)] = getattr(i, method)()
+    return cache[(class_name, method)]
+
+def get_single_instance(ns, class_name):
     """
     Returns single instance of instance_name.
 
@@ -39,14 +60,9 @@ def get_single_instance(ns, instance_name):
     :returns: Instance of instance_name
     :rtype: :py:class:`lmi.shell.LMIInstance`
     """
-    if not hasattr(get_single_instance, 'instances'):
-        get_single_instance.instances = {}
-    if not instance_name in get_single_instance.instances:
-        i = getattr(ns, instance_name)
-        get_single_instance.instances[instance_name] = i.first_instance()
-    return get_single_instance.instances[instance_name]
+    return _cache_replies(ns, class_name, 'first_instance')
 
-def get_all_instances(ns, instance_name):
+def get_all_instances(ns, class_name):
     """
     Returns all instances of instance_name.
 
@@ -55,12 +71,7 @@ def get_all_instances(ns, instance_name):
     :returns: List of instances of instance_name
     :rtype: List of :py:class:`lmi.shell.LMIInstance`
     """
-    if not hasattr(get_all_instances, 'instances'):
-        get_all_instances.instances = {}
-    if not instance_name in get_all_instances.instances:
-        i = getattr(ns, instance_name)
-        get_all_instances.instances[instance_name] = i.instances()
-    return get_all_instances.instances[instance_name]
+    return _cache_replies(ns, class_name, 'instances')
 
 def get_all_info(ns):
     """
