@@ -55,16 +55,16 @@ class All(HwBase):
 class System(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_system_info'
 
-class Motherboard(command.LmiLister):
+class Motherboard(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_motherboard_info'
 
-class Cpu(command.LmiLister):
+class Cpu(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_cpu_info'
 
 class Memory(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_memory_info'
 
-class Disks(command.LmiLister):
+class Disks(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_disks_info'
 
 Hardware = command.register_subcommands(
