@@ -22,18 +22,14 @@
 Networking service management.
 
 Usage:
-    %(cmd)s list device [<device_name> ...]
-    %(cmd)s list setting [<caption> ...]
-    %(cmd)s show device [<device_name> ...]
-    %(cmd)s show setting [<caption> ...]
+    %(cmd)s list (device [<device_name> ...] | setting [<caption> ...])
+    %(cmd)s show (device [<device_name> ...] | setting [<caption> ...])
     %(cmd)s activate <caption> [<device_name>]
     %(cmd)s deactivate <caption> [<device_name>]
     %(cmd)s create <caption> <device_name> [--ethernet | --bridging | --bonding] [--ipv4 <ipv4_method>]  [--ipv6 <ipv6_method>]
     %(cmd)s delete <caption>
     %(cmd)s enslave <master_caption> <device_name>
-    %(cmd)s address add <caption> <address> <prefix> [<gateway>]
-    %(cmd)s address remove <caption> <address>
-    %(cmd)s address replace <caption> <address> <prefix> [<gateway>]
+    %(cmd)s address (--help | <operation> [<args>...])
 
 Commands:
     list             Prints a list of devices or settings.
@@ -44,9 +40,6 @@ Commands:
     delete           Delete existing setting.
     enslave          Create new slave setting.
     address          Manipulate the list of IP addresses on given setting.
-    address add      Add IP address to the existing list of addresses.
-    address remove   Remove given IP address from the list of addresses.
-    address replace  Replace all IP address with new address.
 
 Options:
     --ethernet  Create ethernet setting [default].
@@ -247,12 +240,26 @@ def cmd_deactivate(ns, caption, device_name):
 ## Mutliplexing
 
 class Lister(command.LmiCommandMultiplexer):
-    """ List information about devices or settings. """
+    """
+    List information about devices or settings.
+
+    Usage:
+        %(cmd)s device [<device_name> ...]
+        %(cmd)s setting [<caption> ...]
+    """
     COMMANDS = { 'device' : DeviceLister, 'setting' : SettingLister }
+    OWN_USAGE = True
 
 class Shower(command.LmiCommandMultiplexer):
-    """ Show detailed information about devices or settings. """
+    """
+    Show detailed information about device or setting.
+
+    Usage:
+        %(cmd)s device [<device_name> ...]
+        %(cmd)s setting [<caption> ...]
+    """
     COMMANDS = { 'device' : DeviceShower, 'setting' : SettingShower }
+    OWN_USAGE = True
 
 class Activate(command.LmiCheckResult):
     EXPECT = 0
@@ -383,8 +390,22 @@ class ReplaceAddress(command.LmiCheckResult):
 
 
 class Address(command.LmiCommandMultiplexer):
-    """ Manage the list of IP addresses. """
+    """
+    Manage the list of IP addresses.
+
+    Usage:
+        %(cmd)s add <caption> <address> <prefix> [<gateway>]
+        %(cmd)s remove <caption> <address>
+        %(cmd)s replace <caption> <address> <prefix> [<gateway>]
+
+    Commands:
+        add      Add IP address to the existing list of addresses.
+        remove   Remove given IP address from the list of addresses.
+        replace  Replace all IP address with new address.
+    """
+
     COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress, 'replace': ReplaceAddress }
+    OWN_USAGE = True
 
 Networking = command.register_subcommands(
     'Networking', __doc__,
