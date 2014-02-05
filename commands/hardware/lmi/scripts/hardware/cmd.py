@@ -57,7 +57,6 @@ class System(HwBase):
 
 class Motherboard(command.LmiLister):
     CALLABLE = 'lmi.scripts.hardware:get_motherboard_info'
-    COLUMNS = EMPTY_LINE
 
 class Cpu(command.LmiLister):
     CALLABLE = 'lmi.scripts.hardware:get_cpu_info'
@@ -67,7 +66,6 @@ class Memory(HwBase):
 
 class Disks(command.LmiLister):
     CALLABLE = 'lmi.scripts.hardware:get_disks_info'
-    COLUMNS = EMPTY_LINE
 
 Hardware = command.register_subcommands(
         'Hardware', __doc__,
