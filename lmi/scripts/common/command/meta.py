@@ -55,6 +55,8 @@ RE_CALLABLE = re.compile(
 RE_ARRAY_SUFFIX = re.compile(r'^(?:[a-z_]+[a-z0-9_]*)?$', re.IGNORECASE)
 RE_OPTION = re.compile(r'^-+(?P<name>[^-+].*)$')
 
+FORMAT_OPTIONS = ('no_headings', 'human_friendly')
+
 LOG = get_logger(__name__)
 
 def _handle_usage(name, dcl):
@@ -443,6 +445,45 @@ def _handle_fallback_command(name, bases, dcl):
             fallback.has_own_usage = lambda cls: True
         dcl['fallback_command'] = staticmethod(lambda: fallback)
 
+def _handle_format_options(name, bases, dcl):
+    """
+    Process any ``FMT_*`` properties. This overrides ``format_options``
+    property which returns dictionary of arguments passed to formatter factory.
+
+    These properties are removed from class' dictionary.
+    """
+    format_options = {}
+    for key, value in dcl.items():
+        if key.startswith("FMT_"):
+            opt_name = key[4:].lower()
+            if opt_name not in FORMAT_OPTIONS:
+                raise errors.LmiCommandInvalidProperty(
+                        dcl['__module__'], name,
+                        'formatting option "%s" is not supported' %
+                        opt_name)
+            if (   opt_name in ('no_headings', 'human_friendly')
+               and not isinstance(value, bool)):
+                raise errors.LmiCommandInvalidProperty(
+                        dcl['__module__'], name,
+                        '"%s" property must be a boolean')
+            format_options[opt_name] = value
+
+    if format_options:
+        def _new_format_options(self):
+            """ :returns: Dictionary of options for formatter object. """
+            basecls = [b for b in bases if issubclass(b, base.LmiBaseCommand)][0]
+            opts = basecls.format_options.fget(self)
+            opts.update(format_options)
+            return opts
+        if 'format_options' in dcl:
+            raise errors.LmiCommandError(dcl['__module__'], name,
+                    'can not define both FMT_ options and "format_options" in'
+                    ' the same class, choose just one of them')
+        dcl['format_options'] = property(_new_format_options)
+
+    for key in format_options:
+        dcl.pop('FMT_' + key.upper())
+
 class EndPointCommandMetaClass(abc.ABCMeta):
     """
     End point command does not have any subcommands. It's a leaf of
@@ -457,12 +498,19 @@ class EndPointCommandMetaClass(abc.ABCMeta):
         ``ARG_ARRAY_SUFFIX`` : ``str``
             Suffix added to argument names containing array of values.
             Optional property.
+        ``FMT_NO_HEADINGS`` : ``bool``
+            Allows to force printing of table headers on and off for
+            this command. Default is to print them.
+        ``FMT_HUMAN_FRIENDLY`` : ``bool``
+            Tells formatter to make the output more human friendly. The result
+            is dependent on the type of formatter used.
     """
 
     def __new__(mcs, name, bases, dcl):
         _handle_usage(name, dcl)
         _handle_callable(name, bases, dcl)
         _handle_opt_preprocess(name, dcl)
+        _handle_format_options(name, bases, dcl)
 
         cls = super(EndPointCommandMetaClass, mcs).__new__(
                 mcs, name, bases, dcl)
@@ -618,6 +666,9 @@ class MultiplexerMetaClass(abc.ABCMeta):
         ``FALLBACK_COMMAND`` : :py:class:`~.endpoint.LmiEndPointCommand`
             Command factory to use in case that no command is passed on command
             line.
+
+    Formatting options (starting with ``FMT_`` are also accepted, and may used
+    to set defaults for all subcommands.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -656,5 +707,6 @@ class MultiplexerMetaClass(abc.ABCMeta):
 
             _handle_usage(name, dcl)
             _handle_fallback_command(name, bases, dcl)
+            _handle_format_options(name, bases, dcl)
 
         return super(MultiplexerMetaClass, mcs).__new__(mcs, name, bases, dcl)

@@ -39,6 +39,14 @@ import re
 # containing non-white-spaces
 RE_LSPACES = re.compile(r'\A(\s*$.)*', re.DOTALL | re.MULTILINE)
 
+#: Default formatting options overriden by options passed onc ommand-line and
+#: set in configuration file.
+DEFAULT_FORMATTER_OPTIONS = {
+    'no_headings'    : False,
+    'padding'        : 0,
+    'human_friendly' : False,
+}
+
 class LmiBaseCommand(object):
     """
     Abstract base class for all commands handling command line arguemtns.
@@ -144,6 +152,26 @@ class LmiBaseCommand(object):
         :rtype: list
         """
         return self.get_cmd_name_parts()
+
+    @property
+    def format_options(self):
+        """
+        Compose formatting options. Parent commands are queried for defaults. If
+        command has no parent, default options will be taken from
+        :py:attr:`DEFAULT_FORMATTER_OPTIONS` which are overriden by config
+        settings.
+
+        :returns: Arguments passed to formatter factory when formatter is
+            for current command is constructed.
+        :rtype: dictionary
+        """
+        if self.parent is None:
+            options = DEFAULT_FORMATTER_OPTIONS.copy()
+            options['no_headings'] = self.app.config.no_headings
+            options['human_friendly'] = self.app.config.human_friendly
+        else:
+            options = self.parent.format_options
+        return options
 
     def get_cmd_name_parts(self, all_parts=False, demand_own_usage=True,
             for_docopt=False):

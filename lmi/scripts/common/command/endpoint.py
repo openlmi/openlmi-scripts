@@ -186,8 +186,13 @@ class LmiEndPointCommand(base.LmiBaseCommand):
         :rtype: :py:class:`~lmi.scripts.common.formatter.Formatter`
         """
         if self._formatter is None:
-            self._formatter = self.formatter_factory()(
-                    self.app.stdout, no_headings=self.app.config.no_headings)
+            opts = self.format_options
+            factory = self.formatter_factory()
+            argspec = inspect.getargspec(
+                    factory.__init__ if type(factory) is type else factory)
+            if not argspec.keywords:
+                kwargs = {k: v for k, v in opts.items() if k in argspec.args}
+            self._formatter = factory(self.app.stdout, **kwargs)
         return self._formatter
 
     def _make_end_point_args(self, options):

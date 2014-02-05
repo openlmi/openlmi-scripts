@@ -286,9 +286,15 @@ class TableFormatter(ListFormatter):
 
         # Compute column sizes
         column_sizes = []
-        for i in xrange(len(self.column_names)):
-            column_sizes.append(len(self.column_names[i]))
-        for row in self.stash:
+        rows = iter(self.stash)
+        if self.column_names is None:
+            row = rows.next()
+        else:
+            row = self.column_names
+        for i in xrange(len(row)):
+            column_sizes.append(len(row))
+
+        for row in rows:
             for i in xrange(len(row)):
                 row_length = len(unicode(row[i]))
                 if column_sizes[i] < row_length:
