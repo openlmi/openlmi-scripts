@@ -30,16 +30,18 @@ Display hardware information.
 Usage:
     %(cmd)s [all]
     %(cmd)s system
-    %(cmd)s chassis
+    %(cmd)s motherboard
     %(cmd)s cpu
     %(cmd)s memory
+    %(cmd)s disks
 
 Commands:
-    all       Display all available information.
-    system    Display system hostname.
-    chassis   Display chassis information.
-    cpu       Display processor information.
-    memory    Display memory information.
+    all          Display all available information.
+    system       Display system information.
+    motherboard  Display motherboard information.
+    cpu          Display processor information.
+    memory       Display memory information.
+    disks        Display disks information.
 """
 
 from lmi.scripts.common import command
@@ -53,8 +55,8 @@ class All(HwBase):
 class System(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_system_info'
 
-class Chassis(HwBase):
-    CALLABLE = 'lmi.scripts.hardware:get_chassis_info'
+class Motherboard(HwBase):
+    CALLABLE = 'lmi.scripts.hardware:get_motherboard_info'
 
 class Cpu(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_cpu_info'
@@ -62,13 +64,17 @@ class Cpu(HwBase):
 class Memory(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_memory_info'
 
+class Disks(HwBase):
+    CALLABLE = 'lmi.scripts.hardware:get_disks_info'
+
 Hardware = command.register_subcommands(
         'Hardware', __doc__,
-        { 'all'     : All
-        , 'system'  : System
-        , 'chassis' : Chassis
-        , 'cpu'     : Cpu
-        , 'memory'  : Memory
+        { 'all'          : All
+        , 'system'       : System
+        , 'motherboard'  : Motherboard
+        , 'cpu'          : Cpu
+        , 'memory'       : Memory
+        , 'disks'        : Disks
         },
         fallback_command=All
     )

@@ -30,6 +30,14 @@ LMI hardware provider client library.
 
 from lmi.scripts.common import get_computer_system
 
+GREEN_COLOR = 1
+YELLOW_COLOR = 2
+RED_COLOR = 3
+
+EMPTY_LINE = ('', '')
+# GLOBAL variable - modified in get_all_info(), accessed in init_result()
+STANDALONE = True
+
 def _cache_replies(ns, class_name, method):
     """
     Get the reply from cimom and cache it. Cache is cleared
@@ -73,42 +81,133 @@ def get_all_instances(ns, class_name):
     """
     return _cache_replies(ns, class_name, 'instances')
 
-def get_all_info(ns):
+def get_hostname(ns):
     """
-    :returns: Tabular data of all available info.
-    :rtype: List of tuples
-    """
-    empty_line = ("", "")
-    result = get_system_info(ns)
-    result.append(empty_line)
-    result += get_chassis_info(ns)
-    result.append(empty_line)
-    result += get_cpu_info(ns)
-    result.append(empty_line)
-    result += get_memory_info(ns)
-    return result
-
-def get_system_info(ns):
-    """
-    :returns: Tabular data of system info.
+    :returns: Tabular data of system hostname.
     :rtype: List of tuples
     """
     i = get_computer_system(ns)
     return [('Hostname:', i.Name)]
 
-def get_chassis_info(ns):
+def init_result(ns):
     """
-    :returns: Tabular data from ``LMI_Chassis`` instance.
+    Returns initialized result list.
+
+    :returns: Initialized result list.
+    :rtype: List
+    """
+    if STANDALONE:
+        result = get_hostname(ns)
+        result.append(EMPTY_LINE)
+    else:
+        result = []
+    return result
+
+def format_memory_size(size):
+    """
+    Returns formatted memory size.
+
+    :param size: Size in bytes
+    :type size: Number
+    :returns: Formatted size string.
+    :rtype: String
+    """
+    if not size:
+        return 'N/A GB'
+    if size >= 1099511627776:
+        sizestr = '%.1f TB' % (float(size) / 1099511627776.0)
+    elif size >= 1073741824:
+        sizestr = '%.1f GB' % (float(size) / 1073741824.0)
+    elif size >= 1048576:
+        sizestr = '%d MB' % (int(size) / 1048576)
+    elif size >= 1024:
+        sizestr = '%d KB' % (int(size) / 1024)
+    else:
+        sizestr = '%d B' % int(size)
+    return sizestr
+
+def get_colored_string(msg, color):
+    """
+    Returns colored message with ANSI escape sequences for terminal.
+
+    :param msg: Message to be colored.
+    :type msg: String
+    :param color: Color of the message [GREEN_COLOR, YELLOW_COLOR, RED_COLOR].
+    :type color: Integer
+    :returns: Colored message.
+    :rtype: String
+    """
+    colors = {
+        GREEN_COLOR: '\033[92m',
+        YELLOW_COLOR: '\033[93m',
+        RED_COLOR: '\033[91m',}
+    ENDC = '\033[0m'
+    return '%s%s%s' % (colors[color], msg, ENDC)
+
+def get_all_info(ns):
+    """
+    :returns: Tabular data of all available info.
+    :rtype: List of tuples
+    """
+    global STANDALONE
+    STANDALONE = False
+    result = get_hostname(ns)
+    result.append(EMPTY_LINE)
+    result += get_system_info(ns)
+    result.append(EMPTY_LINE)
+    result += get_motherboard_info(ns)
+    result.append(EMPTY_LINE)
+    result += get_cpu_info(ns)
+    result.append(EMPTY_LINE)
+    result += get_memory_info(ns)
+    result.append(EMPTY_LINE)
+    result += get_disks_info(ns)
+    STANDALONE = True
+    return result
+
+def get_system_info(ns):
+    """
+    :returns: Tabular data of system info, from the ``LMI_Chassis`` instance.
     :rtype: List of tuples
     """
     i = get_single_instance(ns, 'LMI_Chassis')
-    result = [
+    if i.Model and i.ProductName:
+        model = '%s (%s)' % (i.Model, i.ProductName)
+    elif i.Model:
+        model = i.Model
+    elif i.ProductName:
+        model = i.ProductName
+    else:
+        model = 'N/A'
+    result = init_result(ns)
+    result += [
           ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
                i.ChassisPackageType)),
           ('Manufacturer:', i.Manufacturer),
-          ('Model:', '%s (%s)' % (i.Model, i.ProductName)),
+          ('Model:', model),
           ('Serial Number:', i.SerialNumber),
           ('Asset Tag:', i.Tag)]
+    return result
+
+def get_motherboard_info(ns):
+    """
+    :returns: Tabular data of motherboard info.
+    :rtype: List of tuples
+    """
+    i = get_single_instance(ns, 'LMI_Baseboard')
+    model = ''
+    manufacturer = ''
+    if i:
+        model = i.Model
+        manufacturer = i.Manufacturer
+    if not model:
+        model = 'N/A'
+    if not manufacturer:
+        manufacturer = 'N/A'
+    result = init_result(ns)
+    result += [
+          ('Motherboard:', model),
+          ('Manufacturer:', manufacturer)]
     return result
 
 def get_cpu_info(ns):
@@ -123,7 +222,8 @@ def get_cpu_info(ns):
     for i in cpu_caps:
         cores += i.NumberOfProcessorCores
         threads += i.NumberOfHardwareThreads
-    result = [
+    result = init_result(ns)
+    result += [
           ('CPU:', cpus[0].Name),
           ('Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
                 (len(cpus), cores, threads)),
@@ -139,6 +239,9 @@ def get_memory_info(ns):
     memory = get_single_instance(ns, 'LMI_Memory')
     phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
     memory_slots = get_all_instances(ns, 'LMI_MemorySlot')
+
+    size = format_memory_size(memory.NumberOfBlocks)
+
     slots = ''
     if len(phys_memory):
         slots += '%d' % len(phys_memory)
@@ -150,11 +253,138 @@ def get_memory_info(ns):
     else:
         slots += 'N/A'
     slots += ' total'
-    if memory.NumberOfBlocks >= 1073741824:
-        size = '%d GB' % (int(memory.NumberOfBlocks) / 1073741824)
-    else:
-        size = '%d MB' % (int(memory.NumberOfBlocks) / 1048576)
-    result = [
-          ('Memory:', size),
-          ('Slots:', slots)]
+
+    modules = []
+    for m in phys_memory:
+        module = format_memory_size(m.Capacity)
+        if m.MemoryType:
+            module += ', %s' % \
+                ns.LMI_PhysicalMemory.MemoryTypeValues.value_name(m.MemoryType)
+            if m.FormFactor:
+                module += ' (%s)' % \
+                    ns.LMI_PhysicalMemory.FormFactorValues.value_name(
+                    m.FormFactor)
+        if m.ConfiguredMemoryClockSpeed:
+            module += ', %d MHz' % m.ConfiguredMemoryClockSpeed
+        if m.Manufacturer:
+            module += ', %s' % m.Manufacturer
+        if m.BankLabel:
+            module += ', %s' % m.BankLabel
+        if not modules:
+            modules.append(('Modules:', module))
+        else:
+            modules.append(('', module))
+    if not modules:
+        modules.append(('Modules:', 'N/A'))
+
+    result = init_result(ns)
+    result.append(('Memory:', size))
+    result += modules
+    result.append(('Slots:', slots))
+    return result
+
+def get_disks_info(ns):
+    """
+    :returns: Tabular data of disk info.
+    :rtype: List of tuples
+    """
+    result = init_result(ns)
+    result.append(('Disks:', ''))
+
+    hdds = get_all_instances(ns, 'LMI_DiskDrive')
+    if not hdds:
+        result.append((' N/A', ''))
+        return result
+
+    first_disk = True
+
+    for hdd in hdds:
+        phys_hdds = hdd.associators(ResultClass='LMI_DiskPhysicalPackage')
+        manufacturer = ''
+        model = ''
+        if phys_hdds:
+            manufacturer = phys_hdds[0].Manufacturer
+            model = phys_hdds[0].Model
+        if not manufacturer:
+            manufacturer = 'N/A'
+        if not model:
+            model = 'N/A'
+
+        form_factor_dict = {
+            3: '5.25"',
+            4: '3.5"',
+            5: '2.5"',
+            6: '1.8"',}
+        if hdd.FormFactor in form_factor_dict:
+            form_factor = form_factor_dict[hdd.FormFactor]
+        else:
+            form_factor = 'N/A'
+
+        if hdd.RPM != 0xffffffff:
+            rpm = hdd.RPM
+        else:
+            rpm = 'N/A'
+
+        if hdd.DiskType == 2:
+            disk_type = 'HDD'
+        elif hdd.DiskType == 3:
+            disk_type = 'SSD'
+        else:
+            disk_type = 'N/A'
+
+        port_type = ''
+        port_speed_current = ''
+        port_speed_max = ''
+        hdd_endpoints = hdd.associators(
+            ResultClass='LMI_DiskDriveATAProtocolEndpoint')
+        if hdd_endpoints:
+            hdd_ports = hdd_endpoints[0].associators(
+                ResultClass='LMI_DiskDriveATAPort')
+            if hdd_ports:
+                if hdd_ports[0].PortType:
+                    port_type = ns.LMI_DiskDriveATAPort.PortTypeValues.value_name(
+                        hdd_ports[0].PortType)
+                if hdd_ports[0].Speed:
+                    port_speed_current = '%.1f Gb/s' % \
+                        (float(hdd_ports[0].Speed) / 1000000000.0)
+                if hdd_ports[0].MaxSpeed:
+                    port_speed_max = '%.1f Gb/s' % \
+                        (float(hdd_ports[0].MaxSpeed) / 1000000000.0)
+        if not port_type:
+            port_type = 'N/A'
+        if not port_speed_current:
+            port_speed_current = 'N/A Gb/s'
+        if not port_speed_max:
+            port_speed_max = 'N/A Gb/s'
+
+        status_to_color = {
+            'OK': GREEN_COLOR,
+            'Unknown': YELLOW_COLOR,
+            'Predictive Failure': RED_COLOR,}
+        if hdd.OperationalStatus:
+            smart = ns.LMI_DiskDrive.OperationalStatusValues.value_name(
+                hdd.OperationalStatus[0])
+            smart = get_colored_string(smart, status_to_color[smart])
+        else:
+            smart = get_colored_string('Unknown', YELLOW_COLOR)
+
+        if not first_disk:
+            result.append(EMPTY_LINE)
+        else:
+            first_disk = False
+
+        if hdd.Name != hdd.DeviceID and hdd.Name != model:
+            result.append(('  %s' % hdd.DeviceID, hdd.Name))
+        else:
+            result.append(('  %s' % hdd.DeviceID, ''))
+        result += [('    Manufacturer:', manufacturer),
+            ('    Model:', model),
+            ('    Capacity:', format_memory_size(hdd.Capacity)),
+            ('    Form Factor:', form_factor),
+            ('    HDD/SSD:', disk_type),
+            ('    RPM:', rpm),
+            ('    Port Type:', port_type),
+            ('    Port Speed:', '%s current, %s max' % \
+                (port_speed_current, port_speed_max)),
+            ('    SMART Status:', smart)]
     return result
