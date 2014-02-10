@@ -32,7 +32,7 @@
 . ./base.sh
 
 # Set the full test name
-TEST="openlmi-scripts/test/test_lmi.sh"
+TEST="openlmi-scripts/test/test_cmd.sh"
 
 # Package being tested
 PACKAGE="openlmi-scripts"
