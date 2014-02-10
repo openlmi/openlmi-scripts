@@ -281,9 +281,6 @@ class TableFormatter(ListFormatter):
         self.line_counter += 1
 
     def print_stash(self):
-        if not self.stash:
-            return
-
         # Compute column sizes
         column_sizes = []
         rows = iter(self.stash)
