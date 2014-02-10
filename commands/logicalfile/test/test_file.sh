@@ -35,7 +35,7 @@
 TEST="openlmi-scripts/test/test_file.sh"
 
 # Package being tested
-PACKAGE="openlmi-scripts"
+PACKAGE="openlmi-scripts-logicalfile"
 
 function list_dir() {
     # Generate the same output as `lmi file list <path>` should do
