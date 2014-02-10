@@ -39,6 +39,9 @@ LMI_CIMOM_URL=${LMI_CIMOM_URL:-kvm-rhel7}
 LMI_CIMOM_USERNAME=${LMI_CIMOM_USERNAME:-root}
 LMI_CIMOM_PASSWORD=${LMI_CIMOM_PASSWORD:-redhat}
 
-SCHEMA=$(echo $LMI_CIMOM_URL | sed -n 's!^\([[:alpha:]]\+://\).*!p')
+SCHEMA=$(echo $LMI_CIMOM_URL | sed -n 's!^\([[:alpha:]]\+://\).*!\1!p')
 HOSTNAME=$(echo $LMI_CIMOM_URL | sed -e 's!^.*//!!' -e 's!/.*!!')
-export LMI="lmi -n -h $SCHEMA$LMI_CIMOM_USERNAME:$LMI_CIMOM_PASSWORD@$HOSTNAME"
+LMI="lmi"
+[ -n "$HOSTNAME" ] && \
+    LMI+=" -n -h $SCHEMA$LMI_CIMOM_USERNAME:$LMI_CIMOM_PASSWORD@$HOSTNAME"
+export LMI
