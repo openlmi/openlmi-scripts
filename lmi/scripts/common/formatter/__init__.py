@@ -276,7 +276,8 @@ class TableFormatter(ListFormatter):
             if i < len(row) - 1:
                 item = item.ljust(size)
             self.out.write(self.render_value(item))
-            self.out.write(" ")
+            if i < len(row) - 1:
+                self.out.write(" ")
         self.out.write("\n")
         self.line_counter += 1
 
