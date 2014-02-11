@@ -40,6 +40,7 @@ import urlparse
 
 from lmi.scripts.common import Configuration
 from lmi.scripts.common import get_logger
+from lmi.scripts.common import lmi_logging
 
 PYTHON_EGG_NAME = "openlmi-scripts"
 
@@ -51,7 +52,12 @@ DEFAULT_LOGGING_CONFIG = {
     'disable_existing_loggers': True,
     'formatters' : {
         'console' : {
-            'format': Configuration.default_options()['ConsoleFormat'],
+            "()" : "lmi.scripts.common.lmi_logging.LevelDispatchingFormatter",
+            "formatters" : {
+                logging.INFO :
+                    Configuration.default_options()['ConsoleInfoFormat']
+            },
+            'default': Configuration.default_options()['ConsoleFormat'],
             'datefmt' : '%Y-%m-%d %H:%M:%S'
         },
         'file' : {
@@ -116,12 +122,19 @@ def setup_logging(app_config, stderr=sys.stderr):
                 Configuration.OUTPUT_INFO    : logging.INFO,
                 Configuration.OUTPUT_DEBUG   : logging.DEBUG,
             }.get(app_config.verbosity)
-        cfg['formatters']['console']['format'] = app_config.get_safe(
+        # use ConsoleInfoFormat for INFO and less severe levels
+        cfg['formatters']['console']['formatters'] = {
+            logging.INFO :
+                    app_config.get_safe('Log', 'ConsoleInfoFormat', raw=True)
+        }
+        # use ConsoleFormat for any other level
+        cfg['formatters']['console']['default'] = app_config.get_safe(
                 'Log', 'ConsoleFormat', raw=True)
     else:
         del cfg['handlers']['console']
         cfg['root']['handlers'].remove('console')
 
+    lmi_logging.setup_logger()
     logging.config.dictConfig(cfg)
 
 def get_version(egg_name=PYTHON_EGG_NAME):

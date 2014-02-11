@@ -40,6 +40,7 @@ Configuration
 
 import os
 from lmi.base.BaseConfiguration import BaseConfiguration
+from lmi.scripts.common.lmi_logging import DEFAULT_FORMAT_STRING
 
 LISTER_FORMATS = ['csv', 'table']
 
@@ -93,7 +94,8 @@ class Configuration(BaseConfiguration):
         defaults["Trace"] = "False"
         defaults["Verbosity"] = "0"
         # [Log] options
-        defaults['ConsoleFormat'] = "%(levelname)s: %(message)s"
+        defaults['ConsoleFormat'] = DEFAULT_FORMAT_STRING
+        defaults['ConsoleInfoFormat'] = '%(message)s'
         defaults['FileFormat'] = \
                 "%(asctime)s:%(levelname)-8s:%(name)s:%(lineno)d - %(message)s"
         defaults['LogToConsole'] = 'True'

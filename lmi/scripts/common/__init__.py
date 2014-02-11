@@ -36,32 +36,9 @@ import logging
 from lmi.shell import LMINamespace
 from lmi.shell import LMIExceptions
 from lmi.scripts.common.configuration import Configuration
+from lmi.scripts.common.lmi_logging import get_logger
 
-def get_logger(module_name):
-    """
-    Convenience function for getting callable returning logger for particular
-    module name. It's supposed to be used at module's level to assign its
-    result to global variable like this: ::
-
-        from lmi.scripts import common
-
-        LOG = common.get_logger(__name__)
-
-    This can be used in module's functions and classes like this: ::
-
-        def module_function(param):
-            LOG().debug("this is debug statement logging param: %s", param)
-
-    Thanks to ``LOG`` being a callable, it always returns valid logger object
-    with current configuration, which may change overtime.
-
-    :param string module_name: Absolute dotted module path.
-    :rtype: :py:class:`logging.Logger`
-    """
-    def _logger():
-        """ Callable used to obtain current logger object. """
-        return logging.getLogger(module_name)
-    return _logger
+LOG = get_logger(__name__)
 
 def get_computer_system(ns):
     """
@@ -81,17 +58,16 @@ def get_computer_system(ns):
         get_computer_system._cs_cache = {}
     ns_path = ns.connection.uri + '/' + ns.name
     if not ns_path in get_computer_system._cs_cache:
-        logger = logging.getLogger(__name__)
         config = Configuration.get_instance()
         try:
             get_computer_system._cs_cache[ns_path] = cs = \
                     getattr(ns, config.system_class_name).first_instance()
         except LMIExceptions.LMIClassNotFound:
-            logger.warn('failed to get instance of %s on host "%s"'
+            LOG().warn('failed to get instance of %s on host "%s"'
                     ' - falling back to CIM_ComputerSystem',
                     config.system_class_name, ns.connection.uri)
             get_computer_system._cs_cache[ns_path] = cs = \
                     ns.CIM_ComputerSystem.first_instance_name()
-        logger.debug('loaded instance instance of %s:%s for host "%s"',
+        LOG().debug('loaded instance instance of %s:%s for host "%s"',
             ns.name, cs.classname, ns.connection.uri)
     return get_computer_system._cs_cache[ns_path]

@@ -103,6 +103,7 @@ class MetaCommand(object):
                 * [Log] OutputFile
                 * [Log] FileFormat
                 * [Log] ConsoleFormat
+                * [Log] ConsoleInfoFormat
                 * [Log] LogToConsole
             * With command line options:
                 ``-v`` flags :
