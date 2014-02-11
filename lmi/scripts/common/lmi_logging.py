@@ -29,16 +29,70 @@
 #
 import logging
 
+TERM_COLOR_NAMES = (
+        'black',
+        'red',
+        'green',
+        'yellow',
+        'blue',
+        'magenta',
+        'cyan',
+        'white',
+        )
+
+# Following are terminal color codes of normal mode.
+CN_BLACK   = 0
+CN_RED     = 1
+CN_GREEN   = 2
+CN_YELLOW  = 3
+CN_BLUE    = 4
+CN_MAGENTA = 5
+CN_CYAN    = 6
+CN_WHITE   = 7
+# Following are terminal color codes of bright mode.
+CB_BLACK   = 8
+CB_RED     = 9
+CB_GREEN   = 10
+CB_YELLOW  = 11
+CB_BLUE    = 12
+CB_MAGENTA = 13
+CB_CYAN    = 14
+CB_WHITE   = 15
+
 #: Default format string to use in stderr handlers.
-DEFAULT_FORMAT_STRING = "%(levelname_)-8s: %(message)s"
+DEFAULT_FORMAT_STRING = "%(cseq)s%(levelname_)-8s:%(creset)s %(message)s"
+
+WARNING_COLOR  = CB_YELLOW
+ERROR_COLOR    = CB_RED
+CRITICAL_COLOR = CB_MAGENTA
+
+LOG_LEVEL_2_COLOR = {
+        logging.WARNING : WARNING_COLOR,
+        logging.ERROR   : ERROR_COLOR,
+        logging.CRITICAL: CRITICAL_COLOR
+}
 
 class LogRecord(logging.LogRecord):
 
-    def __init__(self, name, *args, **kwargs):
-        logging.LogRecord.__init__(self, name, *args, **kwargs)
-        self.levelname_ = self.levelname
+    def __init__(self, name, level, *args, **kwargs):
+        use_colors = kwargs.pop('use_colors', True)
+        logging.LogRecord.__init__(self, name, level, *args, **kwargs)
+        self.levelname_ = self.levelname.lower()
+        if use_colors and level >= logging.WARNING:
+            if level >= logging.CRITICAL:
+                color = LOG_LEVEL_2_COLOR[logging.CRITICAL]
+            elif level >= logging.ERROR:
+                color = LOG_LEVEL_2_COLOR[logging.ERROR]
+            else:
+                color = LOG_LEVEL_2_COLOR[logging.WARNING]
+            self.cseq = get_color_sequence(color)
+            self.creset = "\x1b[39m"
+        else:
+            self.cseq = self.creset = ''
 
 class ScriptsLogger(logging.getLoggerClass()):
+
+    USE_COLORS = True
 
     def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None,
             extra=None):
@@ -46,7 +100,8 @@ class ScriptsLogger(logging.getLoggerClass()):
         Overriden method that just changes the *LogRecord* class to our
         predefined.
         """
-        rv = LogRecord(name, level, fn, lno, msg, args, exc_info, func)
+        rv = LogRecord(name, level, fn, lno, msg, args, exc_info, func,
+                use_colors=self.USE_COLORS)
         if extra is not None:
             for key in extra:
                 if (key in ["message", "asctime"]) or (key in rv.__dict__):
@@ -132,5 +187,11 @@ def get_logger(module_name):
         return logging.getLogger(module_name)
     return _logger
 
-def setup_logger():
+def get_color_sequence(color_code):
+    if color_code <= 7:
+        return "\x1b[%dm" % (30 + color_code)
+    return "\x1b[38;5;%dm" % color_code
+
+def setup_logger(use_colors=True):
+    ScriptsLogger.USE_COLORS = use_colors
     logging.setLoggerClass(ScriptsLogger)

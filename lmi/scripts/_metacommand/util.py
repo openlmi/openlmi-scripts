@@ -34,6 +34,7 @@ Meta-command utility module.
 import logging
 import logging.config
 import pkg_resources
+import platform
 import re
 import sys
 import urlparse
@@ -134,7 +135,8 @@ def setup_logging(app_config, stderr=sys.stderr):
         del cfg['handlers']['console']
         cfg['root']['handlers'].remove('console')
 
-    lmi_logging.setup_logger()
+    use_colors = platform.system() != 'Windows' and stderr.isatty()
+    lmi_logging.setup_logger(use_colors = use_colors)
     logging.config.dictConfig(cfg)
 
 def get_version(egg_name=PYTHON_EGG_NAME):
