@@ -140,8 +140,8 @@ def mount_create(ns, device, mountpoint, fs_type=None, options=None, other_optio
     """
     Create a mounted filesystem.
 
-    :type device: string
-    :param device: device path
+    :type device: string or LMIInstance/CIM_StorageExtent
+    :param device: Device to mount or a mount specifier (like '//server/share' for CIFS).
     :type mountpoint: string
     :param mountpoint: path where device should be mounted
     :type fs_type: string
@@ -151,7 +151,17 @@ def mount_create(ns, device, mountpoint, fs_type=None, options=None, other_optio
     :type other_options: string
     :param other_options: comma-separated string of filesystem specific mount options
     """
-    fs_setting = ns.LMI_FileSystemSetting.first_instance({'InstanceID':'LMI:LMI_FileSystemSetting:'+device})
+    # Try to convert device name to full device path
+    try:
+        device_inst = common.str2device(ns, device)
+        if device_inst:
+            device = device_inst.Name
+    except LmiFailed:
+        # we did not find CIM_StorageExtent for the device, it must be non
+        # device filesystem specification
+        pass
+
+    fs_setting = ns.LMI_FileSystemSetting.first_instance({'InstanceID':'LMI:LMI_FileSystemSetting:' + device})
     if fs_setting is None:
         raise LmiFailed('Wrong device: %s' % device)
     filesystem = fs_setting.associators()[0]
@@ -185,6 +195,16 @@ def mount_delete(ns, target):
     :type target: string
     :param target: device path or mountpoint
     """
+    # Try to convert device name to full device path
+    try:
+        device_inst = common.str2device(ns, target)
+        if device_inst:
+            target = device_inst.Name
+    except LmiFailed:
+        # we did not find CIM_StorageExtent for the device, it must be non
+        # device filesystem specification
+        pass
+
     mnt = ns.LMI_MountedFileSystem.first_instance({'FileSystemSpec':target}) or \
           ns.LMI_MountedFileSystem.first_instance({'MountPointPath':target})
     if mnt is None:
