@@ -117,7 +117,7 @@ def setup_logging(app_config, stderr=sys.stderr):
         if stderr is not sys.stderr:
             cfg['handlers']['console']['stream'] = stderr
         cfg['handlers']['console']['level'] = {
-                Configuration.OUTPUT_SILENT  : logging.CRITICAL,
+                Configuration.OUTPUT_SILENT  : logging.ERROR,
                 Configuration.OUTPUT_WARNING : logging.WARNING,
                 Configuration.OUTPUT_INFO    : logging.INFO,
                 Configuration.OUTPUT_DEBUG   : logging.DEBUG,

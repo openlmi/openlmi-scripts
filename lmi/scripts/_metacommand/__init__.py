@@ -53,18 +53,6 @@ LOG = common.get_logger(__name__)
 # write errors to stderr until logging is configured
 logging.getLogger('').addHandler(logging.StreamHandler())
 
-class NullFile(object):
-    """
-    Mock class implementing toilette for any message passed to it. It mocks
-    file object representing standard output stream.
-
-    It implements only the minimum set of methods of ``file`` interface used
-    in this application.
-    """
-    def write(self, *args, **kwargs):
-        """ Let's totally ignore what we are given. """
-        pass
-
 class MetaCommand(object):
     """
     Main application class. It instantiates configuration object, logging and
@@ -111,7 +99,7 @@ class MetaCommand(object):
                     into console. This overrides `[Main] Verbosity` option.
                 ``-q`` :
                     Causes supression of any output made to stdout except for
-                    critical messages. This overrides ``[Main] Verbosity``.
+                    error messages. This overrides ``[Main] Verbosity``.
                     option and ``-v`` flags.
                 ``--log-file`` :
                     Output file for logging messages. This overrides ``[Log]
@@ -121,8 +109,6 @@ class MetaCommand(object):
         stream without any tracebacks.
         """
         util.setup_logging(self.config, self.stderr)
-        if self.config.silent:
-            self.stdout = NullFile()
 
     @property
     def command_manager(self):
