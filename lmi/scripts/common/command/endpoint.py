@@ -219,8 +219,9 @@ class LmiEndPointCommand(base.LmiBaseCommand):
             # otherwise we need to remove any unhandled
             for opt_name in kwargs:
                 if opt_name not in argspec.args[pos_args_count:]:
-                    LOG().debug('option "%s" not handled in function "%s",'
-                        ' ignoring', opt_name, self.cmd_name)
+                    if opt_name not in self.cmd_name_parts:
+                        LOG().debug('option "%s" not handled in function "%s",'
+                            ' ignoring', opt_name, self.cmd_name)
                     to_remove.append(opt_name)
         for opt_name in to_remove:
             # remove options unhandled by function

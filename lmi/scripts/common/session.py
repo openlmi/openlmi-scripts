@@ -118,8 +118,6 @@ class Session(object):
             kwargs['prompt_prefix'] = '[%s] ' % hostname
         connection = connect(hostname, username, password, **kwargs)
         if connection is not None:
-            LOG().debug('connection to host "%s" successfully created',
-                    hostname)
             tp = connection._client._cliconn.creds
             if tp is None:
                 tp = ('', '')
