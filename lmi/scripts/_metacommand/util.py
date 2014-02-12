@@ -48,6 +48,13 @@ PYTHON_EGG_NAME = "openlmi-scripts"
 RE_NETLOC = re.compile(r'^((?P<username>[^:@]+)(:(?P<password>[^@]+))?@)?'
         r'(?P<hostname>[^:]+)(:(?P<port>\d+))?$')
 
+VERBOSITY_2_LOG_LEVEL = {
+    Configuration.OUTPUT_SILENT  : logging.ERROR,
+    Configuration.OUTPUT_WARNING : logging.WARNING,
+    Configuration.OUTPUT_INFO    : logging.INFO,
+    Configuration.OUTPUT_DEBUG   : logging.DEBUG,
+}
+
 DEFAULT_LOGGING_CONFIG = {
     'version' : 1,
     'disable_existing_loggers': True,
@@ -72,10 +79,22 @@ DEFAULT_LOGGING_CONFIG = {
             'level' : logging.ERROR,
             'formatter': 'console',
         },
+        'console_shell': {
+            'class' : "logging.StreamHandler",
+            'level' : logging.CRITICAL,
+            'formatter': 'console',
+        },
         'file' : {
             'class' : "logging.FileHandler",
             'level' : Configuration.default_options()['Level'].upper(),
             'formatter': 'file',
+        }
+    },
+    'loggers' : {
+        'lmi.shell' : {
+            'handlers' : ['console_shell'],
+            'level' : logging.DEBUG,
+            'propagate' : False
         }
     },
     'root' : {
@@ -109,6 +128,7 @@ def setup_logging(app_config, stderr=sys.stderr):
             LOG().error('unsupported logging level: "%s"',
                     app_config.logging_level)
         cfg['root']['handlers'].append('file')
+        cfg['loggers']['lmi.shell']['handlers'].append('file')
     else:
         del cfg['formatters']['file']
         del cfg['handlers']['file']
@@ -117,12 +137,17 @@ def setup_logging(app_config, stderr=sys.stderr):
         # Set up logging to console
         if stderr is not sys.stderr:
             cfg['handlers']['console']['stream'] = stderr
-        cfg['handlers']['console']['level'] = {
-                Configuration.OUTPUT_SILENT  : logging.ERROR,
-                Configuration.OUTPUT_WARNING : logging.WARNING,
-                Configuration.OUTPUT_INFO    : logging.INFO,
-                Configuration.OUTPUT_DEBUG   : logging.DEBUG,
-            }.get(app_config.verbosity)
+        cfg['handlers']['console']['level'] = \
+                VERBOSITY_2_LOG_LEVEL[app_config.verbosity]
+
+        # make the verbosity of lmi shell one level less
+        lmi_shell_verbosity = app_config.verbosity
+        if (   app_config.verbosity < app_config.OUTPUT_DEBUG
+           and app_config.verbosity > app_config.OUTPUT_SILENT):
+            lmi_shell_verbosity -= 1
+        cfg['handlers']['console_shell']['level'] = \
+                VERBOSITY_2_LOG_LEVEL[lmi_shell_verbosity]
+
         # use ConsoleInfoFormat for INFO and less severe levels
         cfg['formatters']['console']['formatters'] = {
             logging.INFO :
@@ -132,8 +157,10 @@ def setup_logging(app_config, stderr=sys.stderr):
         cfg['formatters']['console']['default'] = app_config.get_safe(
                 'Log', 'ConsoleFormat', raw=True)
     else:
-        del cfg['handlers']['console']
         cfg['root']['handlers'].remove('console')
+        cfg['loggers']['lmi.shell']['handlers'].remove('console_shell')
+        del cfg['handlers']['console']
+        del cfg['handlers']['console_shell']
 
     use_colors = platform.system() != 'Windows' and stderr.isatty()
     lmi_logging.setup_logger(use_colors = use_colors)
