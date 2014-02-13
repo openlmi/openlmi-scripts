@@ -51,8 +51,8 @@ class LmiUnexpectedResult(LmiError):
     """
     def __init__(self, command_class, expected, result):
         LmiError.__init__(self,
-                'got unexpected result from associated function of'
-                ' "%s.%s", expected "%s", got: %s' %
+                'Got unexpected result from associated function of'
+                ' "%s.%s", expected "%s", got: "%s".' %
                 (command_class.__module__, command_class.__name__,
                     expected, repr(result)))
 
@@ -66,7 +66,7 @@ class LmiInvalidOptions(LmiError):
 class LmiCommandNotFound(LmiError):
     """ Raised, when user requests not registered command. """
     def __init__(self, cmd_name):
-        LmiError.__init__(self, 'no such command "%s"' % cmd_name)
+        LmiError.__init__(self, 'No such command "%s".' % cmd_name)
 
 class LmiNoConnections(LmiError):
     """ Raised, when no connection to remote hosts could be made. """
@@ -75,20 +75,20 @@ class LmiNoConnections(LmiError):
 class LmiCommandError(LmiError):
     """ Generic exception related to command declaration. """
     def __init__(self, module_name, class_name, msg):
-        LmiError.__init__(self, 'wrong declaration of command "%s.%s": %s'
+        LmiError.__init__(self, 'Wrong declaration of command "%s.%s": %s'
                 % (module_name, class_name, msg))
 
 class LmiCommandInvalidName(LmiCommandError):
     """ Raised, when command gets invalid name. """
     def __init__(self, module_name, class_name, cmd_name):
         LmiCommandError.__init__(self, module_name, class_name,
-                'invalid command name "%s"' % cmd_name)
+                'Invalid command name "%s".' % cmd_name)
 
 class LmiCommandMissingCallable(LmiCommandError):
     """ Raised, when command declaration is missing callable object. """
     def __init__(self, module_name, class_name):
         LmiCommandError.__init__(self, module_name, class_name,
-                'missing CALLABLE property')
+                'Missing CALLABLE property.')
 
 class LmiCommandInvalidProperty(LmiCommandError):
     """ Raised, when any command property contains unexpected value. """
@@ -98,7 +98,7 @@ class LmiCommandImportFailed(LmiCommandInvalidProperty):
     """ Raised, when callable object of command could not be imported. """
     def __init__(self, module_name, class_name, callable_prop):
         LmiCommandInvalidProperty.__init__(self, module_name, class_name,
-            'failed to import callable "%s"' % callable_prop)
+            'Failed to import callable "%s".' % callable_prop)
 
 class LmiCommandInvalidCallable(LmiCommandInvalidProperty):
     """ Raised, when given callback is not callable. """

@@ -76,7 +76,7 @@ class List(command.LmiInstanceLister):
            and not options['--type'].lower() in {
                'any', 'file', 'directory', 'symlink', 'dev', 'socket', 'fifo'}):
             raise errors.LmiInvalidOptions(
-                    'unsupported type: %s' % options['--type'])
+                    'Unsupported type: %s' % options['--type'])
 
     def transform_options(self, options):
         file_type = options.pop('--type')

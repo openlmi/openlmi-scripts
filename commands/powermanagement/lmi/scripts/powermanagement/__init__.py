@@ -76,7 +76,7 @@ def switch_power_state(ns, state):
     # Check if the power state is available first
     capabilities = ns.LMI_PowerManagementCapabilities.first_instance()
     if not state in capabilities.PowerStatesSupported:
-        raise LmiInvalidOptions("Power state is not supported")
+        raise LmiInvalidOptions("Power state is not supported.")
     service = ns.LMI_PowerManagementService.first_instance()
     service.RequestPowerStateChange(PowerState=state)
     return 0

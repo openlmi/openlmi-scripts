@@ -133,7 +133,7 @@ def lf_list(ns, directory, depth=None):
         try:
             depth = int(depth)
         except ValueError:
-            raise LmiFailed("Depth must be integer")
+            raise LmiFailed("Depth must be integer.")
     else:
         depth = 0
 

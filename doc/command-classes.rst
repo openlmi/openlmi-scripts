@@ -41,7 +41,7 @@ methods:
                 if (   options['--type'] is not None
                    and options['--type'] not in file_types):
                     raise errors.LmiInvalidOptions(
-                            'invalid file type given, must be one of %s' %
+                            'Invalid file type given, must be one of %s' %
                                  file_types)
 
     .. seealso::

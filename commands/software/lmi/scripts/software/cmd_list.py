@@ -111,7 +111,7 @@ class FileLister(command.LmiInstanceLister):
         if (   options['--type'] is not None
            and options['--type'] not in file_types):
             raise errors.LmiInvalidOptions(
-                    'invalid file type given, must be one of %s' % file_types)
+                    'Invalid file type given, must be one of %s.' % file_types)
 
     def execute(self, ns, package, _type=None):
         properties = [
@@ -130,9 +130,9 @@ class FileLister(command.LmiInstanceLister):
         pkgs = [p for p in pkgs if p.InstallDate is not None]
         if len(pkgs) < 1:
             raise errors.LmiFailed(
-                    'no package matching "%s" found' % package)
+                    'No package matching "%s" found.' % package)
         if len(pkgs) > 1:
-            LOG().warn('more than one package found for "%s": %s', package,
+            LOG().warn('More than one package found for "%s": %s', package,
                     ', '.join(p.ElementName for p in pkgs))
 
         return ( properties

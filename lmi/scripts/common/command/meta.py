@@ -213,7 +213,7 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
         if isinstance(prop, basestring):
             prop_name = prop
             if not prop in inst.properties():
-                LOG().warn('property "%s" not present in instance of "%s"',
+                LOG().warn('Property "%s" not present in instance of "%s".',
                         prop, inst.path)
                 value = "UNKNOWN"
             else:
@@ -230,10 +230,9 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
                     value = getattr(inst, prop[1])
             except Exception as exc:
                 if Configuration.get_instance().trace:
-                    LOG().exception('failed to render property "%s"',
-                            prop[0])
+                    LOG().exception('Failed to render property "%s".', prop[0])
                 else:
-                    LOG().error('failed to render property "%s": %s',
+                    LOG().error('Failed to render property "%s": %s',
                             prop[0], exc)
                 value = "ERROR"
         if value is None:
@@ -404,10 +403,10 @@ def _handle_opt_preprocess(name, dcl):
                             if cond(name, value))
                 for name in to_rename:
                     new_name = transform(name)
-                    LOG().debug('renaming option "%s" to "%s"', name, new_name)
+                    LOG().debug('Renaming option "%s" to "%s".', name, new_name)
                     if new_name in options:
                         LOG().warn(
-                                'existing option named "%s" replaced with "%s"',
+                            'Existing option named "%s" replaced with "%s".',
                                 new_name, name)
                     options[new_name] = options.pop(name)
 
@@ -632,7 +631,7 @@ class CheckResultMetaClass(SessionCommandMetaClass):
                         result = result.rval
                     passed = expect(options, result)
                     if not passed:
-                        LOG().info('got unexpected result "%s"')
+                        LOG().info('Got unexpected result "%s".')
                     return passed
             else:
                 def _new_expect(_self, _options, result):
@@ -641,7 +640,7 @@ class CheckResultMetaClass(SessionCommandMetaClass):
                         result = result.rval
                     passed = expect == result
                     if not passed:
-                        LOG().info('expected "%s", got "%s"', expect, result)
+                        LOG().info('Expected "%s", got "%s".', expect, result)
                         return (False, '%s != %s' % (expect, result))
                     return passed
                 _new_expect.expected = expect

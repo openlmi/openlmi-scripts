@@ -88,7 +88,7 @@ def str2device(ns, device):
     if len(devices) > 1:
         raise LmiFailed("Too many devices with name '%s' found" % (device,))
 
-    LOG().debug("String %s translated to device '%s'",
+    LOG().debug("String %s translated to device '%s'.",
             device, devices[0].DeviceID)
     return devices[0]
 
@@ -120,11 +120,11 @@ def str2vg(ns, vg):
             % {'vg': escape_cql(vg)}
     vgs = ns.wql(query)
     if not vgs:
-        raise LmiFailed("Volume Group '%s' not found" % (vg,))
+        raise LmiFailed("Volume Group '%s' not found." % (vg,))
     if len(vgs) > 1:
-        raise LmiFailed("Too many volume groups with name '%s' found" % (vg,))
+        raise LmiFailed("Too many volume groups with name '%s' found." % (vg,))
 
-    LOG().debug("String %s translated to Volume Group '%s'",
+    LOG().debug("String %s translated to Volume Group '%s'.",
             vg, vgs[0].InstanceID)
     return vgs[0]
 

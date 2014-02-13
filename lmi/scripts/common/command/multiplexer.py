@@ -117,7 +117,7 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
             cmd = cmd_cls(self.app, cmd_name, self)
         except KeyError:
             self.app.stderr.write(self.get_usage())
-            LOG().critical('unexpected command "%s"', cmd_name)
+            LOG().critical('Unexpected command "%s".', cmd_name)
             return 1
         return cmd.run(args)
 

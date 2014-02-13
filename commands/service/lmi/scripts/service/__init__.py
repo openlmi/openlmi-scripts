@@ -163,7 +163,7 @@ def get_service(ns, service):
         })
         inst = iname.to_instance()
         if inst is None:
-            raise LmiFailed('No such service "%s"' % service)
+            raise LmiFailed('No such service "%s".' % service)
     elif isinstance(service, (LMIInstance, LMIInstanceName)):
         inst = service
         service = inst.Name

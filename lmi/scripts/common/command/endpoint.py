@@ -84,14 +84,14 @@ def options_dict2kwargs(options):
                 break
         else:
             raise errors.LmiError(
-                    'failed to convert argument "%s" to function option' %
+                    'Failed to convert argument "%s" to function option.' %
                     name)
         if new_name == '--':
             continue    # ignore double dash
         new_name = opt_name_sanitize(new_name)
         if new_name in kwargs:
-            raise errors.LmiError('option clash for "%s" and "%s", which both'
-                ' translate to "%s"' % (name, orig_names[new_name], new_name))
+            raise errors.LmiError('Option clash for "%s" and "%s", which both'
+                ' translate to "%s".' % (name, orig_names[new_name], new_name))
         kwargs[new_name] = value
         orig_names[new_name] = name
     return kwargs
@@ -220,8 +220,8 @@ class LmiEndPointCommand(base.LmiBaseCommand):
             for opt_name in kwargs:
                 if opt_name not in argspec.args[pos_args_count:]:
                     if opt_name not in self.cmd_name_parts:
-                        LOG().debug('option "%s" not handled in function "%s",'
-                            ' ignoring', opt_name, self.cmd_name)
+                        LOG().debug('Option "%s" not handled in function "%s",'
+                            ' ignoring.', opt_name, self.cmd_name)
                     to_remove.append(opt_name)
         for opt_name in to_remove:
             # remove options unhandled by function
@@ -277,8 +277,8 @@ class LmiEndPointCommand(base.LmiBaseCommand):
                 try:
                     del options[scn]
                 except KeyError:
-                    LOG().warn('usage string of "%s.%s" command does not'
-                            ' contain registered command "%s" command',
+                    LOG().warn('Usage string of "%s.%s" command does not'
+                            ' contain registered command "%s" command.',
                             cmd.__module__, cmd.__class__.__name__, scn)
         # remove also the root command name from options
         if cmd is not None and cmd.cmd_name in options:

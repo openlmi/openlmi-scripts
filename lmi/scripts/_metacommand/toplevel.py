@@ -167,7 +167,7 @@ class TopLevelCommand(base.LmiBaseCommand):
             return self.start_interactive_mode()
 
         try:
-            LOG().debug('running command "%s"', options['<command>'])
+            LOG().debug('Running command "%s".', options['<command>'])
             return self.run_subcommand(options['<command>'], options['<args>'])
         except docopt.DocoptExit as err:
             if '--help' in args:

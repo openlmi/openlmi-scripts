@@ -156,15 +156,15 @@ class Interactive(cmd.Cmd):
                            if cur_node.parent is not None else cur_node)
             elif subcmd and subcmd != '.':
                 if not subcmd in cmdutil.get_subcommand_names(cur_node):
-                    raise LmiCanNotNest('no such subcommand "%s"' %
+                    raise LmiCanNotNest('No such subcommand "%s".' %
                             "/".join(cmd_chain))
                 cmd_cls = cmdutil.get_subcommand_factory(cur_node, subcmd)
                 if not issubclass(cmd_cls, LmiCommandMultiplexer):
-                    raise LmiCanNotNest('can not nest to subcommand "%s" which'
-                            " is not a multiplexer" % "/".join(cmd_chain))
+                    raise LmiCanNotNest('Can not nest to subcommand "%s" which'
+                            " is not a multiplexer." % "/".join(cmd_chain))
                 if not cmd_cls.has_own_usage():
-                    raise LmiCanNotNest('can not nest to subcommand "%s" which'
-                            ' lacks any help message' % "/".join(cmd_chain))
+                    raise LmiCanNotNest('Can not nest to subcommand "%s" which'
+                            ' lacks any help message.' % "/".join(cmd_chain))
                 cur_node = cmd_cls(self.app, subcmd, cur_node)
         self.app.active_command = cur_node
         return exit.EXIT_CODE_SUCCESS
@@ -278,7 +278,7 @@ class Interactive(cmd.Cmd):
             if '--help' in line_parts:
                 return self.do_help(" ".join(
                     line_parts[:line_parts.index('--help')]))
-            LOG().warn("wrong options given: %s", line.strip())
+            LOG().warn("Wrong options given: %s", line.strip())
             self.stdout.write(str(err))
             if (   line_parts[0] in cmdutil.get_subcommand_names(
                     self.app.active_command)

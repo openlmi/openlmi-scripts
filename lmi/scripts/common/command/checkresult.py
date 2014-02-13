@@ -127,9 +127,9 @@ class LmiCheckResult(LmiSessionCommand):
             raise
         except Exception as err:
             if self.app.config.trace:
-                LOG().exception("failed to execute wrapped function")
+                LOG().exception("Failed to execute wrapped function.")
             else:
-                LOG().error("failed to execute wrapped function: %s", err)
+                LOG().error("Failed to execute wrapped function: %s", err)
             raise
         return 0
 

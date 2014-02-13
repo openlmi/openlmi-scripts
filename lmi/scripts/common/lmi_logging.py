@@ -174,7 +174,7 @@ def get_logger(module_name):
     This can be used in module's functions and classes like this: ::
 
         def module_function(param):
-            LOG().debug("this is debug statement logging param: %s", param)
+            LOG().debug("This is debug statement logging param: %s", param)
 
     Thanks to ``LOG`` being a callable, it always returns valid logger object
     with current configuration, which may change overtime.

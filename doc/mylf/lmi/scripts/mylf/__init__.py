@@ -47,7 +47,7 @@ def logical_file_type_name(file_identity):
     try:
         return namemap[file_identity.classname.lower()]
     except KeyError:
-        LOG().warn('unhandled logical file class "%s"',
+        LOG().warn('Unhandled logical file class "%s".',
                 file_identity.classname)
         return 'unknown'
 
@@ -98,7 +98,7 @@ def get_unix_file_instance(ns, path, dereference=False):
                             lf.TargetLink, err)
         return uf
     except:
-        raise errors.LmiFailed('No such file or directory: "%s"' % path)
+        raise errors.LmiFailed('No such file or directory: "%s".' % path)
 
 def get_logical_file_instance(ns, file_ident, dereference=False):
     """

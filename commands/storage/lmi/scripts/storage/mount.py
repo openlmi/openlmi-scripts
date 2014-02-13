@@ -87,7 +87,7 @@ def get_setting_from_opts(ns, options, other_options):
 
     (ret, outparams, _err) = cap.CreateSetting()
     if ret != 0:
-        raise LmiFailed('Could not create setting')
+        raise LmiFailed('Could not create setting.')
 
     setting = outparams['setting'].to_instance()
 
@@ -109,7 +109,7 @@ def get_setting_from_opts(ns, options, other_options):
         # insist on using a number with FileSystemCheckOrder
         if opts[0] == 'FileSystemCheckOrder':
             if not opts[1].isdigit():
-                raise LmiFailed('Value of FileSystemCheckOrder must be a number')
+                raise LmiFailed('Value of FileSystemCheckOrder must be a number.')
             opts[1] = int(opts[1])
         else:
             # otherwise check for true/false possibilities

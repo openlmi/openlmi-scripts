@@ -94,10 +94,10 @@ class Session(object):
                     yield connection
                     successful_connections += 1
             except Exception as exc:
-                LOG().error('failed to make a connection to "%s": %s',
+                LOG().error('Failed to make a connection to "%s": %s',
                         hostname, exc)
         if successful_connections == 0:
-            raise errors.LmiNoConnections('no successful connection made')
+            raise errors.LmiNoConnections('No successful connection made.')
 
     def _connect(self, hostname, interactive=False):
         """
@@ -123,7 +123,7 @@ class Session(object):
                 tp = ('', '')
             self._credentials[hostname] = (tp[0], tp[1], True)
         else:
-            LOG().error('failed to connect to host "%s"', hostname)
+            LOG().error('Failed to connect to host "%s".', hostname)
         return connection
 
     @property

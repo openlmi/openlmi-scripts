@@ -112,13 +112,13 @@ class CommandManager(object):
             checks and adding it to registered commands.
             """
             if not util.RE_COMMAND_NAME.match(epoint.name):
-                LOG().error('invalid command name: %s, ignoring', epoint.name)
+                LOG().error('Invalid command name: %s, ignoring.', epoint.name)
                 return
             if epoint.name in self._commands:
-                LOG().warn('command "%s" already registered, ignoring',
+                LOG().warn('Command "%s" already registered, ignoring.',
                         epoint.name)
             else:
-                LOG().debug('found command "%s"', epoint.name)
+                LOG().debug('Found registered command "%s".', epoint.name)
                 self._commands[epoint.name] = epoint
 
         for entry_point in pkg_resources.iter_entry_points(self._namespace):
@@ -144,7 +144,7 @@ class CommandManager(object):
             raise errors.LmiCommandInvalidName(
                     cmd_class.__module__, cmd_class.__class__.__name__, name)
         if name in self._commands:
-            LOG().warn('command "%s" already managed, overwriting with "%s:%s"',
+            LOG().warn('Command "%s" already managed, overwriting with "%s:%s".',
                     name, cmd_class.__module__, cmd_class.__name__)
         self._commands[name] = _CustomCommandWrapper(name, cmd_class)
 
@@ -163,10 +163,10 @@ class CommandManager(object):
             cmd_path = self._commands[cmd_name].module_name.rsplit(':', 1)
             if len(cmd_path) < 2:
                 cmd_path[0:0] = ['']*(2 - len(cmd_path))
-            LOG().debug('failed to import command "%s"', cmd_name, exc_info=err)
+            LOG().debug('Failed to import command "%s".', cmd_name, exc_info=err)
             raise errors.LmiCommandError(
                     cmd_path[0], cmd_path[1],
-                    'failed to import command "%s"' % cmd_name)
+                    'Failed to import command "%s".' % cmd_name)
 
     def reload_commands(self, keep_custom=True):
         """

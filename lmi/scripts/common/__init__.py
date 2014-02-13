@@ -63,11 +63,11 @@ def get_computer_system(ns):
             get_computer_system._cs_cache[ns_path] = cs = \
                     getattr(ns, config.system_class_name).first_instance()
         except LMIExceptions.LMIClassNotFound:
-            LOG().warn('failed to get instance of %s on host "%s"'
-                    ' - falling back to CIM_ComputerSystem',
+            LOG().warn('Failed to get instance of %s on host "%s"'
+                    ' - falling back to CIM_ComputerSystem.',
                     config.system_class_name, ns.connection.uri)
             get_computer_system._cs_cache[ns_path] = cs = \
                     ns.CIM_ComputerSystem.first_instance_name()
-        LOG().debug('loaded instance instance of %s:%s for host "%s"',
+        LOG().debug('Loaded instance of %s:%s for host "%s".',
             ns.name, cs.classname, ns.connection.uri)
     return get_computer_system._cs_cache[ns_path]

@@ -136,9 +136,9 @@ class PkgInfo(command.LmiShowInstance):
                         repoid=_repoid)]
         pkgs = [p for p in pkgs if not _installed or bool(p.InstallDate)]
         if len(pkgs) < 1:
-            raise errors.LmiFailed('no such package "%s" found' % package)
+            raise errors.LmiFailed('No such package "%s" found.' % package)
         if len(pkgs) > 1:
-            LOG().warn('more than one package found for "%s" : %s',
+            LOG().warn('More than one package found for "%s" : %s',
                     package, ', '.join(p.ElementName for p in pkgs))
 
         return (properties, pkgs[-1])
@@ -203,11 +203,11 @@ def for_each_package_specs(ns, pkg_specs, info, func,
             identities = list(software.find_package(ns,
                 pkg_spec=pkg_spec, repoid=repoid))
         if len(identities) < 1:
-            LOG().warn('failed to find any matching package for "%s",'
-                ' skipping', pkg_spec)
+            LOG().warn('Failed to find any matching package for "%s",'
+                ' skipping.', pkg_spec)
             continue
         if len(identities) > 1:
-            LOG().warn('more than one package found for "%s": %s',
+            LOG().warn('More than one package found for "%s": %s',
                     pkg_spec,
                     ', '.join(software.get_package_nevra(i)
                         for i in identities))
@@ -215,7 +215,7 @@ def for_each_package_specs(ns, pkg_specs, info, func,
             func(identities[-1])
             done_on.append(pkg_spec)
         except errors.LmiFailed as err:
-            LOG().warn('failed to %s "%s": %s', info, pkg_spec, err)
+            LOG().warn('Failed to %s "%s": %s', info, pkg_spec, err)
     return done_on
 
 class Install(command.LmiCheckResult):
@@ -244,7 +244,7 @@ class Install(command.LmiCheckResult):
                 software.install_from_uri(ns, _uri, force=_force)
                 return [_uri]
             except errors.LmiFailed as err:
-                LOG().warn('failed to install "%s": %s', _uri, err)
+                LOG().warn('Failed to install "%s": %s', _uri, err)
 
         else:
             return for_each_package_specs(ns, package_array, 'install',
@@ -308,7 +308,7 @@ class Verify(command.LmiLister):
             if len(failed_checks):
                 failed_identity_checks.append((identity, failed_checks))
             else:
-                LOG().debug('package "%s" passed', identity.ElementName)
+                LOG().debug('Package "%s" passed.', identity.ElementName)
 
         for_each_package_specs(ns, package_array, 'verify', _verify_identity)
         for identity, checks in failed_identity_checks:

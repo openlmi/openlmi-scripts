@@ -133,7 +133,7 @@ class MetaCommand(object):
         if self._session is None:
             if (   not self._options['--host']
                and not self._options['--hosts-file']):
-                LOG().info('no hosts given, using "localhost"')
+                LOG().info('No hosts given, using "localhost".')
                 self._options['--host'] = ['localhost']
             hostnames = []
             # credentials loaded from file
@@ -148,7 +148,7 @@ class MetaCommand(object):
                     with open(hosts_path, 'r') as hosts_file:
                         add_hosts(*util.parse_hosts_file(hosts_file))
                 except (OSError, IOError) as err:
-                    LOG().critical('could not read hosts file "%s": %s',
+                    LOG().critical('Could not read hosts file "%s": %s',
                             hosts_path, err)
                     sys.exit(1)
             add_hosts(*util.get_hosts_credentials(self._options['--host']))
@@ -224,7 +224,7 @@ class MetaCommand(object):
             if isinstance(exc, errors.LmiError) or not trace:
                 LOG().error(exc)
             else:
-                LOG().exception("fatal")
+                LOG().exception('Fatal')
 
         if isinstance(retval, bool) or not isinstance(retval, (int, long)):
             return (    exit.EXIT_CODE_SUCCESS if bool(retval) or retval is None

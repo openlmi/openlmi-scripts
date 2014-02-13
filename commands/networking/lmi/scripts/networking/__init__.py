@@ -284,7 +284,7 @@ def activate(ns, setting, device=None):
     if device is None:
         device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
         if device is None:
-            raise LmiFailed("No device is associated with given connection")
+            raise LmiFailed("No device is associated with given connection.")
     service = ns.LMI_IPConfigurationService.first_instance()
     result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
             IPNetworkConnection=device,
@@ -302,7 +302,7 @@ def deactivate(ns, setting, device=None):
     if device is None:
         device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
         if device is None:
-            raise LmiFailed("No device is associated with given connection")
+            raise LmiFailed("No device is associated with given connection.")
     service = ns.LMI_IPConfigurationService.first_instance()
     return service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
             IPNetworkConnection=device, #ns.LMI_IPNetworkConnection.first_instance(),
@@ -390,7 +390,7 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
             found = True
             settingData.push()
     if not found:
-        raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type")
+        raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type.")
     return 0
 
 def remove_ip_address(ns, setting, address):
@@ -424,7 +424,7 @@ def remove_ip_address(ns, setting, address):
                 i += 1
             settingData.push()
     if not found:
-        raise LmiInvalidOptions("Can't remove IP address from setting: invalid setting type or address doesn't exist")
+        raise LmiInvalidOptions("Can't remove IP address from setting: invalid setting type or address doesn't exist.")
     return 0
 
 def replace_ip_address(ns, setting, address, prefix, gateway=None):
@@ -479,5 +479,5 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
             found = True
             settingData.push()
     if not found:
-        raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type")
+        raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type.")
     return 0

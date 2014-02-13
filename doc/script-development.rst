@@ -108,13 +108,13 @@ the number of instances evaluated.
             inst = service
             name = inst.path['Name']
         if inst is None:
-            raise LmiFailed('No such service "%s"' % name)
+            raise LmiFailed('No such service "%s".' % name)
         if isinstance(inst, LMIInstanceName):
             # we need LMIInstance
             inst = inst.to_instance()
         res = inst.StartService()
         if res == 0:
-            LOG().debug('started service "%s" on hostname "%s"',
+            LOG().debug('Started service "%s" on hostname "%s".',
                         name, ns.hostname)
         return res
 
@@ -129,7 +129,7 @@ these functions operating upon a connection object like this: ::
         inst = c.root.cimv2.LMI_Service.first_instance(
                     key="Name", value=service)
         if inst is None:
-            raise LmiFailed('No such service "%s"' % service)
+            raise LmiFailed('No such service "%s".' % service)
         return inst
 
 User can then easily access any other namespace he may need. Command classes

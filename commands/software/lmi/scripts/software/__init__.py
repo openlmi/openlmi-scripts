@@ -122,7 +122,7 @@ def _wait_for_job_finished(job):
     """
     if not isinstance(job, LMIInstance):
         raise TypeError("job must be an LMIInstance")
-    LOG().debug('waiting for a job "%s" to finish', job.InstanceID)
+    LOG().debug('Waiting for a job "%s" to finish.', job.InstanceID)
     sleep_time = 0.5
     while not LMIJob.lmi_is_job_finished(job):
         # Sleep, a bit longer in every iteration
@@ -183,7 +183,7 @@ def list_available_packages(ns,
         inst = ns.LMI_SoftwareIdentityResource.first_instance(
                 key='Name', value=repoid)
         if inst is None:
-            raise LmiFailed('no such repository "%s"' % repoid)
+            raise LmiFailed('No such repository "%s".' % repoid)
         repos = [inst]
     else:
         repos = ns.LMI_SoftwareIdentityResource.instances()
@@ -297,17 +297,17 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
         opts['repository'] = repo_iname
     if 'envra' in kwargs:   # takes precedence over pkg_spec and nevra
         if not RE_ENVRA.match(kwargs['envra']):
-            raise ValueError('invalid envra string "%s"' % kwargs['envra'])
+            raise ValueError('Invalid envra string "%s".' % kwargs['envra'])
         kwargs['pkg_spec'] = kwargs.pop("envra")
     elif 'nevra' in kwargs: # takes precedence over pkg_spec
         if not RE_NEVRA.match(kwargs['nevra']):
-            raise ValueError('invalid nevra string "%s"' % kwargs['nevra'])
+            raise ValueError('Invalid nevra string "%s".' % kwargs['nevra'])
         kwargs['pkg_spec'] = kwargs.pop("nevra")
     if 'pkg_spec' in kwargs:
         pkg_spec = kwargs.pop('pkg_spec')
         opts.update(pkg_spec_to_filter(pkg_spec))
     if not opts:
-        raise LmiFailed("no supported package query key given")
+        raise LmiFailed("No supported package query key given.")
     if 'arch' in opts:
         opts['architecture'] = opts.pop('arch')
     ret = ns.LMI_SoftwareInstallationService.first_instance() \
@@ -361,7 +361,7 @@ def list_package_files(ns, package, file_type=None):
     if file_type is not None:
         if isinstance(file_type, (int, long)):
             if file_type < 1 or file_type >= len(FILE_TYPES):
-                raise ValueError('invalid file_type value "%d"' % file_type)
+                raise ValueError('Invalid file_type value "%d".' % file_type)
         elif isinstance(file_type, basestring):
             if file_type.lower() == 'all':
                 file_type = None
@@ -373,7 +373,7 @@ def list_package_files(ns, package, file_type=None):
     if isinstance(package, LMIInstanceName):
         package = package.to_instance()
     if package.InstallDate is None:
-        raise LmiFailed('can not list files of not installed package "%s"' %
+        raise LmiFailed('Can not list files of not installed package "%s".' %
                 package.ElementName)
     for file_inst in package.associators(
             Role="Element",
@@ -396,7 +396,7 @@ def get_repository(ns, repoid):
         raise TypeError("repoid must be a string")
     repo = ns.LMI_SoftwareIdentityResource.first_instance({'Name' : repoid})
     if repo is None:
-        raise LmiFailed('no such repository "%s"' % repoid)
+        raise LmiFailed('No such repository "%s".' % repoid)
     return repo
 
 def set_repository_enabled(ns, repository, enable=True):
@@ -421,7 +421,7 @@ def set_repository_enabled(ns, repository, enable=True):
     if repository.EnabledState != requested_state:
         results = repository.RequestStateChange(RequestedState=requested_state)
         if results.rval != 0:
-            msg = 'failed to enable repository "%s" (rval=%d)' % (
+            msg = 'Failed to enable repository "%s" (rval=%d).' % (
                     repository.Name, results.rval)
             if results.errorstr:
                 msg += ': ' + results.errorstr
@@ -460,7 +460,7 @@ def install_package(ns, package, force=False, update=False):
             InstallOptions=options)
     nevra = get_package_nevra(package)
     if results.rval != 4096:
-        msg = 'failed to %s package "%s" (rval=%d)' % (
+        msg = 'Failed to %s package "%s" (rval=%d).' % (
                 'update' if update else 'install', nevra, results.rval)
         if results.errorstr:
             msg += ': ' + results.errorstr
@@ -469,13 +469,13 @@ def install_package(ns, package, force=False, update=False):
     job = results.rparams['Job'].to_instance()
     _wait_for_job_finished(job)
     if not LMIJob.lmi_is_job_completed(job):
-        msg = 'failed to %s package "%s"' % (
+        msg = 'Failed to %s package "%s".' % (
                 'update' if update else 'install', nevra)
         if job.ErrorDescription:
             msg += ': ' + job.ErrorDescription
         raise LmiFailed(msg)
     else:
-        LOG().info('installed package "%s" on remote host "%s"',
+        LOG().info('Installed package "%s" on remote host "%s".',
                 nevra, ns.connection.uri)
 
     installed = job.associators(
@@ -484,9 +484,9 @@ def install_package(ns, package, force=False, update=False):
             AssocClass="LMI_AffectedSoftwareJobElement",
             ResultClass='LMI_SoftwareIdentity')
     if len(installed) < 1:
-        raise LmiFailed('failed to find installed package "%s"' % nevra)
+        raise LmiFailed('Failed to find installed package "%s".' % nevra)
     if len(installed) > 1:
-        LOG().warn('expected just one affected software identity, got: %s',
+        LOG().warn('Expected just one affected software identity, got: %s',
                 {get_package_nevra(p) for p in installed})
 
     return installed[-1]
@@ -514,13 +514,13 @@ def install_from_uri(ns, uri, force=False, update=False):
             Target=get_computer_system(ns).path,
             InstallOptions=options)
     if results.rval != 0:
-        msg = 'failed to %s package from uri (rval=%d)' % (
+        msg = 'Failed to %s package from uri (rval=%d).' % (
                 'update' if update else 'install', results.rval)
         if results.errorstr:
             msg += ': ' + results.errorstr
         raise LmiFailed(msg)
     else:
-        LOG().info('installed package from uri')
+        LOG().info('Installed package from uri.')
 
 def remove_package(ns, package):
     """
@@ -543,7 +543,7 @@ def remove_package(ns, package):
         for assoc in installed_assocs:
             assoc.to_instance().delete()
     else:
-        raise LmiFailed('given package "%s" is not installed!' %
+        raise LmiFailed('Given package "%s" is not installed!' %
                 get_package_nevra(package))
 
 def render_failed_flags(failed_flags):
@@ -601,7 +601,7 @@ def verify_package(ns, package):
             Target=get_computer_system(ns).path)
     nevra = get_package_nevra(package)
     if results.rval != 4096:
-        msg = 'failed to verify package "%s (rval=%d)"' % (nevra, results.rval)
+        msg = 'Failed to verify package "%s (rval=%d)".' % (nevra, results.rval)
         if results.errorstr:
             msg += ': ' + results.errorstr
         raise LmiFailed(msg)
@@ -609,11 +609,11 @@ def verify_package(ns, package):
     job = results.rparams['Job'].to_instance()
     _wait_for_job_finished(job)
     if not LMIJob.lmi_is_job_completed(job):
-        msg = 'failed to verify package "%s"' % nevra
+        msg = 'Failed to verify package "%s".' % nevra
         if job.ErrorDescription:
             msg += ': ' + job.ErrorDescription
         raise LmiFailed(msg)
-    LOG().debug('verified package "%s" on remote host "%s"',
+    LOG().debug('Verified package "%s" on remote host "%s".',
             nevra, ns.connection.uri)
 
     failed = job.associators(
@@ -621,7 +621,7 @@ def verify_package(ns, package):
             ResultRole='AffectedElement',
             AssocClass="LMI_AffectedSoftwareJobElement",
             ResultClass='LMI_SoftwareIdentityFileCheck')
-    LOG().debug('verified package "%s" on remote host "%s" with %d failures',
+    LOG().debug('Verified package "%s" on remote host "%s" with %d failures.',
             nevra, ns.connection.uri, len(failed))
 
     return failed

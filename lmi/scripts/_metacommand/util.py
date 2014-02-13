@@ -125,7 +125,7 @@ def setup_logging(app_config, stderr=sys.stderr):
             cfg['handlers']['file']['level'] = \
                     getattr(logging, app_config.logging_level.upper())
         except KeyError:
-            LOG().error('unsupported logging level: "%s"',
+            LOG().error('Unsupported logging level: "%s".',
                     app_config.logging_level)
         cfg['root']['handlers'].append('file')
         cfg['loggers']['lmi.shell']['handlers'].append('file')
