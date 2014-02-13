@@ -195,6 +195,7 @@ class MetaCommand(object):
             self.config.verbosity = options['-v']
         if options.pop('--noverify', False):
             self.config.verify_server_cert = False
+        self.config.log_file = options.pop('--log-file', None)
         self._configure_logging()
         del options['--trace']
         del options['--notrace']
@@ -203,7 +204,6 @@ class MetaCommand(object):
         self.config.human_friendly = options.pop('--human-friendly', None)
         self.config.no_headings = options.pop('--no-headings', None)
         self.config.lister_format = options.pop('--lister-format', None)
-        self.config.log_file = options.pop('--log-file', None)
         # unhandled options may be used later (for session creation),
         # so let's save them
         self._options = options
