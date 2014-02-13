@@ -45,3 +45,7 @@ LMI="lmi"
 [ -n "$HOSTNAME" ] && \
     LMI+=" -n -h $SCHEMA$LMI_CIMOM_USERNAME:$LMI_CIMOM_PASSWORD@$HOSTNAME"
 export LMI
+
+# for some tests no other options are welcomed
+export LMI_=`echo $LMI | cut -d \  -f 1`
+

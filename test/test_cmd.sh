@@ -37,9 +37,6 @@ TEST="openlmi-scripts/test/test_cmd.sh"
 # Package being tested
 PACKAGE="openlmi-scripts"
 
-# for some tests no other options are not welcomed
-LMI_=`echo $LMI | cut -d \  -f 1`
-
 rlJournalStart
 
 rlPhaseStartSetup
