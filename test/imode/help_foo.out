@@ -1,4 +1,4 @@
-ERROR: no such command "foo"
+error   : No such command "foo".
 
 Static commands
 ===============

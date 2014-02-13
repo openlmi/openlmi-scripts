@@ -12,7 +12,7 @@ if {[llength $argv] > 0} {
     send "[lindex $argv 0]\r"
     expect {
         timeout { exit -2 }
-        -re "[lindex $argv 1]"
+        "[lindex $argv 1]"
     }
     expect "lmi> "
 }

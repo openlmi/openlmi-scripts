@@ -4,3 +4,4 @@ Usage:
     test list <cmd> [<args> ...]
     test show pkg <name>
     test show repo <name>
+    test log <cmd> [<args> ...]

@@ -79,6 +79,26 @@ function run_test_command() {
     done
 }
 
+function make_error_message() {
+    # Args:
+    #   level   - one of debug, info, warn, error, critical
+    #   message
+    level=$1
+    message="$2"
+    [ "$level" = 'warn' ] && level=warning
+    case "$level" in
+        warning)  color='\x1b[38;5;11m'; ;;
+        error)    color='\x1b[38;5;9m'; ;;
+        critical) color='\x1b[38;5;13m'; ;;
+        *)        unset color; ;;
+    esac
+    if [[ -n "$color" ]]; then
+        printf "$color%-8s:\x1b[39m %s\n" $level "$message"
+    else
+        echo "$message"
+    fi
+}
+
 rlJournalStart
 
 rlPhaseStartSetup
@@ -110,7 +130,8 @@ rlPhaseStartTest
     rlLogInfo "Test end of file"
     rlRun "expect imode/eof.exp" 0
     rlRun "expect imode/eof.exp ':pwd' '/lmi'" 0
-    rlRun 'expect imode/eof.exp ":cd foo" "ERROR: no such subcommand \"foo\""' 0
+    errmsg=`make_error_message error 'No such subcommand \"foo\".'`
+    rlRun "expect imode/eof.exp ':cd foo' \"$errmsg\"" 0
     rlRun "expect imode/empty_lines.exp" 0
     run_and_compare_output "$LMI < imode/empty_lines.txt" empty_lines
 rlPhaseEnd

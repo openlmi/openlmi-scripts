@@ -4,6 +4,7 @@ Usage:
     test list <cmd> [<args> ...]
     test show pkg <name>
     test show repo <name>
+    test log <cmd> [<args> ...]
 
 To get help for built-in commands, type:
     :help

@@ -34,10 +34,15 @@ Usage:
     %(cmd)s list <cmd> [<args> ...]
     %(cmd)s show pkg <name>
     %(cmd)s show repo <name>
+    %(cmd)s log <cmd> [<args> ...]
 """
 
+from lmi.scripts.common import get_logger
 from lmi.scripts.common import errors
 from lmi.scripts.common import command
+from lmi.scripts.common import configuration
+
+LOG = get_logger(__name__)
 
 class ListPackages(command.LmiLister):
     OPT_NO_UNDERSCORES = True
@@ -87,7 +92,7 @@ class ShowPackage(command.LmiLister):
     def execute(self, ns, name):
         pkgd = { p[0] : p for p in PACKAGES }
         if not name in pkgd:
-            raise errors.LmiFailed('no such package "%s"' % name)
+            raise errors.LmiFailed('No such package "%s".' % name)
         for n, v in zip(('Name', 'Architecture', 'Installed'), pkgd[name]):
             yield n, v
 
@@ -97,7 +102,7 @@ class ShowRepository(command.LmiLister):
     def execute(self, ns, name):
         repod = { r[0] : r for r in REPOSITORIES }
         if not name in repod:
-            raise errors.LmiFailed('no such repository "%s"' % name)
+            raise errors.LmiFailed('No such repository "%s".' % name)
         for n, v in zip(('Name', 'Enabled'), repod[name]):
             yield n, v
 
@@ -107,10 +112,78 @@ class Show(command.LmiCommandMultiplexer):
             'repo' : ShowRepository
     }
 
+class LogLevel(command.LmiCheckResult):
+    EXPECT = None
+
+    def execute(self, ns, _debug, _info, _warn, _error, _critical,
+            message=None, args=None):
+        for level in ('debug', 'info', 'warn', 'error', 'critical'):
+            if locals()['_' + level]:
+                break
+        if not message:
+            message = "This is %s message." % level
+        if not args:
+            args = []
+        getattr(LOG(), level)(message, *args)
+
+class LogAll(command.LmiCheckResult):
+    EXPECT = None
+    POEM = (
+            'One Ring to rule them all.',
+            'One Ring to find them.',
+            'One Ring to bring them all',
+            'and in the darkness bind them.',
+            'In the land of Mordor where the Shadows lie.')
+
+    def execute(self, ns, _with_traceback):
+        for verse, level in zip(LogAll.POEM,
+                ('debug', 'info', 'warn', 'error', 'critical')):
+            if _with_traceback:
+                try:
+                    raise RuntimeError('S**t happens!')
+                except RuntimeError as err:
+                    getattr(LOG(), level)(verse, exc_info=err)
+            else:
+                getattr(LOG(), level)(verse)
+        if self.app.config.verbose:
+            self.app.stdout.write('Additional information.\n')
+        if self.app.config.silent:
+            self.app.stdout.write("Let's be silent.\n")
+        if self.app.config.trace:
+            self.app.stdout.write('Enjoy tracebacks.\n')
+        if self.app.config.verbosity >= self.app.config.OUTPUT_DEBUG:
+            self.app.stdout.write('I can not be more verbose than this!\n')
+
+class LogRaise(command.LmiCheckResult):
+    EXPECT = None
+
+    def execute(self, ns, _lmi_failed=False):
+        if _lmi_failed:
+            raise errors.LmiFailed("You asked for it!")
+        raise RuntimeError("This shall make a nice traceback.")
+
+class Logger(command.LmiCommandMultiplexer):
+    """
+    Command for logging testing.
+
+    Usage:
+        %(cmd)s level (--debug | --info | --warn | --error | --critical)
+                [<message> <args>...]
+        %(cmd)s all [--with-traceback]
+        %(cmd)s raise [--lmi-failed]
+    """
+    COMMANDS = {
+            'level' : LogLevel,
+            'all'   : LogAll,
+            'raise' : LogRaise
+    }
+    OWN_USAGE = True
+
 Test = command.register_subcommands(
         'Test', __doc__,
         { 'list'    : Lister,
           'show'    : Show,
+          'log'     : Logger,
         },
     )
 
