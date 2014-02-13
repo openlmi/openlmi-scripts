@@ -161,8 +161,9 @@ class LmiSessionCommand(LmiEndPointCommand):
             for hostname, (success, error) in results.items():
                 if not success:
                     data.append((hostname, [error]))
-            self._print_errors(data,
-                    new_line=any(r[0] for r in results.values()))
+            if len(session) > 1:
+                self._print_errors(data,
+                        new_line=any(r[0] for r in results.values()))
 
     @abc.abstractmethod
     def take_action(self, connection, args, kwargs):
