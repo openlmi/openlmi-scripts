@@ -180,6 +180,10 @@ def get_system_info(ns):
         model = i.ProductName
     else:
         model = 'N/A'
+    if i.VirtualMachine:
+        virt = i.VirtualMachine
+    else:
+        virt = 'N/A'
     result = init_result(ns)
     result += [
           ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
@@ -187,7 +191,8 @@ def get_system_info(ns):
           ('Manufacturer:', i.Manufacturer),
           ('Model:', model),
           ('Serial Number:', i.SerialNumber),
-          ('Asset Tag:', i.Tag)]
+          ('Asset Tag:', i.Tag),
+          ('Virtual Machine:', virt)]
     return result
 
 def get_motherboard_info(ns):
