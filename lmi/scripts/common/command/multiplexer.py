@@ -139,7 +139,9 @@ class LmiCommandMultiplexer(base.LmiBaseCommand):
             # usage string and when a height of this branch is > 2
             'options_first' : not self.has_own_usage()
                     or any(   not cmd.is_end_point()
-                          for cmd in self.child_commands().values())
+                          for cmd in self.child_commands().values()
+                          if  not args or args[0] not in self.child_commands()
+                              or self.child_commands()[args[0]] is cmd)
         }
         options = docopt(self.get_usage(), full_args, **docopt_kwargs)
         if options.pop('--help', False) or (args and args[0] == '--help'):
