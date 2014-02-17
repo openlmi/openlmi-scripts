@@ -49,7 +49,7 @@ function test_raid() {
 
 	rlPhaseStartTest "Create RAID $level: $name on $parts"
 		rlLogInfo "Creating the RAID"
-		rlRun "$LMI raid create --name="$name" $level $parts"
+		rlRun "$LMI storage raid create --name="$name" $level $parts"
 
 	    rlLogInfo "Check that the RAID exists"
 	    rlRun "ls -l /dev/md/$name"
@@ -59,16 +59,16 @@ function test_raid() {
 	    done
 	    rm $rlRun_LOG
 
-        rlLogInfo "Check lmi raid list output"
-        rlRun -s "$LMI -NHL csv raid list"
+        rlLogInfo "Check lmi storage raid list output"
+        rlRun -s "$LMI -NHL csv storage raid list"
         rlAssertGrep "\"$name\"" $rlRun_LOG
         rlAssertGrep "\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
         member_count=$(echo $parts | wc -w)
         rlAssertGrep ",$level,$member_count\$" $rlRun_LOG
         rm $rlRun_LOG
 
-        rlLogInfo "Check lmi raid show output"
-        rlRun -s "$LMI -NHL csv raid show $name"
+        rlLogInfo "Check lmi storage raid show output"
+        rlRun -s "$LMI -NHL csv storage raid show $name"
         rlAssertGrep "\"DeviceID\",\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
         rlAssertGrep "\"Name\",\"/dev/md/$name\"" $rlRun_LOG
         rlAssertGrep "\"ElementName\",\"$name\"" $rlRun_LOG
@@ -81,20 +81,20 @@ function test_raid() {
 
     rlPhaseStartTest "Delete RAID $level: $name on $parts"
         rlLogInfo "deleting the RAID"
-        rlRun "$LMI raid delete $name"
+        rlRun "$LMI storage raid delete $name"
 
         rlLogInfo "Check that the RAID does not exist"
         rlRun "ls -l /dev/md/$name" 2
         rlRun "mdadm -D /dev/md/$name" 1
 
-        rlLogInfo "Check lmi raid list output"
-        rlRun -s "$LMI -NHL csv raid list"
+        rlLogInfo "Check lmi storage raid list output"
+        rlRun -s "$LMI -NHL csv storage raid list"
         rlAssertNotGrep "\"$name\"" $rlRun_LOG
         rlAssertNotGrep "\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
         rm $rlRun_LOG
 
-        rlLogInfo "Check lmi raid show output"
-        rlRun -s "$LMI -NHL csv raid show $name" 1
+        rlLogInfo "Check lmi storage raid show output"
+        rlRun -s "$LMI -NHL csv storage raid show $name" 1
         rlAssertNotGrep "\"DeviceID\",\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
         rlAssertNotGrep "\"Name\",\"/dev/md/$name\"" $rlRun_LOG
     rlPhaseEnd

@@ -42,13 +42,13 @@ rlJournalStart
 part=${PARTITIONS[0]}
 rlPhaseStartTest
     rlLogInfo "Getting list of supported filesystems"
-    rlRun -s "$LMI -N fs list-supported"
+    rlRun -s "$LMI -N storage fs list-supported"
     filesystems=$(cat $rlRun_LOG)
     rm $rlRun_LOG
     for fsname in $filesystems; do
         rlLogInfo "Test fs create $fsname"
-        rlRun "$LMI fs create $fsname $part"
-        rlRun -s "$LMI -N -L csv fs list $part"
+        rlRun "$LMI storage fs create $fsname $part"
+        rlRun -s "$LMI -N -L csv storage fs list $part"
 
         rlLogInfo "Test fs list"
         # the last column is lower-case filesystem type in double quotes
@@ -63,7 +63,7 @@ rlPhaseStartTest
         rm $rlRun_LOG
 
         rlLogInfo "Test fs delete"
-        rlRun "$LMI fs delete $part"
+        rlRun "$LMI storage fs delete $part"
 
         rlLogInfo "Test the fs is really deleted"
         rlRun -s "file -s $part"

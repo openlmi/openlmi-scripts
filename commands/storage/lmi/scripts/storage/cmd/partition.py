@@ -1,6 +1,7 @@
+# coding=utf-8
 # Storage Management Providers
 #
-# Copyright (C) 2013-2014 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2014 Red Hat, Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,7 +30,6 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-
 """
 Partition management.
 
@@ -97,13 +97,17 @@ Options:
     --extended  Override the automatic behavior and request extended partition.
 """
 
+from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
-from lmi.scripts.storage import partition, show
-from lmi.scripts.storage.common import str2size, str2device, size2str
-from lmi.scripts.common import formatter
+from lmi.scripts.common import get_logger
 from lmi.scripts.common.formatter import command as fcmd
+from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
+from lmi.scripts.storage.common import (size2str, get_devices, get_children,
+        get_parents, str2device, str2size, str2vg)
 
-class Lister(command.LmiLister):
+LOG = get_logger(__name__)
+
+class PartitionList(command.LmiLister):
     COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
 
     def transform_options(self, options):
@@ -138,7 +142,7 @@ class Lister(command.LmiLister):
                     size)
 
 
-class Create(command.LmiCheckResult):
+class PartitionCreate(command.LmiCheckResult):
     EXPECT = None
     def transform_options(self, options):
         """
@@ -165,7 +169,7 @@ class Create(command.LmiCheckResult):
         print "Partition %s, with DeviceID %s created." % (p.Name, p.DeviceID)
 
 
-class Delete(command.LmiCheckResult):
+class PartitionDelete(command.LmiCheckResult):
     EXPECT = None
 
     def transform_options(self, options):
@@ -183,7 +187,7 @@ class Delete(command.LmiCheckResult):
             partition.delete_partition(ns, part)
 
 
-class Show(command.LmiLister):
+class PartitionShow(command.LmiLister):
     COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
@@ -207,12 +211,12 @@ class Show(command.LmiLister):
                     self.app.config.human_friendly):
                 yield line
 
+class Partition(command.LmiCommandMultiplexer):
+    OWN_USAGE = __doc__
+    COMMANDS = {
+            'list'    : PartitionList,
+            'create'  : PartitionCreate,
+            'delete'  : PartitionDelete,
+            'show'    : PartitionShow,
+    }
 
-Partition = command.register_subcommands(
-        'Partition', __doc__,
-        { 'list'    : Lister ,
-          'create'  : Create,
-          'delete'  : Delete,
-          'show'    : Show,
-        },
-    )

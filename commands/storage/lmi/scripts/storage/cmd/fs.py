@@ -1,6 +1,7 @@
+# coding=utf-8
 # Storage Management Providers
 #
-# Copyright (C) 2013-2014 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2014 Red Hat, Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,7 +30,6 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-
 """
 Filesystem and other data format management.
 
@@ -40,11 +40,11 @@ Usage:
     %(cmd)s list-supported
 
 Commands:
-    list        List filesystems and and other data formats (RAID metadata, ...)
-                on given devices.
+    list        List filesystems and and other data formats (RAID metadata,
+                ...)  on given devices.
                 If no devices are provided, all filesystems are listed.
-                If --all option is set, all filesystem, including system ones
-                like tmpfs, cgroups, procfs, sysfs etc are listed.
+                If --all option is set, all filesystem, including system
+                ones like tmpfs, cgroups, procfs, sysfs etc are listed.
 
     create      Format device(s) with given filesystem.
                 If more devices are given, the filesystem will span
@@ -53,8 +53,8 @@ Commands:
                 For list of available filesystem types, see output of
                 %(cmd)s list-supported.
 
-    delete      Delete given filesystem or data format (like partition table,
-                RAID metadata, LUKS, physical volume metadata etc)
+    delete      Delete given filesystem or data format (like partition
+                table, RAID metadata, LUKS, physical volume metadata etc)
                 on given devices.
 
     list-supported
@@ -62,10 +62,17 @@ Commands:
                 %(cmd)s create <fstype> option.
 """
 
+from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
-from lmi.scripts.storage import fs
+from lmi.scripts.common import get_logger
+from lmi.scripts.common.formatter import command as fcmd
+from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
+from lmi.scripts.storage.common import (size2str, get_devices, get_children,
+        get_parents, str2device, str2size, str2vg)
 
-class Lister(command.LmiLister):
+LOG = get_logger(__name__)
+
+class FSList(command.LmiLister):
     COLUMNS = ('Device', 'Name', "ElementName", "Type")
 
     def transform_options(self, options):
@@ -98,7 +105,7 @@ class Lister(command.LmiLister):
             yield (devname, name, label, fstype)
 
 
-class ListSupported(command.LmiLister):
+class FSListSupported(command.LmiLister):
     COLUMNS = ('Filesystem',)
 
     def execute(self, ns):
@@ -112,7 +119,7 @@ class ListSupported(command.LmiLister):
             yield [fsname.lower()]
 
 
-class Create(command.LmiCheckResult):
+class FSCreate(command.LmiCheckResult):
     EXPECT = None
 
     def transform_options(self, options):
@@ -129,7 +136,7 @@ class Create(command.LmiCheckResult):
         fs.create_fs(ns, devices, fstype, _label)
 
 
-class Delete(command.LmiCheckResult):
+class FSDelete(command.LmiCheckResult):
     EXPECT = None
 
     def transform_options(self, options):
@@ -146,12 +153,11 @@ class Delete(command.LmiCheckResult):
         for dev in devices:
             fs.delete_format(ns, dev)
 
-
-Fs = command.register_subcommands(
-        'fs', __doc__,
-        { 'list'    : Lister ,
-          'create'  : Create,
-          'delete'  : Delete,
-          'list-supported': ListSupported,
-        },
-    )
+class FS(command.LmiCommandMultiplexer):
+    OWN_USAGE = __doc__
+    COMMANDS = {
+            'list' : FSList,
+            'create' : FSCreate,
+            'delete' : FSDelete,
+            'list-supported': FSListSupported,
+    }

@@ -40,14 +40,7 @@ setup(
 
     entry_points={
         'lmi.scripts.cmd': [
-            'fs = lmi.scripts.storage.fs_cmd:Fs',
-            'partition = lmi.scripts.storage.partition_cmd:Partition',
-            'partition-table = lmi.scripts.storage.partitiontable_cmd:PartitionTable',
-            'raid = lmi.scripts.storage.raid_cmd:Raid',
-            'lv = lmi.scripts.storage.lv_cmd:Lv',
-            'vg = lmi.scripts.storage.vg_cmd:Vg',
             'storage = lmi.scripts.storage.storage_cmd:Storage',
-            'mount = lmi.scripts.storage.mount_cmd:Mount',
             ],
         },
     )

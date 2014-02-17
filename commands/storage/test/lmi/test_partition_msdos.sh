@@ -48,20 +48,20 @@ SIZE2=20M # first logical
 
 rlPhaseStartTest "Create the partition table"
 	rlLogInfo "Creating partition table"
-	rlRun "$LMI partition-table create --msdos $LMI_STORAGE_DISK"
+	rlRun "$LMI storage partition-table create --msdos $LMI_STORAGE_DISK"
 
     rlLogInfo "Check the partition table exists"
     rlRun -s "parted $LMI_STORAGE_DISK print"
     rlAssertGrep "Partition Table: msdos" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlLogInfo "Check lmi partition-table list shows it"
-    rlRun -s "$LMI -NHL csv partition-table list $LMI_STORAGE_DISK"
+    rlLogInfo "Check lmi storage partition-table list shows it"
+    rlRun -s "$LMI -NHL csv storage partition-table list $LMI_STORAGE_DISK"
     rlAssertGrep "\"$LMI_STORAGE_DISK\"" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlLogInfo "Check lmi partition-table show shows it"
-    rlRun -s "$LMI -NHL csv partition-table show $LMI_STORAGE_DISK"
+    rlLogInfo "Check lmi storage partition-table show shows it"
+    rlRun -s "$LMI -NHL csv storage partition-table show $LMI_STORAGE_DISK"
     rlAssertGrep "\"Partition Table Type\",\"MS-DOS\"" $rlRun_LOG
     rlAssertGrep "\"Partition Table Size (in blocks)\",1" $rlRun_LOG
     rm $rlRun_LOG
@@ -69,15 +69,15 @@ rlPhaseEnd
 
 rlPhaseStartTest "Create partitions"
     rlLogInfo "Creating partitions"
-    rlRun "$LMI partition create $LMI_STORAGE_DISK $SIZE1"
-    rlRun "$LMI partition create --extended $LMI_STORAGE_DISK"
-    rlRun "$LMI partition create --logical $LMI_STORAGE_DISK $SIZE2"
-    rlRun "$LMI partition create --logical $LMI_STORAGE_DISK"
+    rlRun "$LMI storage partition create $LMI_STORAGE_DISK $SIZE1"
+    rlRun "$LMI storage partition create --extended $LMI_STORAGE_DISK"
+    rlRun "$LMI storage partition create --logical $LMI_STORAGE_DISK $SIZE2"
+    rlRun "$LMI storage partition create --logical $LMI_STORAGE_DISK"
 
-    rlLogInfo "Check lmi partition list shows them"
-    rlRun "$LMI -NHL csv partition list"
-    rlRun "$LMI -NHL csv partition list ${LMI_STORAGE_DISK}2"
-    rlRun -s "$LMI -NHL csv partition list $LMI_STORAGE_DISK"
+    rlLogInfo "Check lmi storage partition list shows them"
+    rlRun "$LMI -NHL csv storage partition list"
+    rlRun "$LMI -NHL csv storage partition list ${LMI_STORAGE_DISK}2"
+    rlRun -s "$LMI -NHL csv storage partition list $LMI_STORAGE_DISK"
     rlAssertGrep "\"${LMI_STORAGE_DISK}1\",\"${DISKNAME}1\",\"primary\",\"$SIZE1\"" $rlRun_LOG
     rlAssertGrep "\"${LMI_STORAGE_DISK}2\",\"${DISKNAME}2\",\"extended\"," $rlRun_LOG
     rlAssertGrep "\"${LMI_STORAGE_DISK}5\",\"${DISKNAME}5\",\"logical\",\"$SIZE2\"" $rlRun_LOG
@@ -85,27 +85,27 @@ rlPhaseStartTest "Create partitions"
     rm $rlRun_LOG
 
     rlLogInfo "Check lmi partition show shows them"
-    rlRun -s "$LMI -NHL csv partition show ${LMI_STORAGE_DISK}1"
+    rlRun -s "$LMI -NHL csv storage partition show ${LMI_STORAGE_DISK}1"
     rlAssertGrep "\"Name\",\"${LMI_STORAGE_DISK}1\"" $rlRun_LOG
     rlAssertGrep "\"ElementName\",\"${DISKNAME}1\"" $rlRun_LOG
     rlAssertGrep "\"Total Size\",\"$SIZE1\"" $rlRun_LOG
     rlAssertGrep "\"Disk\",\"${LMI_STORAGE_DISK}\"" $rlRun_LOG
     rlAssertGrep "\"Partition Type\",\"primary\"" $rlRun_LOG
     rm $rlRun_LOG
-    rlRun -s "$LMI -NHL csv partition show ${LMI_STORAGE_DISK}2"
+    rlRun -s "$LMI -NHL csv storage partition show ${LMI_STORAGE_DISK}2"
     rlAssertGrep "\"Name\",\"${LMI_STORAGE_DISK}2\"" $rlRun_LOG
     rlAssertGrep "\"ElementName\",\"${DISKNAME}2\"" $rlRun_LOG
     rlAssertGrep "\"Disk\",\"${LMI_STORAGE_DISK}\"" $rlRun_LOG
     rlAssertGrep "\"Partition Type\",\"extended\"" $rlRun_LOG
     rm $rlRun_LOG
-    rlRun -s "$LMI -NHL csv partition show ${LMI_STORAGE_DISK}5"
+    rlRun -s "$LMI -NHL csv storage partition show ${LMI_STORAGE_DISK}5"
     rlAssertGrep "\"Name\",\"${LMI_STORAGE_DISK}5\"" $rlRun_LOG
     rlAssertGrep "\"ElementName\",\"${DISKNAME}5\"" $rlRun_LOG
     rlAssertGrep "\"Total Size\",\"$SIZE2\"" $rlRun_LOG
     rlAssertGrep "\"Disk\",\"${LMI_STORAGE_DISK}\"" $rlRun_LOG
     rlAssertGrep "\"Partition Type\",\"logical\"" $rlRun_LOG
     rm $rlRun_LOG
-    rlRun -s "$LMI -NHL csv partition show ${LMI_STORAGE_DISK}6"
+    rlRun -s "$LMI -NHL csv storage partition show ${LMI_STORAGE_DISK}6"
     rlAssertGrep "\"Name\",\"${LMI_STORAGE_DISK}6\"" $rlRun_LOG
     rlAssertGrep "\"ElementName\",\"${DISKNAME}6\"" $rlRun_LOG
     rlAssertGrep "\"Disk\",\"${LMI_STORAGE_DISK}\"" $rlRun_LOG
@@ -115,10 +115,10 @@ rlPhaseEnd
 
 rlPhaseStartTest "Delete partitions"
     rlLogInfo "Deleting partitions"
-    rlRun "$LMI partition delete ${LMI_STORAGE_DISK}1 ${LMI_STORAGE_DISK}5 ${LMI_STORAGE_DISK}5 ${LMI_STORAGE_DISK}2"
+    rlRun "$LMI storage partition delete ${LMI_STORAGE_DISK}1 ${LMI_STORAGE_DISK}5 ${LMI_STORAGE_DISK}5 ${LMI_STORAGE_DISK}2"
 
-    rlLogInfo "Check lmi partition list does not show them"
-    rlRun -s "$LMI -NHL csv partition list $LMI_STORAGE_DISK"
+    rlLogInfo "Check lmi storage partition list does not show them"
+    rlRun -s "$LMI -NHL csv storage partition list $LMI_STORAGE_DISK"
     rlAssertNotGrep "\"${LMI_STORAGE_DISK}1\",\"${DISKNAME}1\",\"\",\"$SIZE1\"" $rlRun_LOG
     rlAssertNotGrep "\"${LMI_STORAGE_DISK}2\",\"${DISKNAME}2\"" $rlRun_LOG
     rlAssertNotGrep "\"${LMI_STORAGE_DISK}5\",\"${DISKNAME}5\"" $rlRun_LOG

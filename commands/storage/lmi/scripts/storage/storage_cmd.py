@@ -35,13 +35,34 @@
 Basic storage device information.
 
 Usage:
-    %(cmd)s list [ <device> ...]
+    %(cmd)s fs <cmd> [<args> ...]
+    %(cmd)s lv <cmd> [<args> ...]
+    %(cmd)s mount <cmd> [<args> ...]
+    %(cmd)s partition <cmd> [<args> ...]
+    %(cmd)s partition-table <cmd> [<args> ...]
+    %(cmd)s raid <cmd> [<args> ...]
+    %(cmd)s vg <cmd> [<args> ...]
     %(cmd)s depends [ --deep ] [ <device> ...]
+    %(cmd)s list [ <device> ...]
     %(cmd)s provides [ --deep ] [ <device> ...]
     %(cmd)s show [ <device> ...]
     %(cmd)s tree [ <device> ]
 
 Commands:
+    fs          Filesystem and other data format management.
+
+    lv          Logical Volume management.
+
+    mount       Mount management.
+
+    partition   Partition management.
+
+    partition-table  Partition table management.
+
+    raid        MD RAID management.
+
+    vg          Volume Group management.
+
     list        List short information about given device. If no devices
                 are given, all devices are listed.
 
@@ -51,7 +72,7 @@ Commands:
     provides    Show devices, which are created from given devices
                 (= show children of the devices).
 
-                For example, if disk is provided, all partitions on it are
+                For example, if a disk is provided, all partitions on it are
                 returned. If 'deep' is used, all RAIDs, Volume Groups and
                 Logical Volumes indirectly allocated from it are returned too.
 
@@ -60,17 +81,16 @@ Commands:
 
                 For example, if a Logical Volume is provided, its Volume Group
                 is returned. If 'deep' is used, also all Physical Volumes and
-                disk are returned.
+                appropriate disk(s) are returned.
 
     tree        Show tree of devices, similar to lsblk.
-                (Note that the output is really crude and needs to be worked
-                on).
 
                 If no device is provided, all devices are shown, starting
                 with physical disks.
 
                 If a device is provided, tree starts with the device
                 and all dependent devices are shown.
+
 
 Options:
 
@@ -98,11 +118,23 @@ from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
 from lmi.scripts.common import get_logger
 from lmi.scripts.common.formatter import command as fcmd
-from lmi.scripts.storage import show, fs
+from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
 from lmi.scripts.storage.common import (size2str, get_devices, get_children,
-        get_parents, str2device)
-from lmi.scripts.storage.lvm import get_vgs
+        get_parents, str2device, str2size, str2vg)
+
+import lmi.scripts.storage.cmd.fs
+import lmi.scripts.storage.cmd.lv
+import lmi.scripts.storage.cmd.mount
+import lmi.scripts.storage.cmd.partition
+import lmi.scripts.storage.cmd.partition_table
+import lmi.scripts.storage.cmd.raid
+import lmi.scripts.storage.cmd.vg
+
 LOG = get_logger(__name__)
+
+##############################################################################
+#  Storage
+##############################################################################
 
 def get_device_info(ns, device, human_friendly):
     """
@@ -274,7 +306,7 @@ class Tree(command.LmiLister):
         for dev in get_devices(ns):
             devices[self.get_obj_id(ns, dev)] = dev
         # Add *all* LMI_VGStoragePools.
-        for vg in get_vgs(ns):
+        for vg in lvm.get_vgs(ns):
             devices[self.get_obj_id(ns, vg)] = vg
 
         # deps = array of tuples (parent devid, child devid)
@@ -372,5 +404,13 @@ Storage = command.register_subcommands(
           'tree'    : Tree,
           'provides': Provides,
           'depends' : Depends,
+          'fs'      : lmi.scripts.storage.cmd.fs.FS,
+          'lv'      : lmi.scripts.storage.cmd.lv.LV,
+          'mount'   : lmi.scripts.storage.cmd.mount.Mount,
+          'partition': lmi.scripts.storage.cmd.partition.Partition,
+          'partition-table': lmi.scripts.storage.cmd.partition_table.PartitionTable,
+          'raid'    : lmi.scripts.storage.cmd.raid.Raid,
+          'vg'      : lmi.scripts.storage.cmd.vg.VG,
         },
     )
+

@@ -1,6 +1,7 @@
+# coding=utf-8
 # Storage Management Providers
 #
-# Copyright (C) 2013-2014 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2014 Red Hat, Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,7 +30,6 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-
 """
 Logical Volume management.
 
@@ -58,19 +58,24 @@ Options:
                 'T', 'G', 'M' or 'K' suffix can be used to use specify other
                 units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
                 (= 1024 bytes).
-                The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+                The suffix is case insensitive, i.e. 1g = 1G = 1073741824
+                bytes.
 
                 'E' suffix can be used to specify number of volume group
                 extents, '100e' means 100 extents.
 """
 
+from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
-from lmi.scripts.storage import lvm, show
-from lmi.scripts.storage.common import str2size, size2str, str2device, str2vg
-from lmi.scripts.common import formatter
+from lmi.scripts.common import get_logger
 from lmi.scripts.common.formatter import command as fcmd
+from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
+from lmi.scripts.storage.common import (size2str, get_devices, get_children,
+        get_parents, str2device, str2size, str2vg)
 
-class Lister(command.LmiLister):
+LOG = get_logger(__name__)
+
+class LVList(command.LmiLister):
     COLUMNS = ('DeviceID', "Name", "ElementName", "Size")
 
     def transform_options(self, options):
@@ -93,7 +98,7 @@ class Lister(command.LmiLister):
                     size)
 
 
-class Create(command.LmiCheckResult):
+class LVCreate(command.LmiCheckResult):
     EXPECT = None
 
     def execute(self, ns, vg, name, size):
@@ -104,7 +109,7 @@ class Create(command.LmiCheckResult):
         lvm.create_lv(ns, vg, name, str2size(size, vg.ExtentSize, 'E'))
 
 
-class Delete(command.LmiCheckResult):
+class LVDelete(command.LmiCheckResult):
     EXPECT = None
 
     def transform_options(self, options):
@@ -122,7 +127,7 @@ class Delete(command.LmiCheckResult):
             lvm.delete_lv(ns, lv)
 
 
-class Show(command.LmiLister):
+class LVShow(command.LmiLister):
     COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
@@ -145,12 +150,12 @@ class Show(command.LmiLister):
             for line in show.lv_show(ns, lv, self.app.config.human_friendly):
                 yield line
 
+class LV(command.LmiCommandMultiplexer):
+    OWN_USAGE = __doc__
+    COMMANDS = {
+            'list'    : LVList,
+            'create'  : LVCreate,
+            'delete'  : LVDelete,
+            'show'    : LVShow,
+    }
 
-Lv = command.register_subcommands(
-        'Lv', __doc__,
-        { 'list'    : Lister ,
-          'create'  : Create,
-          'delete'  : Delete,
-          'show'    : Show,
-        },
-    )
