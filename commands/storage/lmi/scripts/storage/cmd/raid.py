@@ -80,7 +80,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
 LOG = get_logger(__name__)
 
 class RaidList(command.LmiLister):
-    COLUMNS = ('DeviceID', 'Name', "Level", "Nr. of members")
+    COLUMNS = ('Name', "Level", "Nr. of members")
 
     def execute(self, ns):
         """
@@ -88,7 +88,7 @@ class RaidList(command.LmiLister):
         """
         for r in raid.get_raids(ns):
             members = raid.get_raid_members(ns, r)
-            yield (r.DeviceID, r.ElementName, r.Level, len(members))
+            yield (r.ElementName, r.Level, len(members))
 
 
 class RaidCreate(command.LmiCheckResult):

@@ -75,9 +75,9 @@ rlPhaseStartTest "Create partitions"
 
     rlLogInfo "Check lmi storage partition list shows them"
     rlRun -s "$LMI -NHL csv storage partition list $LMI_STORAGE_DISK"
-    rlAssertGrep "\"${LMI_STORAGE_DISK}1\",\"${DISKNAME}1\",\"\",\"$SIZE1\"" $rlRun_LOG
-    rlAssertGrep "\"${LMI_STORAGE_DISK}2\",\"${DISKNAME}2\",\"\",\"$SIZE2\"" $rlRun_LOG
-    rlAssertGrep "\"${LMI_STORAGE_DISK}3\",\"${DISKNAME}3\"" $rlRun_LOG
+    rlAssertGrep "\"${LMI_STORAGE_DISK}1\",\"\",\"$SIZE1\"" $rlRun_LOG
+    rlAssertGrep "\"${LMI_STORAGE_DISK}2\",\"\",\"$SIZE2\"" $rlRun_LOG
+    rlAssertGrep "\"${LMI_STORAGE_DISK}3\"," $rlRun_LOG
     rm $rlRun_LOG
 
     rlLogInfo "Check lmi storage partition show shows them"
@@ -106,9 +106,9 @@ rlPhaseStartTest "Delete partitions"
 
     rlLogInfo "Check lmi storage partition list does not show them"
     rlRun -s "$LMI -NHL csv storage partition list $LMI_STORAGE_DISK"
-    rlAssertNotGrep "\"${LMI_STORAGE_DISK}1\",\"${DISKNAME}1\",\"\",\"$SIZE1\"" $rlRun_LOG
-    rlAssertNotGrep "\"${LMI_STORAGE_DISK}2\",\"${DISKNAME}2\",\"\",\"$SIZE2\"" $rlRun_LOG
-    rlAssertNotGrep "\"${LMI_STORAGE_DISK}3\",\"${DISKNAME}3\"" $rlRun_LOG
+    rlAssertNotGrep "\"${LMI_STORAGE_DISK}1\",\"\",\"$SIZE1\"" $rlRun_LOG
+    rlAssertNotGrep "\"${LMI_STORAGE_DISK}2\",\"\",\"$SIZE2\"" $rlRun_LOG
+    rlAssertNotGrep "\"${LMI_STORAGE_DISK}3\"," $rlRun_LOG
     rm $rlRun_LOG
 rlPhaseEnd
 

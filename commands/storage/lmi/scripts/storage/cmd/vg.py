@@ -87,8 +87,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
 LOG = get_logger(__name__)
 
 class VGList(command.LmiLister):
-    COLUMNS = ('InstanceID', 'ElementName', "ExtentSize", "Total space",
-            "Free space")
+    COLUMNS = ('ElementName', "ExtentSize", "Total space", "Free space")
 
     def execute(self, ns):
         """
@@ -101,8 +100,7 @@ class VGList(command.LmiLister):
                     self.app.config.human_friendly)
             remaining_space = size2str(vg.RemainingManagedSpace,
                     self.app.config.human_friendly)
-            yield (vg.InstanceID,
-                    vg.ElementName,
+            yield (vg.ElementName,
                     extent_size,
                     total_space,
                     remaining_space)

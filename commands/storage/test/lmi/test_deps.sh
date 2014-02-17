@@ -79,49 +79,49 @@ rlPhaseEnd
 function check_part1()
 {
     prefix=$1
-    rlAssertGrep "$prefix.*\"${LMI_STORAGE_DISK}1\",\"${DISKNAME}1\",\"$PARTSIZE\",\"software RAID\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix${LMI_STORAGE_DISK}1\",\"$PARTSIZE\",\"software RAID\"" $rlRun_LOG
 }
 
 function check_part2()
 {
     prefix=$1
-    rlAssertGrep "$prefix.*\"${LMI_STORAGE_DISK}2\",\"${DISKNAME}2\",\"$PARTSIZE\",\"software RAID\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix${LMI_STORAGE_DISK}2\",\"$PARTSIZE\",\"software RAID\"" $rlRun_LOG
 }
 
 function check_part3()
 {
     prefix=$1
-    rlAssertGrep "$prefix.*\"${LMI_STORAGE_DISK}3\",\"${DISKNAME}3\",\".*\",\"physical volume (LVM)\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix${LMI_STORAGE_DISK}3\",\".*\",\"physical volume (LVM)\"" $rlRun_LOG
 }
 
 function check_md()
 {
     prefix=$1
-    rlAssertGrep "\"$prefix/dev/disk/by-id/md-name-.*:$MDNAME\",\"/dev/md/$MDNAME\",\"$MDNAME\",\".*\",\"physical volume (LVM)\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix/dev/md/$MDNAME\",\".*\",\"physical volume (LVM)\"" $rlRun_LOG
 }
 
 function check_lv1()
 {
     prefix=$1
-    rlAssertGrep "\"$prefix/dev/disk/by-id/dm-name-$VGNAME-${LVNAME}1\",\"/dev/mapper/$VGNAME-${LVNAME}1\",\"${LVNAME}1\",\".*M\",\"xfs\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix/dev/mapper/$VGNAME-${LVNAME}1\",\".*M\",\"xfs\"" $rlRun_LOG
 }
 
 function check_lv2()
 {
     prefix=$1
-    rlAssertGrep "\"$prefix/dev/disk/by-id/dm-name-$VGNAME-${LVNAME}2\",\"/dev/mapper/$VGNAME-${LVNAME}2\",\"${LVNAME}2\",\".*M\",\"ext4\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix/dev/mapper/$VGNAME-${LVNAME}2\",\".*M\",\"ext4\"" $rlRun_LOG
 }
 
 function check_disk()
 {
     prefix=$1
-    rlAssertGrep "$prefix.*\"$LMI_STORAGE_DISK\",\"$DISKNAME\",\".*\",\"GPT partition table\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix$LMI_STORAGE_DISK\".*,\"GPT partition table\"" $rlRun_LOG
 }
 
 function check_vg()
 {
     prefix=$1
-    rlAssertGrep "\"${prefix}LMI:VG:$VGNAME\",\"$VGNAME\",\"$VGNAME\",\".*\",\"volume group (LVM)\"" $rlRun_LOG
+    rlAssertGrep "\"$prefix$VGNAME\",.*,\"volume group (LVM)\"" $rlRun_LOG
 }
 
 rlPhaseStartTest "lmi storage list"

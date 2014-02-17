@@ -146,9 +146,7 @@ def get_device_info(ns, device, human_friendly):
         size = 'N/A'
 
     fslabel = fs.get_device_format_label(ns, device)
-    return (device.DeviceID,
-            device.Name,
-            device.ElementName,
+    return (device.Name,
             size,
             fslabel)
 
@@ -157,9 +155,7 @@ def get_pool_info(_ns, pool, human_friendly):
     Return detailed information of the Volume Group to show.
     """
     size = size2str(pool.TotalManagedSpace, human_friendly)
-    return (pool.InstanceID,
-            pool.ElementName,
-            pool.ElementName,
+    return (pool.ElementName,
             size,
             "volume group (LVM)")
 
@@ -174,7 +170,7 @@ def get_obj_info(ns, obj, human_friendly):
 
 
 class Lister(command.LmiLister):
-    COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
+    COLUMNS = ("Name", "Size", "Format")
 
     def transform_options(self, options):
         """
@@ -190,15 +186,6 @@ class Lister(command.LmiLister):
         devices = get_devices(ns, devices)
         for dev in devices:
             yield get_device_info(ns, dev, self.app.config.human_friendly)
-
-    def execute(self, ns, devices=None):
-        """
-        Implementation of 'device list' command.
-        """
-        devices = get_devices(ns, devices)
-        for dev in devices:
-            yield get_device_info(ns, dev, self.app.config.human_friendly)
-
 
 class Show(command.LmiLister):
     COLUMNS = ('Name', 'Value')
@@ -226,7 +213,7 @@ class Show(command.LmiLister):
 
 
 class Depends(command.LmiLister):
-    COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
+    COLUMNS = ("Name", "Size", "Format")
 
     def transform_options(self, options):
         """
@@ -246,7 +233,7 @@ class Depends(command.LmiLister):
 
 
 class Provides(command.LmiLister):
-    COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
+    COLUMNS = ("Name", "Size", "Format")
 
     def transform_options(self, options):
         """
@@ -266,7 +253,7 @@ class Provides(command.LmiLister):
 
 
 class Tree(command.LmiLister):
-    COLUMNS = ('DeviceID', "Name", "ElementName", "Size", "Format")
+    COLUMNS = ("Name", "Size", "Format")
 
     def prepare_tree_line(self, level, name, subsequent):
         """

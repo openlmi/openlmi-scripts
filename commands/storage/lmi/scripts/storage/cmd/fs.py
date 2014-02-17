@@ -73,7 +73,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
 LOG = get_logger(__name__)
 
 class FSList(command.LmiLister):
-    COLUMNS = ('Device', 'Name', "ElementName", "Type")
+    COLUMNS = ("Name", "ElementName", "Type")
 
     def transform_options(self, options):
         """
@@ -87,11 +87,6 @@ class FSList(command.LmiLister):
         Implementation of 'fs list' command.
         """
         for fmt in fs.get_formats(ns, devices, fs.FORMAT_ALL, _all):
-            device = fmt.first_associator(AssocClass="CIM_ResidesOnExtent")
-            if device:
-                devname = device.DeviceID
-            else:
-                devname = "(none)"
             name = fmt.Name
             label = fmt.ElementName
             if "FileSystemType" in fmt.properties():
@@ -102,7 +97,7 @@ class FSList(command.LmiLister):
                 # it must be LMI_DataFormat
                 fstype = fmt.FormatTypeDescription
             # TODO: add free space when OpenLMI provides it
-            yield (devname, name, label, fstype)
+            yield (name, label, fstype)
 
 
 class FSListSupported(command.LmiLister):

@@ -108,7 +108,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
 LOG = get_logger(__name__)
 
 class PartitionList(command.LmiLister):
-    COLUMNS = ('DeviceID', "Name", "ElementName", "Type", "Size")
+    COLUMNS = ("Name", "Type", "Size")
 
     def transform_options(self, options):
         """
@@ -135,11 +135,7 @@ class PartitionList(command.LmiLister):
                     ptype = "unknown"
             size = size2str(part.NumberOfBlocks * part.BlockSize,
                     self.app.config.human_friendly)
-            yield (part.DeviceID,
-                    part.Name,
-                    part.ElementName,
-                    ptype,
-                    size)
+            yield (part.Name, ptype, size)
 
 
 class PartitionCreate(command.LmiCheckResult):

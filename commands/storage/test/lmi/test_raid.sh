@@ -62,7 +62,6 @@ function test_raid() {
         rlLogInfo "Check lmi storage raid list output"
         rlRun -s "$LMI -NHL csv storage raid list"
         rlAssertGrep "\"$name\"" $rlRun_LOG
-        rlAssertGrep "\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
         member_count=$(echo $parts | wc -w)
         rlAssertGrep ",$level,$member_count\$" $rlRun_LOG
         rm $rlRun_LOG
@@ -89,8 +88,7 @@ function test_raid() {
 
         rlLogInfo "Check lmi storage raid list output"
         rlRun -s "$LMI -NHL csv storage raid list"
-        rlAssertNotGrep "\"$name\"" $rlRun_LOG
-        rlAssertNotGrep "\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
+        rlAssertNotGrep "\"/dev/md/$name\"" $rlRun_LOG
         rm $rlRun_LOG
 
         rlLogInfo "Check lmi storage raid show output"
