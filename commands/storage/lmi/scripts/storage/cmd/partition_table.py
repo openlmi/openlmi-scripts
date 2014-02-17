@@ -1,6 +1,7 @@
+# coding=utf-8
 # Storage Management Providers
 #
-# Copyright (C) 2013-2014 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2014 Red Hat, Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,25 +30,24 @@
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
-
 """
-MD RAID management.
+Partition table management.
 
 Usage:
-    %(cmd)s list
-    %(cmd)s create [ --name=<name> ] <level> <device> ...
-    %(cmd)s delete <device> ...
-    %(cmd)s show [ <device> ...]
+    %(cmd)s list [ <device> ...]
+    %(cmd)s create [ --gpt | --msdos ] <device> ...
+    %(cmd)s show  [ <device> ...]
 
 Commands:
-    list        List all MD RAID devices on the system.
+    list        List partition tables on given device.
+                If no devices are provided, all partition tables are listed.
 
-    create      Create MD RAID array with given RAID level from list of devices.
+    create      Create a partition table on given devices. The devices must be
+                empty, i.e. must not have any partitions on them. GPT partition
+                table is created by default.
 
-    delete      Delete given MD RAID devices.
-
-    show        Show detailed information about given MD RAID devices. If no
-                devices are provided, all MD RAID devices are displayed.
+    show        Show detailed information about partition table on given
+                devices. If no devices are provided, all of them are displayed.
 
 Options:
     device      Identifier of the device. Either one of:
@@ -66,28 +66,56 @@ Options:
                   volume groups. This name is available as ElementName
                   property of CIM_StorageExtent object.
 
-    level       RAID level. Supported levels are: 0, 1, 4, 5, 6, 10.
+    --gpt       Create GPT partition table (default).
+    --msdos     Create MS-DOS partition table.
 """
 
+from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
-from lmi.scripts.storage import raid, show
-from lmi.scripts.storage.common import str2device
-from lmi.scripts.common import formatter
+from lmi.scripts.common import get_logger
 from lmi.scripts.common.formatter import command as fcmd
+from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
+from lmi.scripts.storage.common import (size2str, get_devices, get_children,
+        get_parents, str2device, str2size, str2vg)
 
-class Lister(command.LmiLister):
-    COLUMNS = ('DeviceID', 'Name', "Level", "Nr. of members")
+LOG = get_logger(__name__)
 
-    def execute(self, ns):
+class PartitionTableList(command.LmiLister):
+    COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Type', 'Largest free region')
+
+    def transform_options(self, options):
         """
-        Implementation of 'raid list' command.
+        Rename 'device' option to 'devices' parameter name for better
+        readability.
         """
-        for r in raid.get_raids(ns):
-            members = raid.get_raid_members(ns, r)
-            yield (r.DeviceID, r.ElementName, r.Level, len(members))
+        options['<devices>'] = options.pop('<device>')
+
+    def execute(self, ns, devices=None):
+        """
+        Implementation of 'partition-table list' command.
+        """
+        cls = ns.LMI_DiskPartitionConfigurationCapabilities
+        for (device, table) in partition.get_partition_tables(ns, devices):
+            LOG().debug("Examining %s", device.Name)
+            largest_size = partition.get_largest_partition_size(ns, device)
+            largest_size = size2str(largest_size,
+                    self.app.config.human_friendly)
+
+            if table.PartitionStyle == cls.PartitionStyleValues.MBR:
+                table_type = "MS-DOS"
+            else:
+                table_type = cls.PartitionStyleValues.value_name(
+                        table.PartitionStyle)
+
+            yield (device.DeviceID,
+                    device.Name,
+                    device.ElementName,
+                    table_type,
+                    largest_size
+                    )
 
 
-class Create(command.LmiCheckResult):
+class PartitionTableCreate(command.LmiCheckResult):
     EXPECT = None
 
     def transform_options(self, options):
@@ -97,32 +125,19 @@ class Create(command.LmiCheckResult):
         """
         options['<devices>'] = options.pop('<device>')
 
-    def execute(self, ns, devices, level, _name=None):
+    def execute(self, ns, devices, _gpt, _msdos):
         """
-        Implementation of 'raid create' command.
+        Implementation of 'partition-table create' command.
         """
-        raid.create_raid(ns, devices, int(level), _name)
+        if _msdos:
+            ptype = partition.PARTITION_TABLE_TYPE_MSDOS
+        else:
+            ptype = partition.PARTITION_TABLE_TYPE_GPT
+        for device in devices:
+            partition.create_partition_table(ns, device, ptype)
 
 
-class Delete(command.LmiCheckResult):
-    EXPECT = None
-
-    def transform_options(self, options):
-        """
-        Rename 'device' option to 'devices' parameter name for better
-        readability.
-        """
-        options['<devices>'] = options.pop('<device>')
-
-    def execute(self, ns, devices):
-        """
-        Implementation of 'raid delete' command.
-        """
-        for dev in devices:
-            raid.delete_raid(ns, dev)
-
-
-class Show(command.LmiLister):
+class PartitionTableShow(command.LmiLister):
     COLUMNS = ('Name', 'Value')
 
     def transform_options(self, options):
@@ -134,23 +149,24 @@ class Show(command.LmiLister):
 
     def execute(self, ns, devices=None):
         """
-        Implementation of 'raid show' command.
+        Implementation of 'partition-table show' command.
         """
         if not devices:
-            devices = raid.get_raids(ns)
-        for r in devices:
-            r = str2device(ns, r)
-            cmd = fcmd.NewTableCommand(title=r.DeviceID)
+            ret = partition.get_partition_tables(ns)
+            devices = [i[0] for i in ret]
+        for device in devices:
+            device = str2device(ns, device)
+            cmd = fcmd.NewTableCommand(title=device.DeviceID)
             yield cmd
-            for line in show.raid_show(ns, r, self.app.config.human_friendly):
+            for line in show.partition_table_show(
+                    ns, device, self.app.config.human_friendly):
                 yield line
 
+class PartitionTable(command.LmiCommandMultiplexer):
+    OWN_USAGE = __doc__
+    COMMANDS = {
+            'list'    : PartitionTableList,
+            'create'  : PartitionTableCreate,
+            'show'    : PartitionTableShow,
+    }
 
-Raid = command.register_subcommands(
-        'raid', __doc__,
-        { 'list'    : Lister ,
-          'create'  : Create,
-          'delete'  : Delete,
-          'show'    : Show,
-        },
-    )

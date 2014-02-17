@@ -1,6 +1,7 @@
+# coding=utf-8
 # Storage Management Providers
 #
-# Copyright (C) 2013-2014 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2014 Red Hat, Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -28,6 +29,7 @@
 # policies, either expressed or implied, of the FreeBSD Project.
 #
 # Authors: Jan Synacek <jsynacek@redhat.com>
+#          Jan Safranek <jsafrane@redhat.com>
 #
 """
 Mount management.
@@ -80,11 +82,15 @@ Commands:
              attached to them. Optionally, show all mounted filesystems.
 """
 
-from lmi.scripts.common import command, get_logger
-from lmi.scripts.common.errors import LmiFailed
+from lmi.shell.LMIUtil import lmi_isinstance
+from lmi.scripts.common import command
+from lmi.scripts.common import get_logger
 from lmi.scripts.common.formatter import command as fcmd
-from lmi.scripts.storage import mount
-from lmi.scripts.storage.common import str2device
+from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
+from lmi.scripts.storage.common import (size2str, get_devices, get_children,
+        get_parents, str2device, str2size, str2vg)
+
+LOG = get_logger(__name__)
 
 def get_mounts_for_devices(ns, devices):
     """
@@ -99,9 +105,8 @@ def get_mounts_for_devices(ns, devices):
             mounts += fs.associators(ResultClass="LMI_MountedFileSystem")
     return mounts
 
-class Lister(command.LmiLister):
+class MountList(command.LmiLister):
     COLUMNS = ('FileSystemSpec', 'FileSystemType', 'MountPointPath', 'Options', 'OtherOptions')
-    OPT_NO_UNDERSCORES = True
 
     def transform_options(self, options):
         """
@@ -110,7 +115,7 @@ class Lister(command.LmiLister):
         """
         options['<devices>'] = options.pop('<device>')
 
-    def execute(self, ns, all=None, devices=None):
+    def execute(self, ns, devices=None, _all=None):
         """
         Implementation of 'mount list' command.
         """
@@ -119,7 +124,7 @@ class Lister(command.LmiLister):
         else:
             mounts = mount.get_mounts(ns)
 
-        if all is False:
+        if _all is False:
             transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
 
         for mnt in mounts:
@@ -128,7 +133,7 @@ class Lister(command.LmiLister):
             if mnt.FileSystemSpec == 'rootfs':
                 continue
 
-            if all is False and mnt.MountPointPath != '/':
+            if _all is False and mnt.MountPointPath != '/':
                 # do not list nodevice filesystems
                 name = 'PATH=' + mnt.MountPointPath
                 if name in transients:
@@ -142,9 +147,8 @@ class Lister(command.LmiLister):
                   opts_str[0],
                   opts_str[1])
 
-class Show(command.LmiLister):
+class MountShow(command.LmiLister):
     COLUMNS = ('Name', 'Value')
-    OPT_NO_UNDERSCORES = True
 
     def transform_options(self, options):
         """
@@ -154,7 +158,7 @@ class Show(command.LmiLister):
         options['<devices>'] = options.pop('<device>')
 
 
-    def execute(self, ns, all=None, devices=None):
+    def execute(self, ns, _all=None, devices=None):
         """
         Implementation of 'mount show' command.
         """
@@ -163,7 +167,7 @@ class Show(command.LmiLister):
         else:
             mounts = mount.get_mounts(ns)
 
-        if all is False:
+        if _all is False:
             transients = [mnt.Name for mnt in ns.LMI_TransientFileSystem.instances()]
 
         yield fcmd.NewTableCommand('Mounted filesystems')
@@ -173,7 +177,7 @@ class Show(command.LmiLister):
             if mnt.FileSystemSpec == 'rootfs':
                 continue
 
-            if all is False and mnt.MountPointPath != '/':
+            if _all is False and mnt.MountPointPath != '/':
                 # do not list nodevice filesystems
                 name = 'PATH=' + mnt.MountPointPath
                 if name in transients:
@@ -187,7 +191,7 @@ class Show(command.LmiLister):
             yield('OtherOptions', opts_str[1])
             yield ''
 
-class Create(command.LmiCheckResult):
+class MountCreate(command.LmiCheckResult):
     EXPECT = None
 
     def transform_options(self, options):
@@ -204,7 +208,7 @@ class Create(command.LmiCheckResult):
         """
         return mount.mount_create(ns, device, mountpoint, fs_type, options, other_options)
 
-class Delete(command.LmiCheckResult):
+class MountDelete(command.LmiCheckResult):
     EXPECT = None
 
     def execute(self, ns, target):
@@ -213,11 +217,12 @@ class Delete(command.LmiCheckResult):
         """
         return mount.mount_delete(ns, target)
 
-Mount = command.register_subcommands(
-        'Mount', __doc__,
-        { 'list'    : Lister,
-          'create'  : Create,
-          'delete'  : Delete,
-          'show'    : Show,
-        },
-    )
+class Mount(command.LmiCommandMultiplexer):
+    OWN_USAGE = __doc__
+    COMMANDS = {
+            'list'    : MountList,
+            'create'  : MountCreate,
+            'delete'  : MountDelete,
+            'show'    : MountShow,
+    }
+

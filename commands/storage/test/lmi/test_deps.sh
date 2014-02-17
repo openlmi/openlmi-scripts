@@ -56,24 +56,24 @@ DISKNAME=$( echo $LMI_STORAGE_DISK | sed 's!.*/!!' )
 
 rlPhaseStartTest "Setup"
     rlLogInfo "Create partitions"
-    rlRun "$LMI partition-table create --gpt $LMI_STORAGE_DISK"
-    rlRun "$LMI partition create $LMI_STORAGE_DISK $PARTSIZE"
-    rlRun "$LMI partition create $LMI_STORAGE_DISK $PARTSIZE"
-    rlRun "$LMI partition create $LMI_STORAGE_DISK"
+    rlRun "$LMI storage partition-table create --gpt $LMI_STORAGE_DISK"
+    rlRun "$LMI storage partition create $LMI_STORAGE_DISK $PARTSIZE"
+    rlRun "$LMI storage partition create $LMI_STORAGE_DISK $PARTSIZE"
+    rlRun "$LMI storage partition create $LMI_STORAGE_DISK"
 
     rlLogInfo "Create MD RAID"
-    rlRun "$LMI raid create --name=$MDNAME 0 ${LMI_STORAGE_DISK}1 ${LMI_STORAGE_DISK}2"
+    rlRun "$LMI storage raid create --name=$MDNAME 0 ${LMI_STORAGE_DISK}1 ${LMI_STORAGE_DISK}2"
 
     rlLogInfo "Create VG"
-    rlRun "$LMI vg create $VGNAME $MDNAME ${LMI_STORAGE_DISK}3"
+    rlRun "$LMI storage vg create $VGNAME $MDNAME ${LMI_STORAGE_DISK}3"
 
     rlLogInfo "Create LVs"
-    rlRun "$LMI lv create $VGNAME ${LVNAME}1 $PARTSIZE"
-    rlRun "$LMI lv create $VGNAME ${LVNAME}2 $PARTSIZE"
+    rlRun "$LMI storage lv create $VGNAME ${LVNAME}1 $PARTSIZE"
+    rlRun "$LMI storage lv create $VGNAME ${LVNAME}2 $PARTSIZE"
 
     rlLogInfo "Create filesystems"
-    rlRun "$LMI fs create xfs ${LVNAME}1"
-    rlRun "$LMI fs create ext4 ${LVNAME}2"
+    rlRun "$LMI storage fs create xfs ${LVNAME}1"
+    rlRun "$LMI storage fs create ext4 ${LVNAME}2"
 rlPhaseEnd
 
 function check_part1()
@@ -246,21 +246,21 @@ rlPhaseEnd
 
 rlPhaseStartTest "Cleanup"
     rlLogInfo "Delete filesystems"
-    rlRun "$LMI fs delete ${LVNAME}1"
-    rlRun "$LMI fs delete ${LVNAME}2"
+    rlRun "$LMI storage fs delete ${LVNAME}1"
+    rlRun "$LMI storage fs delete ${LVNAME}2"
 
     rlLogInfo "Delete LVs"
-    rlRun "$LMI lv delete ${LVNAME}1"
-    rlRun "$LMI lv delete ${LVNAME}2"
+    rlRun "$LMI storage lv delete ${LVNAME}1"
+    rlRun "$LMI storage lv delete ${LVNAME}2"
 
     rlLogInfo "Delete VG"
-    rlRun "$LMI vg delete $VGNAME"
+    rlRun "$LMI storage vg delete $VGNAME"
 
     rlLogInfo "Delete MD RAID"
-    rlRun "$LMI raid delete $MDNAME"
+    rlRun "$LMI storage raid delete $MDNAME"
 
     rlLogInfo "Delete partitions"
-    rlRun "$LMI partition delete ${LMI_STORAGE_DISK}1 ${LMI_STORAGE_DISK}2 ${LMI_STORAGE_DISK}3"
+    rlRun "$LMI storage partition delete ${LMI_STORAGE_DISK}1 ${LMI_STORAGE_DISK}2 ${LMI_STORAGE_DISK}3"
 rlPhaseEnd
 
 rlJournalPrintText

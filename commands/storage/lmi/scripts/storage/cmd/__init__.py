@@ -1,4 +1,4 @@
-#!/bin/bash
+# Storage Management Providers
 #
 # Copyright (C) 2013-2014 Red Hat, Inc. All rights reserved.
 #
@@ -28,61 +28,8 @@
 # policies, either expressed or implied, of the FreeBSD Project.
 #
 # Authors: Jan Safranek <jsafrane@redhat.com>
-
-
-# 'lmi mount' test.
-# - create a filesystem
-# - mount & unmount it
-
-. ./base.sh
-
-rlJournalStart
-
-part=${PARTITIONS[0]}
-testdir=$( mktemp -d /var/tmp/XXXXXXXXX )
-
-rlPhaseStartTest "Create filesystem"
-    rlLogInfo "Create filesystem"
-    rlRun "$LMI storage fs create ext3 $part"
-rlPhaseEnd
-
-rlPhaseStartTest "Mount without any options"
-    rlLogInfo "Mount the fs"
-    rlRun "$LMI storage mount create $part $testdir"
-
-    rlLogInfo "Check it is mounted"
-    rlAssertGrep "$part.*$testdir" /proc/mounts
-
-    rlLogInfo "Check lmi mount list shows it"
-    rlRun -s "$LMI -NHL csv storage mount list"
-    rlAssertGrep "\"$part\",\"ext3\",\"$testdir\"" $rlRun_LOG
-    rm $rlRun_LOG
-
-    rlLogInfo "Check lmi mount show shows it"
-    rlRun -s "$LMI -NHL csv storage mount show"
-    rlAssertGrep "\"Mountpoint\",\"$testdir\"" $rlRun_LOG
-    rlAssertGrep "\"Filesystem\",\"$part" $rlRun_LOG
-    rm $rlRun_LOG
-rlPhaseEnd
-
-rlPhaseStartTest "Unmount"
-    rlLogInfo "Unmount the fs"
-    rlRun "$LMI storage mount delete $part"
-
-    rlLogInfo "Check it is unmounted"
-    rlAssertNotGrep "$part.*$testdir" /proc/mounts
-
-    rlLogInfo "Check lmi storage mount list doesn't show it"
-    rlRun -s "$LMI -NHL csv storage mount list"
-    rlAssertNptGrep "\"$part\",\"ext3\",\"$testdir\"" $rlRun_LOG
-    rm $rlRun_LOG
-rlPhaseEnd
-
-
-rlPhaseStartTest "Delete filesystem"
-    rlLogInfo "Delete filesystem"
-    rlRun "$LMI storage fs delete $part"
-rlPhaseEnd
-
-rlJournalPrintText
-rlJournalEnd
+#
+"""
+LMI storage provider command multiplexer. To be used only by 'lmi' command
+line utility.
+"""

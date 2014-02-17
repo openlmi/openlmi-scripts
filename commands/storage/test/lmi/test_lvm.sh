@@ -53,7 +53,7 @@ rlJournalStart
 
 rlPhaseStartTest "CreateVG"
     rlLogInfo "Creating a VG with specific extent size"
-    rlRun "$LMI vg create --extent-size=$EXTENT_SIZE $VGNAME ${PARTITIONS[*]}"
+    rlRun "$LMI storage vg create --extent-size=$EXTENT_SIZE $VGNAME ${PARTITIONS[*]}"
 
     rlLogInfo "Check that the VG exists"
     rlRun -s "vgs --noheading -o vg_name"
@@ -68,13 +68,13 @@ rlPhaseStartTest "CreateVG"
     rm $rlRun_LOG
 
     rlLogInfo "Check lmi vg list shows it"
-    rlRun -s "$LMI -N -H -L csv vg list"
+    rlRun -s "$LMI -N -H -L csv storage vg list"
     rlAssertGrep "\"LMI:VG:$VGNAME\"" $rlRun_LOG
     rlAssertGrep "\"$VGNAME\"" $rlRun_LOG
     rm $rlRun_LOG
 
     rlLogInfo "Check lmi vg show shows it"
-    rlRun -s "$LMI -N -H -L csv vg show"
+    rlRun -s "$LMI -N -H -L csv storage vg show"
     rlAssertGrep "\"InstanceID\",\"LMI:VG:$VGNAME\"" $rlRun_LOG
     rlAssertGrep "\"ElementName\",\"$VGNAME\"" $rlRun_LOG
     rlAssertGrep "\"Extent Size\",\"1024K\"" $rlRun_LOG
@@ -88,8 +88,8 @@ rlPhaseEnd
 
 rlPhaseStartTest "CreateLV"
     rlLogInfo "Creating LVs"
-    rlRun "$LMI lv create $VGNAME $LVNAME1 $LVSIZESPEC1"
-    rlRun "$LMI lv create $VGNAME $LVNAME2 $LVSIZESPEC2"
+    rlRun "$LMI storage lv create $VGNAME $LVNAME1 $LVSIZESPEC1"
+    rlRun "$LMI storage lv create $VGNAME $LVNAME2 $LVSIZESPEC2"
 
     rlLogInfo "Check that the LVs exist"
     rlRun -s "lvs --noheading -o lv_name"
@@ -98,7 +98,7 @@ rlPhaseStartTest "CreateLV"
     rm $rlRun_LOG
 
     rlLogInfo "Check lmi lv list shows them"
-    rlRun -s "$LMI -N -H -L csv lv list $VGNAME"
+    rlRun -s "$LMI -N -H -L csv storage lv list $VGNAME"
     rlAssertGrep "\"/dev/disk/by-id/dm-name-$VGNAME-$LVNAME1\"" $rlRun_LOG
     rlAssertGrep "\"$LVNAME1\"" $rlRun_LOG
     rlAssertGrep "\"$LVSIZE1\"" $rlRun_LOG
@@ -108,7 +108,7 @@ rlPhaseStartTest "CreateLV"
     rm $rlRun_LOG
 
     rlLogInfo "Check lmi lv show shows them"
-    rlRun -s "$LMI -N -H -L csv lv show $LVNAME1"
+    rlRun -s "$LMI -N -H -L csv storage lv show $LVNAME1"
     rlAssertGrep "\"DeviceID\",\"/dev/disk/by-id/dm-name-$VGNAME-$LVNAME1\"" $rlRun_LOG
     rlAssertGrep "\"Name\",\"/dev/mapper/$VGNAME-$LVNAME1\"" $rlRun_LOG
     rlAssertGrep "\"Volume Group\",\"$VGNAME\"" $rlRun_LOG
@@ -117,7 +117,7 @@ rlPhaseStartTest "CreateLV"
     rlAssertGrep "\"Extent Size\",\"$EXTENT_SIZE\"" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlRun -s "$LMI -N -H -L csv lv show $LVNAME2"
+    rlRun -s "$LMI -N -H -L csv storage lv show $LVNAME2"
     rlAssertGrep "\"DeviceID\",\"/dev/disk/by-id/dm-name-$VGNAME-$LVNAME2\"" $rlRun_LOG
     rlAssertGrep "\"Name\",\"/dev/mapper/$VGNAME-$LVNAME2\"" $rlRun_LOG
     rlAssertGrep "\"Volume Group\",\"$VGNAME\"" $rlRun_LOG
@@ -126,8 +126,8 @@ rlPhaseStartTest "CreateLV"
     rlAssertGrep "\"Extent Size\",\"$EXTENT_SIZE\"" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlLogInfo "Check lmi vg show shows them"
-    rlRun -s "$LMI -N -H -L csv vg show"
+    rlLogInfo "Check lmi storage vg show shows them"
+    rlRun -s "$LMI -N -H -L csv storage vg show"
     rlAssertGrep "Logical Volumes.*$LVNAME1" $rlRun_LOG
     rlAssertGrep "Logical Volumes.*$LVNAME2" $rlRun_LOG
 
@@ -136,7 +136,7 @@ rlPhaseEnd
 
 rlPhaseStartTest "DeleteLV"
     rlLogInfo "Deleting LVs"
-    rlRun "$LMI lv delete $LVNAME1 $LVNAME2"
+    rlRun "$LMI storage lv delete $LVNAME1 $LVNAME2"
 
     rlLogInfo "Check that the LVs is deleted"
     rlRun -s "lvs --noheading -o lv_name"
@@ -144,8 +144,8 @@ rlPhaseStartTest "DeleteLV"
     rlAssertNotGrep $LVNAME2 $rlRun_LOG
     rm $rlRun_LOG
 
-    rlLogInfo "Check lmi lv list doesn't show them"
-    rlRun -s "$LMI -N -H -L csv lv list $VGNAME"
+    rlLogInfo "Check lmi storage lv list doesn't show them"
+    rlRun -s "$LMI -N -H -L csv storage lv list $VGNAME"
     rlAssertNotGrep "\"LMI:/dev/disk/by-id/dm-name-$VGNAME-$LVNAME1\"" $rlRun_LOG
     rlAssertNotGrep "\"$LVNAME1\"" $rlRun_LOG
     rlAssertNotGrep "\"$LVSIZE1\"" $rlRun_LOG
@@ -154,8 +154,8 @@ rlPhaseStartTest "DeleteLV"
     rlAssertNotGrep "\"$LVSIZE2\"" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlLogInfo "Check lmi vg show doesn't show them"
-    rlRun -s "$LMI -N -H -L csv vg show"
+    rlLogInfo "Check lmi storage vg show doesn't show them"
+    rlRun -s "$LMI -N -H -L csv storage vg show"
     rlAssertNotGrep "Logical Volumes.*$LVNAME1" $rlRun_LOG
     rlAssertNotGrep "Logical Volumes.*$LVNAME2" $rlRun_LOG
 rlPhaseEnd
@@ -163,15 +163,15 @@ rlPhaseEnd
 
 rlPhaseStartTest "DeleteVG"
     rlLogInfo "Delete the VG"
-    rlRun "$LMI vg delete $VGNAME"
+    rlRun "$LMI storage vg delete $VGNAME"
 
     rlLogInfo "Check that the VG is removed"
     rlRun -s "vgs --noheading -o vg_name"
     rlAssertNotGrep $VGNAME $rlRun_LOG
     rm $rlRun_LOG
 
-    rlLogInfo "Check lmi vg list does not show"
-    rlRun -s "$LMI -N -L csv vg list"
+    rlLogInfo "Check lmi storage vg list does not show"
+    rlRun -s "$LMI -N -L csv storage vg list"
     rlAssertNotGrep "\"LMI:VG:$VGNAME\"" $rlRun_LOG
     rlAssertNotGrep "\"$VGNAME\"" $rlRun_LOG
     rm $rlRun_LOG
