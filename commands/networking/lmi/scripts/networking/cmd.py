@@ -26,7 +26,8 @@ Usage:
     %(cmd)s show (device [<device_name> ...] | setting [<caption> ...])
     %(cmd)s activate <caption> [<device_name>]
     %(cmd)s deactivate <caption> [<device_name>]
-    %(cmd)s create <caption> <device_name> [--ethernet | --bridging | --bonding] [--ipv4 <ipv4_method>]  [--ipv6 <ipv6_method>]
+    %(cmd)s create <caption> <device_name> [(--ethernet | --bridging | --bonding)]
+        [(--ipv4 <ipv4_method>)] [(--ipv6 <ipv6_method>)]
     %(cmd)s delete <caption>
     %(cmd)s enslave <master_caption> <device_name>
     %(cmd)s address (--help | <operation> [<args>...])
@@ -348,14 +349,6 @@ class AddAddress(command.LmiCheckResult):
             raise errors.LmiFailed("No such setting: %s" % caption)
         return add_ip_address(ns, setting, address, prefix, gateway)
 
-    def transform_options(self, options):
-        """
-        AddAddress takes only one caption, get only one element
-        from the list for better readability.
-        """
-        if '<caption>' in options and len(options['<caption>']) > 0:
-            options['<caption>'] = options['<caption>'][0]
-
 class RemoveAddress(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption, address):
@@ -364,14 +357,6 @@ class RemoveAddress(command.LmiCheckResult):
             raise errors.LmiFailed("No such setting: %s" % caption)
         return remove_ip_address(ns, setting, address)
 
-    def transform_options(self, options):
-        """
-        RemoveAddress takes only one caption, get only one element
-        from the list for better readability.
-        """
-        if '<caption>' in options and len(options['<caption>']) > 0:
-            options['<caption>'] = options['<caption>'][0]
-
 class ReplaceAddress(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption, address, prefix, gateway):
@@ -379,15 +364,6 @@ class ReplaceAddress(command.LmiCheckResult):
         if setting is None:
             raise errors.LmiFailed("No such setting: %s" % caption)
         return replace_ip_address(ns, setting, address, prefix, gateway)
-
-    def transform_options(self, options):
-        """
-        ReplaceAddress takes only one caption, get only one element
-        from the list for better readability.
-        """
-        if '<caption>' in options and len(options['<caption>']) > 0:
-            options['<caption>'] = options['<caption>'][0]
-
 
 class Address(command.LmiCommandMultiplexer):
     """
