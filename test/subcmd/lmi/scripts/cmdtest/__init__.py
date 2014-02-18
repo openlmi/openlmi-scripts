@@ -60,7 +60,6 @@ class ListPackages(command.LmiLister):
 
 class ListRepos(command.LmiLister):
     OPT_NO_UNDERSCORES = True
-    COLUMNS = ('Name', )
 
     def execute(self, ns, enabled, disabled):
         fltr = lambda a: True
@@ -68,9 +67,16 @@ class ListRepos(command.LmiLister):
             fltr = lambda a: a[1]
         elif disabled:
             fltr = lambda a: not a[1]
-        for repo in REPOSITORIES:
-            if fltr(repo):
-                yield (repo[0], )
+        if self.app.config.verbose:
+            props = ('Name', 'Enabled')
+        else:
+            props = ('Name', )
+        def data_gen():
+            for repo in REPOSITORIES:
+                if not fltr(repo):
+                    continue
+                yield tuple(v for _, v in zip(props, repo))
+        return (props, data_gen())
 
 class Lister(command.LmiCommandMultiplexer):
     """
@@ -97,14 +103,18 @@ class ShowPackage(command.LmiLister):
             yield n, v
 
 class ShowRepository(command.LmiLister):
-    COLUMNS = ("Prop", "Value")
 
     def execute(self, ns, name):
         repod = { r[0] : r for r in REPOSITORIES }
         if not name in repod:
             raise errors.LmiFailed('No such repository "%s".' % name)
-        for n, v in zip(('Name', 'Enabled'), repod[name]):
-            yield n, v
+        if self.app.config.verbose:
+            props = ('Name', 'Enabled', 'Packages')
+        else:
+            props = ('Name', 'Enabled')
+        value_map = {n: v for n, v in zip(props, repod[name])}
+
+        return (props, [tuple(value_map[p] for p in props)])
 
 class Show(command.LmiCommandMultiplexer):
     COMMANDS = {
@@ -195,7 +205,7 @@ PACKAGES = (
         ('python-docopt', 'noarch', False))
 
 REPOSITORIES = (
-        # Name, Enabled
-        ('fedora', True),
-        ('updates', False))
+        # Name, Enabled, Packages
+        ('fedora', True, 1000),
+        ('updates', False, 500))
 

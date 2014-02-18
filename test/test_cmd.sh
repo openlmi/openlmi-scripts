@@ -45,7 +45,7 @@ rlPhaseStartSetup
     export PYTHONPATH="$sandbox"
     pushd ..
     rlLogInfo "Installing lmi meta-command"
-    rlRun "python setup.py develop --install-dir=$sandbox" 0
+    rlRun "python setup.py develop --install-dir=$sandbox" 
     popd
     export "$sandbox:$PATH"
 rlPhaseEnd
@@ -53,7 +53,7 @@ rlPhaseEnd
 rlPhaseStartTest
     rlLogInfo "Test help messages without subommands"
 
-    rlRun -s "$LMI_ --help" 0
+    rlRun -s "$LMI_ --help" 
     rlAssertGrep "^Usage:$"    $rlRun_LOG
     rlAssertGrep "^Options:$"  $rlRun_LOG
     rlAssertGrep "^Commands:$" $rlRun_LOG
@@ -62,15 +62,16 @@ rlPhaseStartTest
         "Test whether first line is not blank"
     rm $rlRun_LOG
 
-    rlRun -s "$LMI help" 0
+    rlRun -s "$LMI help" 
     rlAssertNotDiffer "cmd/help_without_test.out" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlRun -s "$LMI help foo" 0
+    # suppress warning messages
+    rlRun -s "$LMI -q help foo" 
     rlAssertNotDiffer "cmd/help_foo.out" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlRun -s "$LMI help help" 0
+    rlRun -s "$LMI help help" 
     rlAssertNotDiffer "cmd/help_help.out" $rlRun_LOG
     rm $rlRun_LOG
 
@@ -86,7 +87,7 @@ rlPhaseEnd
 rlPhaseStartTest
     rlLogInfo "Test help messages with test subcommand"
 
-    rlRun -s "$LMI_ --help" 0
+    rlRun -s "$LMI_ --help" 
     rlAssertGrep "^Usage:$"         $rlRun_LOG
     rlAssertGrep "^Options:$"       $rlRun_LOG
     rlAssertGrep "^Commands:$"      $rlRun_LOG
@@ -95,22 +96,71 @@ rlPhaseStartTest
         "Test whether first line is not blank"
     rm $rlRun_LOG
 
-    rlRun -s "$LMI help 2>/dev/null" 0
+    rlRun -s "$LMI help 2>/dev/null" 
     rlAssertNotDiffer "cmd/help_with_test.out" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlRun -s "$LMI help test 2>/dev/null" 0
+    rlRun -s "$LMI help test 2>/dev/null" 
     rlAssertNotDiffer "cmd/help_test.out" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlRun -s "$LMI test --help 2>/dev/null" 0
+    rlRun -s "$LMI test --help 2>/dev/null" 
     rlAssertNotDiffer "cmd/help_test.out" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlRun -s "$LMI test list --help 2>/dev/null" 0
+    rlRun -s "$LMI test list --help 2>/dev/null" 
     rlAssertNotDiffer "cmd/help_test_list.out" $rlRun_LOG
     rm $rlRun_LOG
 
+rlPhaseEnd
+
+rlPhaseStartTest
+    rlLogInfo "Test the *no headings* option"
+    with_headings=`mktemp with_headingsXXXX`
+    without_headings=`mktemp without_headingsXXXX`
+    expected_colonized=`mktemp expectedXXXX`
+
+    rlRun -s "$LMI test show pkg hwdata >$with_headings"
+    whl=`cat $with_headings | wc -l`
+    rlRun -s "$LMI -N test show pkg hwdata >$without_headings"
+    nhl=`cat $without_headings | wc -l`
+    rlAssertEquals "Output without headings needs to be one line shorter" \
+        $((whl - 1)) $nhl
+    rlAssertGrep "Prop\s\+Value" $with_headings
+    rlAssertNotGrep "Prop\s\+Value" $without_headings
+    cat >$expected_colonized <<EOF
+Name:hwdata
+Architecture:noarch
+Installed:True
+EOF
+    rlRun "sed -n -e '/^warning :/ d' -e '1 !s/\s\+/:/gp' $with_headings | cmp $expected_colonized -" 0 \
+        "Compare the output to expected with reduced spaces"
+
+    rlRun -s "$LMI test show repo fedora >$with_headings"
+    whl=`cat $with_headings | wc -l`
+    rlRun -s "$LMI -N test show repo fedora >$without_headings"
+    nhl=`cat $without_headings | wc -l`
+    rlAssertEquals "Output without headings needs to be one line shorter" \
+        $((whl - 1)) $nhl
+    rlAssertGrep    "^Name\s\+Enabled" $with_headings
+    rlAssertNotGrep "^Name\s\+Enabled" $without_headings
+    echo "fedora:True" >$expected_colonized
+    rlRun "sed -n -e '/^warning :/ d' -e '1 !s/\s\+/:/gp' $with_headings | cmp $expected_colonized -" 0 \
+        "Compare the output to expected with reduced spaces"
+
+    rlRun -s "$LMI -v test show repo fedora >$with_headings"
+    whl=`cat $with_headings | wc -l`
+    rlRun -s "$LMI -v -N test show repo fedora >$without_headings"
+    nhl=`cat $without_headings | wc -l`
+    rlAssertEquals "Output without headings needs to be one line shorter" \
+        $((whl - 1)) $nhl
+    rlAssertGrep    "^Name\s\+Enabled\s\+Packages" $with_headings
+    rlAssertNotGrep "^Name\s\+Enabled\s\+Packages" $without_headings
+    sed -i '1 s/$/:1000/' $expected_colonized
+    rlRun "sed -n -e '/^warning :/ d' -e '1 !s/\s\+/:/gp' $with_headings | cmp $expected_colonized -" 0 \
+        "Compare the output to expected with reduced spaces"
+
+    rm $with_headings $without_headings $expected_colonized
 rlPhaseEnd
 
 rlPhaseStartCleanup
