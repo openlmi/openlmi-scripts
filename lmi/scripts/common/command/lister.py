@@ -101,6 +101,9 @@ class LmiLister(LmiBaseListerCommand):
         if columns is not None:
             command = fcmd.NewTableHeaderCommand(columns)
             res = chain((command, ), res)
+        else:
+            command = fcmd.NewTableHeaderCommand(res[0])
+            res = chain((command, ), res[1])
         return res
 
 class LmiInstanceLister(LmiBaseListerCommand):
