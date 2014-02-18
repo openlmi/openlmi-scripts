@@ -36,6 +36,7 @@ Basic storage device information.
 
 Usage:
     %(cmd)s fs <cmd> [<args> ...]
+    %(cmd)s luks <cmd> [<args> ...]
     %(cmd)s lv <cmd> [<args> ...]
     %(cmd)s mount <cmd> [<args> ...]
     %(cmd)s partition <cmd> [<args> ...]
@@ -50,6 +51,8 @@ Usage:
 
 Commands:
     fs          Filesystem and other data format management.
+
+    luks        LUKS management.
 
     lv          Logical Volume management.
 
@@ -123,6 +126,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
         get_parents, str2device, str2size, str2vg)
 
 import lmi.scripts.storage.cmd.fs
+import lmi.scripts.storage.cmd.luks
 import lmi.scripts.storage.cmd.lv
 import lmi.scripts.storage.cmd.mount
 import lmi.scripts.storage.cmd.partition
@@ -392,6 +396,7 @@ Storage = command.register_subcommands(
           'provides': Provides,
           'depends' : Depends,
           'fs'      : lmi.scripts.storage.cmd.fs.FS,
+          'luks'      : lmi.scripts.storage.cmd.luks.LUKS,
           'lv'      : lmi.scripts.storage.cmd.lv.LV,
           'mount'   : lmi.scripts.storage.cmd.mount.Mount,
           'partition': lmi.scripts.storage.cmd.partition.Partition,
