@@ -181,8 +181,8 @@ def create_user(ns, name,
         "HomeDirectory": home,
         "DontCreateHome": not create_home,
         "Shell": shell,
-        "UID": uid,
-        "GID": gid,
+        "UID":  int(uid) if uid else uid,
+        "GID": int(gid) if gid else gid,
         "SystemAccount": reserved,
         "Password": password,
         "DontCreateGroup": not create_group,
@@ -239,7 +239,7 @@ def create_group(ns, group, reserved=False, gid=None):
     if reserved:
         params["SystemAccount"] = True
     if gid is not None:
-        params["GID"] = gid
+        params["GID"] = int(gid)
 
     LOG().debug("Creating group %s with arguments %s", group, str(params))
 
