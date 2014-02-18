@@ -69,7 +69,6 @@ rlPhaseStartTest "CreateVG"
 
     rlLogInfo "Check lmi vg list shows it"
     rlRun -s "$LMI -N -H -L csv storage vg list"
-    rlAssertGrep "\"LMI:VG:$VGNAME\"" $rlRun_LOG
     rlAssertGrep "\"$VGNAME\"" $rlRun_LOG
     rm $rlRun_LOG
 
@@ -99,15 +98,13 @@ rlPhaseStartTest "CreateLV"
 
     rlLogInfo "Check lmi lv list shows them"
     rlRun -s "$LMI -N -H -L csv storage lv list $VGNAME"
-    rlAssertGrep "\"/dev/disk/by-id/dm-name-$VGNAME-$LVNAME1\"" $rlRun_LOG
-    rlAssertGrep "\"$LVNAME1\"" $rlRun_LOG
+    rlAssertGrep "\"/dev/mapper/$VGNAME-$LVNAME1\"" $rlRun_LOG
     rlAssertGrep "\"$LVSIZE1\"" $rlRun_LOG
-    rlAssertGrep "\"/dev/disk/by-id/dm-name-$VGNAME-$LVNAME2\"" $rlRun_LOG
-    rlAssertGrep "\"$LVNAME2\"" $rlRun_LOG
+    rlAssertGrep "\"/dev/mapper/$VGNAME-$LVNAME2\"" $rlRun_LOG
     rlAssertGrep "\"$LVSIZE2\"" $rlRun_LOG
     rm $rlRun_LOG
 
-    rlLogInfo "Check lmi lv show shows them"
+    rlLogInfo "Check lmi storage lv show shows them"
     rlRun -s "$LMI -N -H -L csv storage lv show $LVNAME1"
     rlAssertGrep "\"DeviceID\",\"/dev/disk/by-id/dm-name-$VGNAME-$LVNAME1\"" $rlRun_LOG
     rlAssertGrep "\"Name\",\"/dev/mapper/$VGNAME-$LVNAME1\"" $rlRun_LOG
@@ -146,11 +143,9 @@ rlPhaseStartTest "DeleteLV"
 
     rlLogInfo "Check lmi storage lv list doesn't show them"
     rlRun -s "$LMI -N -H -L csv storage lv list $VGNAME"
-    rlAssertNotGrep "\"LMI:/dev/disk/by-id/dm-name-$VGNAME-$LVNAME1\"" $rlRun_LOG
-    rlAssertNotGrep "\"$LVNAME1\"" $rlRun_LOG
+    rlAssertNotGrep "\"/dev/mapper/$VGNAME-$LVNAME1\"" $rlRun_LOG
     rlAssertNotGrep "\"$LVSIZE1\"" $rlRun_LOG
     rlAssertNotGrep "\"LMI:/dev/disk/by-id/dm-name-$VGNAME-$LVNAME2\"" $rlRun_LOG
-    rlAssertNotGrep "\"$LVNAME2\"" $rlRun_LOG
     rlAssertNotGrep "\"$LVSIZE2\"" $rlRun_LOG
     rm $rlRun_LOG
 

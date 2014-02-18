@@ -81,7 +81,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
 LOG = get_logger(__name__)
 
 class PartitionTableList(command.LmiLister):
-    COLUMNS = ('DeviceID', 'Name', 'ElementName', 'Type', 'Largest free region')
+    COLUMNS = ('Name', 'Type', 'Largest free region')
 
     def transform_options(self, options):
         """
@@ -107,12 +107,7 @@ class PartitionTableList(command.LmiLister):
                 table_type = cls.PartitionStyleValues.value_name(
                         table.PartitionStyle)
 
-            yield (device.DeviceID,
-                    device.Name,
-                    device.ElementName,
-                    table_type,
-                    largest_size
-                    )
+            yield (device.Name, table_type, largest_size)
 
 
 class PartitionTableCreate(command.LmiCheckResult):

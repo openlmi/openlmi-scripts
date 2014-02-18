@@ -76,7 +76,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
 LOG = get_logger(__name__)
 
 class LVList(command.LmiLister):
-    COLUMNS = ('DeviceID', "Name", "ElementName", "Size")
+    COLUMNS = ("Name", "Size")
 
     def transform_options(self, options):
         """
@@ -92,10 +92,7 @@ class LVList(command.LmiLister):
         for lv in lvm.get_lvs(ns, vgs):
             size = size2str(lv.NumberOfBlocks * lv.BlockSize,
                     self.app.config.human_friendly)
-            yield (lv.DeviceID,
-                    lv.Name,
-                    lv.ElementName,
-                    size)
+            yield (lv.Name, size)
 
 
 class LVCreate(command.LmiCheckResult):
