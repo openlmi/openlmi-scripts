@@ -267,12 +267,13 @@ class TableFormatter(ListFormatter):
         super(TableFormatter, self).__init__(stream, padding, no_headings)
         self.stash = []
 
-    def print_text_row(self, row, column_size):
+    def print_text_row(self, row, column_sizes):
         for i in xrange(len(row)):
-            size = column_size[i]
+            size = column_sizes[i]
             # Convert to unicode to compute correct length of utf-8 strings
             # (e.g. with fancy trees with utf-8 graphics).
-            item = unicode(row[i])
+            item = (    unicode(row[i]) if not isinstance(row[i], str)
+                   else row[i].decode(self.encoding))
             if i < len(row) - 1:
                 item = item.ljust(size)
             self.out.write(self.render_value(item))
@@ -290,11 +291,13 @@ class TableFormatter(ListFormatter):
         else:
             row = self.column_names
         for i in xrange(len(row)):
-            column_sizes.append(len(row))
+            column_sizes.append(len(row[i]))
 
         for row in rows:
             for i in xrange(len(row)):
-                row_length = len(unicode(row[i]))
+                row_length = len(
+                         unicode(row[i]) if not isinstance(row[i], str)
+                    else row[i].decode(self.encoding))
                 if column_sizes[i] < row_length:
                     column_sizes[i] = row_length
 
