@@ -59,7 +59,8 @@ def get_lvs(ns, vgs=None):
     else:
         # No vgs supplied, list all LVs
         for lv in ns.LMI_LVStorageExtent.instances():
-            yield lv
+            if not lv.ThinlyProvisioned:
+                yield lv
 
 def create_lv(ns, vg, name, size):
     """
@@ -112,6 +113,9 @@ def get_vgs(ns):
     """
     LOG().debug("get_vgs: Loading list of all volume groups.")
     for vg in ns.LMI_VGStoragePool.instances():
+        if vg.SpaceLimitDetermination:
+            # skip thin pools
+            continue
         yield vg
 
 def create_vg(ns, devices, name, extent_size=None):
