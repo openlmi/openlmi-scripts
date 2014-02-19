@@ -6,6 +6,7 @@ Python reference for OpenLMI client scripts
 
    common
    partition
+   luks
    lvm
    raid
    fs
