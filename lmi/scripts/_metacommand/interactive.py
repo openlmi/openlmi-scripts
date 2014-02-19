@@ -233,10 +233,7 @@ class Interactive(cmd.Cmd):
             compfunc = self.completedefault
             if command and hasattr(self, 'complete_' + command):
                 compfunc = getattr(self, 'complete_' + command)
-            try:
-                self.completion_matches = compfunc(text, line, begidx, endidx)
-            except Exception as err:
-                LOG().exception(err)
+            self.completion_matches = compfunc(text, line, begidx, endidx)
         try:
             return self.completion_matches[state]
         except IndexError:
