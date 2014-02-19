@@ -71,7 +71,7 @@ Commands:
 
 Options:
     size        Size of the new partition volume, by default in sectors.
-                'T', 'G', 'M' or 'K' suffix can be used to use specify other
+                'T', 'G', 'M' or 'K' suffix can be used to specify other
                 units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
                 (= 1024 bytes).
                 The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.

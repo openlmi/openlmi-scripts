@@ -55,7 +55,7 @@ Options:
     vg          Name of the volume group, with or without `/dev/` prefix.
 
     size        Size of the new logical volume, by default in bytes.
-                'T', 'G', 'M' or 'K' suffix can be used to use specify other
+                'T', 'G', 'M' or 'K' suffix can be used to specify other
                 units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
                 (= 1024 bytes).
                 The suffix is case insensitive, i.e. 1g = 1G = 1073741824
