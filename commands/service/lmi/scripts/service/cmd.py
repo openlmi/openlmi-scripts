@@ -31,7 +31,7 @@
 System service management.
 
 Usage:
-    %(cmd)s list [--all | --disabled | --oneshot]
+    %(cmd)s list [(--enabled | --disabled)]
     %(cmd)s show <service>
     %(cmd)s start <service>
     %(cmd)s stop <service>
@@ -52,28 +52,39 @@ Commands:
                 instead.
 
 Options:
-    --all       List all services available.
+    --enabled   List only enabled services.
     --disabled  List only disabled services.
-    --oneshot   List only oneshot services.
     --try       Whether to abandon the operation if the service is not running.
 """
+import re
 
 from lmi.scripts import service as srv
 from lmi.scripts.common import command
 
-class Lister(command.LmiInstanceLister):
-    PROPERTIES = ('Name', "Started", 'Status')
+RE_SUFFIX = re.compile(r'\.service$')
 
-    def execute(self, ns, _all, _disabled, _oneshot):
-        kind = 'enabled'
-        if _all:
-            kind = 'all'
+class Lister(command.LmiInstanceLister):
+
+    DYNAMIC_PROPERTIES = True
+
+    def execute(self, ns, _enabled, _disabled):
+        kind = 'all'
+        if _enabled:
+            kind = 'enabled'
         elif _disabled:
             kind = 'disabled'
-        elif _oneshot:
-            kind = 'oneshot'
-        for service_inst in srv.list_services(ns, kind):
-            yield service_inst
+
+        columns = [
+                ('Name', lambda i: RE_SUFFIX.sub('', i.Name)),
+                ('Status', lambda i: srv.get_status_string(ns, i))]
+        if kind == 'all':
+            columns.append(('Enabled', lambda i: srv.get_enabled_string(ns, i)))
+
+        def generator():
+            for service_inst in srv.list_services(ns, kind):
+                yield service_inst
+
+        return columns, generator()
 
 class Start(command.LmiCheckResult):
     CALLABLE = srv.start_service
@@ -107,13 +118,17 @@ class ReloadOrRestart(command.LmiCheckResult):
         return srv.reload_service(ns, service, force=True, just_try=_try)
 
 class Show(command.LmiShowInstance):
-    CALLABLE = srv.get_service
-    PROPERTIES = (
-            'Name',
-            'Caption',
-            ('Enabled', lambda i: i.EnabledDefault == 2),
-            ('Active', 'Started'),
-            'Status')
+
+    DYNAMIC_PROPERTIES = True
+
+    def execute(self, ns, service):
+        columns = (
+                ('Name', lambda i: RE_SUFFIX.sub('', i.Name)),
+                'Caption',
+                ('Enabled', lambda i: srv.get_enabled_string(ns, i)),
+                ('Status', lambda i: srv.get_status_string(ns, i)))
+
+        return columns, srv.get_service(ns, service)
 
 Service = command.register_subcommands(
         'Service', __doc__,

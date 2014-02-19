@@ -41,7 +41,7 @@ from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
 
-SERVICE_KINDS = {'all', 'enabled', 'disabled', 'oneshot'}
+SERVICE_KINDS = {'all', 'enabled', 'disabled'}
 
 def invoke_on_service(ns, method, service, description):
     """
@@ -71,7 +71,6 @@ def list_services(ns, kind='enabled'):
 
         * 'enabled'  - list only enabled services
         * 'disabled' - list only disabled services
-        * 'oneshot'  - list only oneshot services
         * 'all'      - list all services
 
     :returns: Instances of ``LMI_Service``.
@@ -84,9 +83,6 @@ def list_services(ns, kind='enabled'):
     for service in sorted(ns.LMI_Service.instances(), key=lambda i: i.Name):
         if kind == 'disabled' and service.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.Disabled:
-            continue
-        if kind == 'oneshot' and service.EnabledDefault != \
-                ns.LMI_Service.EnabledDefaultValues.NotApplicable:
             continue
         if kind == 'enabled' and service.EnabledDefault != \
                 ns.LMI_Service.EnabledDefaultValues.Enabled:
@@ -182,3 +178,57 @@ def get_service(ns, service):
 
     raise TypeError("service must be either string or ``LMIInstanceName``")
 
+def get_status_string(ns, service):
+    """
+    Return human friendly status description.
+
+    :param service: Either a service instance or its name.
+    :returns: Status description. One of
+        ``{ OK, Running, Stopped - OK, Stopped - Error }``.
+    :rtype: string
+    """
+    service = get_service(ns, service)
+
+    status = []
+    # first check for common statuses
+    if ns.LMI_Service.OperationalStatusValues.Completed in \
+            service.OperationalStatus:
+        status.append('Stopped')
+    if ns.LMI_Service.OperationalStatusValues.OK in service.OperationalStatus:
+        if not status:
+            status.append('Running')
+        else:
+            status.append('OK')
+    elif ns.LMI_Service.OperationalStatusValues.Error in \
+            service.OperationalStatus:
+        status.append('Error')
+
+    if not status:
+        # build the status from formal names
+        status = [  ns.LMI_Service.OperationalStatusValues.value_name(val)
+                 for val in service.OperationalStatus]
+
+        if not status:
+            status.append = 'Unknown'
+
+    return ' - '.join(status)
+
+def get_enabled_string(ns, service):
+    """
+    Return human friendly string for enabled state.
+
+    :param service: Either a service instance of its name.
+    :returns: Status description. One of:
+        ``{ Yes, No, Static }``.
+    ``Static`` represents a service that can not be enabled or disabled,
+    and are run only if something depends on them. It lacks ``[Install]``
+    section.
+    :rtype: string
+    """
+    service = get_service(ns, service)
+
+    if service.EnabledDefault == ns.LMI_Service.EnabledDefaultValues.Enabled:
+        return "Yes"
+    if service.EnabledDefault == ns.LMI_Service.EnabledDefaultValues.Disabled:
+        return "No"
+    return "Static"
