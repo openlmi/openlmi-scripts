@@ -154,6 +154,8 @@ def get_service(ns, service):
     :param string service: Service name.
     """
     if isinstance(service, basestring):
+        if not service.endswith('.service'):
+            service += '.service'
         cs = get_computer_system(ns)
         iname = ns.LMI_Service.new_instance_name({
             "Name": service,
