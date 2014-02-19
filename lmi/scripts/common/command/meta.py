@@ -229,11 +229,8 @@ def _make_render_with_properties(properties, target_formatter_lister=False):
                 else:
                     value = getattr(inst, prop[1])
             except Exception as exc:
-                if Configuration.get_instance().trace:
-                    LOG().exception('Failed to render property "%s".', prop[0])
-                else:
-                    LOG().error('Failed to render property "%s": %s',
-                            prop[0], exc)
+                LOG().exception('Failed to render property "%s": %s',
+                        prop[0], exc)
                 value = "ERROR"
         if value is None:
             value = ''

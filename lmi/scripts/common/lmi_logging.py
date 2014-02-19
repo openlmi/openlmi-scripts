@@ -27,7 +27,14 @@
 #
 # Authors: Michal Minar <miminar@redhat.com>
 #
+"""
+Utilities for logging framework.
+"""
 import logging
+import sys
+
+from lmi.scripts.common import configuration
+from lmi.scripts.common import errors
 
 TERM_COLOR_NAMES = (
         'black',
@@ -59,13 +66,11 @@ CB_MAGENTA = 13
 CB_CYAN    = 14
 CB_WHITE   = 15
 
-#: Default format string to use in stderr handlers.
-DEFAULT_FORMAT_STRING = "%(cseq)s%(levelname_)-8s:%(creset)s %(message)s"
-
 WARNING_COLOR  = CB_YELLOW
 ERROR_COLOR    = CB_RED
 CRITICAL_COLOR = CB_MAGENTA
 
+#: Dictionary assigning color code to logging level.
 LOG_LEVEL_2_COLOR = {
         logging.WARNING : WARNING_COLOR,
         logging.ERROR   : ERROR_COLOR,
@@ -73,6 +78,19 @@ LOG_LEVEL_2_COLOR = {
 }
 
 class LogRecord(logging.LogRecord):
+    """
+    Overrides :py:class:`logging.LogRecord`. It adds new attributes:
+
+        * `levelname_` - Name of level in lowercase.
+        * `cseq`       - Escape sequence for terminal used to set color
+                         assigned to particular log level.
+        * `creset`     - Escape sequence for terminal used to reset foreground
+                         color.
+
+    These can be used in format strings initializing logging formatters.
+
+    Accepts the same arguments as base class.
+    """
 
     def __init__(self, name, level, *args, **kwargs):
         use_colors = kwargs.pop('use_colors', True)
@@ -92,14 +110,27 @@ class LogRecord(logging.LogRecord):
 
 class ScriptsLogger(logging.getLoggerClass()):
 
+    #: Boolean saying whether the color sequences for log messages shall be
+    #: generated.
     USE_COLORS = True
 
     def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None,
             extra=None):
         """
         Overriden method that just changes the *LogRecord* class to our
-        predefined.
+        predefined and ensures that exception's traceback is printed once at
+        most.
         """
+        if exc_info:
+            err = exc_info[1]
+            if getattr(err, '_traceback_logged', False):
+                # do not print traceback second time
+                exc_info = None
+            elif self.isEnabledFor(level):
+                try:
+                    err._traceback_logged = True
+                except AttributeError:
+                    pass
         rv = LogRecord(name, level, fn, lno, msg, args, exc_info, func,
                 use_colors=self.USE_COLORS)
         if extra is not None:
@@ -108,6 +139,19 @@ class ScriptsLogger(logging.getLoggerClass()):
                     raise KeyError("Attempt to overwrite %r in LogRecord" % key)
                 rv.__dict__[key] = extra[key]
         return rv
+
+    def exception(self, msg, *args, **kwargs):
+        lmi_config = configuration.Configuration.get_instance()
+        exc_info = sys.exc_info()
+        err = exc_info[1]
+        if (   lmi_config.trace
+           and (  not isinstance(err, errors.LmiError)
+               or (   not getattr(err, '_traceback_logged', False)
+                  and lmi_config.verbosity >= lmi_config.OUTPUT_DEBUG))):
+            kwargs['exc_info'] = exc_info
+        else:
+            kwargs.pop('exc_info', None)
+        self.error(msg, *args, **kwargs)
 
 class LevelDispatchingFormatter(object):
     """
@@ -136,7 +180,7 @@ class LevelDispatchingFormatter(object):
     :param default: Default *format* to use. This format is used for all levels
         higher than the maximum of *formatters*' keys.
     """
-    def __init__(self, formatters, default=DEFAULT_FORMAT_STRING,
+    def __init__(self, formatters, default=configuration.DEFAULT_FORMAT_STRING,
             datefmt=None):
         for k, formatter in formatters.items():
             if isinstance(formatter, basestring):
@@ -188,10 +232,19 @@ def get_logger(module_name):
     return _logger
 
 def get_color_sequence(color_code):
+    """
+    Computer color sequence for particular color code.
+
+    :returns: Escape sequence for terminal used to set foreground color.
+    :rtype: str
+    """
     if color_code <= 7:
         return "\x1b[%dm" % (30 + color_code)
     return "\x1b[38;5;%dm" % color_code
 
 def setup_logger(use_colors=True):
+    """
+    This needs to be called before any logging takes place.
+    """
     ScriptsLogger.USE_COLORS = use_colors
     logging.setLoggerClass(ScriptsLogger)

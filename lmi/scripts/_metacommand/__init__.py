@@ -220,12 +220,7 @@ class MetaCommand(object):
         try:
             retval = cmd.run(argv)
         except Exception as exc:
-            trace = True if self.config is None else self.config.trace
-            if isinstance(exc, errors.LmiError) or not trace:
-                LOG().error(exc)
-            else:
-                LOG().exception('Fatal')
-
+            LOG().exception(str(exc))
         if isinstance(retval, bool) or not isinstance(retval, (int, long)):
             return (    exit.EXIT_CODE_SUCCESS if bool(retval) or retval is None
                    else exit.EXIT_CODE_FAILURE)

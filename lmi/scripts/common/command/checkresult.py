@@ -126,10 +126,7 @@ class LmiCheckResult(LmiSessionCommand):
         except LmiResultFailed:
             raise
         except Exception as err:
-            if self.app.config.trace:
-                LOG().exception("Failed to execute wrapped function.")
-            else:
-                LOG().error("Failed to execute wrapped function: %s", err)
+            LOG().debug("Failed to execute wrapped function.", exc_info=err)
             raise
         return 0
 
@@ -137,7 +134,7 @@ class LmiCheckResult(LmiSessionCommand):
         pass
 
     def process_session_results(self, session, results):
-	if len(self.app.session) > 1:
+        if len(self.app.session) > 1:
             LOG().debug('Successful runs: %d\n',
                     len([r for r in results.values() if r[0]]))
         LmiSessionCommand.process_session_results(self, session, results)

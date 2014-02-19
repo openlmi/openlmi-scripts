@@ -104,12 +104,8 @@ class LmiSessionCommand(LmiEndPointCommand):
                 results[connection.uri] = (True, result)
                 self.process_host_result(connection.uri, True, result)
             except Exception as exc:
-                if self.app.config.trace:
-                    LOG().exception('Invocation failed for host "%s".',
-                            connection.uri)
-                else:
-                    LOG().error('Invocation failed for host "%s": %s',
-                            connection.uri, exc)
+                LOG().exception('Invocation failed for host "%s": %s',
+                        connection.uri, exc)
                 results[connection.uri] = (False, exc)
                 self.process_host_result(connection.uri, False, exc)
         self.process_session_results(session, results)

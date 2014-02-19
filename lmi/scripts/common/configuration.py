@@ -40,9 +40,11 @@ Configuration
 
 import os
 from lmi.base.BaseConfiguration import BaseConfiguration
-from lmi.scripts.common.lmi_logging import DEFAULT_FORMAT_STRING
 
 LISTER_FORMATS = ['csv', 'table']
+
+#: Default format string to use in stderr handlers.
+DEFAULT_FORMAT_STRING = "%(cseq)s%(levelname_)-8s:%(creset)s %(message)s"
 
 class Configuration(BaseConfiguration):
     """
