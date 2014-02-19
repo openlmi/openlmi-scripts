@@ -31,6 +31,8 @@
 LMI service provider client library.
 """
 
+import pywbem
+
 from lmi.shell import LMIInstance
 from lmi.shell import LMIInstanceName
 from lmi.scripts.common.errors import LmiFailed
@@ -153,26 +155,30 @@ def get_service(ns, service):
 
     :param string service: Service name.
     """
-    if isinstance(service, basestring):
-        if not service.endswith('.service'):
-            service += '.service'
-        cs = get_computer_system(ns)
-        iname = ns.LMI_Service.new_instance_name({
-            "Name": service,
-            "CreationClassName" : "LMI_Service",
-            "SystemName" : cs.Name,
-            "SystemCreationClassName" : cs.CreationClassName
-        })
-        inst = iname.to_instance()
-        if inst is None:
-            raise LmiFailed('No such service "%s".' % service)
-    elif isinstance(service, (LMIInstance, LMIInstanceName)):
-        inst = service
-        service = inst.Name
-        if isinstance(inst, LMIInstanceName):
-            inst = inst.to_instance()
-    else:
-        raise TypeError("service must be either string or ``LMIInstanceName``")
+    try:
+        if isinstance(service, basestring):
+            if not service.endswith('.service'):
+                service += '.service'
+            cs = get_computer_system(ns)
+            iname = ns.LMI_Service.new_instance_name({
+                "Name": service,
+                "CreationClassName" : "LMI_Service",
+                "SystemName" : cs.Name,
+                "SystemCreationClassName" : cs.CreationClassName
+            })
+            inst = iname.to_instance()
 
-    return inst
+        elif isinstance(service, (LMIInstance, LMIInstanceName)):
+            inst = service
+            service = inst.Name
+            if isinstance(inst, LMIInstanceName):
+                inst = inst.to_instance()
+
+        return inst
+
+    except pywbem.CIMError as err:
+        if err.args[0] == pywbem.CIM_ERR_NOT_FOUND:
+            raise LmiFailed('No such service "%s".' % service)
+
+    raise TypeError("service must be either string or ``LMIInstanceName``")
 
