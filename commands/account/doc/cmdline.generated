@@ -1,0 +1,157 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
+    !!!!!!!!!
+
+user
+----
+
+POSIX user information and management.
+
+
+**Usage:**
+
+    **lmi** **user** list
+
+    **lmi** **user** **show** [ \ *<user>*\  ...]
+
+    **lmi** **user** **create** \ *<name>*\  [options]
+
+    **lmi** **user** **delete** [\ **--no-delete-home**\ ] [\ **--no-delete-group**\ ] [\ **--force**\ ] \ *<user>*\  ...
+
+
+
+**Commands:**
+
+
+    **list**
+        Prints a list of users.
+
+
+    **show**
+        Show detailed information about user. If no users are provided,
+        all of them are displayed.
+
+
+    **create**
+        Creates a new user. See Create options below for options
+        description.
+
+
+    **delete**
+        Delete specified user (or user list). See Delete options
+        below for options description.
+
+**Create options:**
+
+
+    **-c gecos, --gecos=gecos**
+        Set the GECOS field to gecos.
+
+    **-d dir, --directory=dir**
+        Set the user's home directory to dir.
+        If this option is not set, a default value
+        is used.
+
+    **-s shell, --shell=shell**
+        Set user's login shell to shell. If this
+        option is not set, a default value is used.
+
+    **-u uid, --uid=uid**
+        Use user ID uid for the newly created user.
+        If this option is not set, a default value
+        is used.
+
+    **-g gid, --gid=gid**
+        Set user's primary group ID to gid. If this
+        option is not set, a default value is used.
+
+    **-r, --reserved**
+        The user is a system user.
+        Implies the -M option.
+
+    **-M, --no-user-home**
+        Don't create a home directory.
+
+    **-n, --no-user-group**
+        Don't create a primary group for user.
+
+    **-p, --password=pwd**
+        Set user's password to 'pwd'.
+
+    **-P, --plain-password**
+        If set, the password set in '-p' parameter
+        is plain text. Otherwise, it is already
+        encrypted by supported hash algorithm.
+        See crypt(3).
+
+**Delete options:**
+
+
+    **--no-delete-home**
+        Do not remove home directory.
+
+    **--no-delete-group**
+        Do not remove users primary group.
+
+    **--force**
+        Remove home directory even if the user is not owner.
+
+group
+-----
+
+POSIX group information and management.
+
+
+**Usage:**
+
+    **lmi** **group** **list** [ \ *<group>*\  ...]
+
+    **lmi** **group** **create** [\ **--reserved**\ ] [\ **--gid**\ =gid] \ *<group>*\ 
+
+    **lmi** **group** **delete** \ *<group>*\ 
+
+    **lmi** **group** **listuser** [\ *<group>*\ ] ...
+
+    **lmi** **group** **adduser** \ *<group>*\  \ *<user>*\  ...
+
+    **lmi** **group** **removeuser** \ *<group>*\  \ *<user>*\  ...
+
+
+
+**Commands:**
+
+
+    **list**
+        List groups. If no groups are given, all are listed.
+
+
+
+    **create**
+        Creates a new group.
+
+
+    **delete**
+        Deletes a group.
+
+
+    **listuser**
+        List a users in a group or in a list of groups.
+
+
+    **adduser**
+        Adds a user or a list of users to the group.
+
+
+    **removeuser**
+        Removes a user or a list of users from the group.
+
+**Options:**
+
+
+    **-r, --reserved**
+        Create a system group.
+
+    **-g, --gid=gid**
+        GID for a new group.
+

@@ -30,22 +30,26 @@
 # Authors: Roman Rakus <rrakus@redhat.com>
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
+"""
+LMI account provider client library.
+
+This set of functions can create, modify and delete users and groups on
+a remote managed system.
+"""
+
 from lmi.scripts.common.errors import LmiFailed
 from lmi.shell.LMIInstanceName import LMIInstanceName
 from lmi.scripts.common import get_logger
 import pywbem
+import lmi.scripts.common
 
 LOG = get_logger(__name__)
-
-"""
-LMI account provider client library.
-"""
-import lmi.scripts.common
 
 def list_users(ns):
     """
     Yield all users on the system.
-    :rparam: generator of LMIInstances.
+
+    :rtype: generator of LMIInstances.
     """
     for user in ns.LMI_Account.instances():
             yield user
@@ -53,7 +57,8 @@ def list_users(ns):
 def list_groups(ns):
     """
     Yield all groups on the system.
-    :rparam: generator of LMIInstances.
+
+    :rtype: generator of LMIInstances.
     """
     for group in ns.LMI_Group.instances():
             yield group
@@ -62,6 +67,7 @@ def get_user(ns, username):
     """
     Return LMIInstance of the user. This function raises LmiFailed if the user
     is not found.
+
     :type username: string
     :param username: Name of the user.
     :rtype: LMIInstance of LMI_Account
@@ -87,6 +93,7 @@ def get_group(ns, groupname):
     """
     Return LMIInstance of the group. This function raises LmiFailed if the user
     is not found.
+
     :type groupname: string
     :param groupname: Name of the group.
     :rtype: LMIInstance of LMI_Group
@@ -108,6 +115,7 @@ def delete_user(ns, user,
         force=False):
     """
     Delete a user.
+
     :type user: LMIInstance or LMIInstanceName of LMI_Account.
     :param user: User to delete.
     :type no_delete_group: boolean
@@ -143,6 +151,7 @@ def create_user(ns, name,
         ):
     """
     Create a new user.
+
     :type name: string
     :param name: Name of the user.
     :type gecos: string
@@ -207,6 +216,7 @@ def create_user(ns, name,
 def get_users_in_group(ns, group):
     """
     Yields users in given group.
+
     :type group: LMIInstance or LMIInstanceName of LMI_Group.
     :param group: The group to inspect.
     :returns: Generator of LMIInstances of LMI_Account.
@@ -220,6 +230,7 @@ def get_users_in_group(ns, group):
 def create_group(ns, group, reserved=False, gid=None):
     """
     Create a new group on the system.
+
     :type group: string
     :param group: Name of the group.
     :type reserved: boolean
@@ -256,6 +267,7 @@ def create_group(ns, group, reserved=False, gid=None):
 def delete_group(ns, group):
     """
     Delete a group.
+
     :type group: LMIInstance or LMIInstanceName of LMI_Group.
     :param group: The group to delete.
     """
@@ -265,6 +277,7 @@ def delete_group(ns, group):
 def is_in_group(group, user):
     """
     Return True if user is in group
+
     :type group: LMIInstance or LMIInstanceName of LMI_Group.
     :param group: The group.
     :type user: LMIInstance or LMIInstanceName of LMI_Account.
@@ -286,6 +299,7 @@ def is_in_group(group, user):
 def add_to_group(ns, group, users):
     """
     Add users to a group.
+
     :type group: LMIInstance or LMIInstanceName of LMI_Group.
     :param group: The group.
     :type users: List (or generator) of LMIInstances or LMIInstanceNames of
@@ -309,6 +323,7 @@ def add_to_group(ns, group, users):
 def remove_from_group(ns, group, users):
     """
     Remove users from a group.
+
     :type group: LMIInstance or LMIInstanceName of LMI_Group.
     :param group: The group.
     :type users: List (or generator) of LMIInstances or LMIInstanceNames of
