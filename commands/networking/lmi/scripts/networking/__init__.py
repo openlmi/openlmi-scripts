@@ -32,9 +32,20 @@ LMI networking provider client library.
 from lmi.scripts.common.errors import LmiFailed, LmiInvalidOptions
 from lmi.scripts.common import get_logger
 
-import IPy
+import util
 
 LOG = get_logger(__name__)
+
+def _gateway_check(gateway, version):
+    if gateway is None:
+        return None
+    try:
+        gw, gateway_version = util.address_check(gateway)
+    except util.IPCheckFailed:
+        raise LmiInvalidOptions("Invalid gateway: %s" % gateway)
+    if gateway_version != version:
+        raise LmiInvalidOptions("Invalid gateway, should be IPv%d: %s" % (version, gateway))
+    return gw
 
 def get_device_by_name(ns, device_name):
     '''
@@ -382,31 +393,9 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
     :param gateway: default gateway or None
     :type gateway: str or None
     '''
-    # Check the IP address
-    try:
-        address_int, version = IPy.parseAddress(address)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid IP address: %s" % address)
-    address = IPy.intToIp(address_int, version)
-
-    # Check the prefix
-    try:
-        prefix_int = int(prefix)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    if (version == 4 and prefix_int > 32) or (version == 6 and prefix_int > 128):
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    prefix = str(prefix_int)
-
-    # Check the gateway
-    if gateway:
-        try:
-            gateway_int, gateway_version = IPy.parseAddress(gateway)
-        except ValueError:
-            raise LmiInvalidOptions("Invalid gateway: %s" % gateway)
-        if gateway_version != version:
-            raise LmiInvalidOptions("Invalid gateway, should be IPv%d: %s" % (version, gateway))
-        gateway = IPy.intToIp(gateway_int, version)
+    address, version = util.address_check(address)
+    prefix = util.prefix_check(prefix, version)
+    gateway = _gateway_check(gateway, version)
 
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
@@ -414,9 +403,9 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
         if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
             settingData.IPAddresses.append(address)
             if version == 4:
-                settingData.SubnetMasks.append(IPy.IP("0.0.0.0/%s" % prefix).netmask().strFullsize())
+                settingData.SubnetMasks.append(util.netmask_from_prefix(prefix))
             else:
-                settingData.IPv6SubnetPrefixLengths.append(prefix)
+                settingData.IPv6SubnetPrefixLengths.append(str(prefix))
             if gateway:
                 settingData.GatewayAddresses.append(gateway)
             else:
@@ -434,12 +423,7 @@ def remove_ip_address(ns, setting, address):
     :param LMI_IPAssignmentSettingData setting: network setting.
     :param str address: IPv4 or IPv6 address.
     '''
-    # Check the IP address
-    try:
-        address_int, version = IPy.parseAddress(address)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid IP address: %s" % address)
-    address = IPy.intToIp(address_int, version)
+    address, version = util.address_check(address)
 
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
@@ -447,7 +431,7 @@ def remove_ip_address(ns, setting, address):
         if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
             i = 0
             while i < len(settingData.IPAddresses):
-                if settingData.IPAddresses[i] == address:
+                if util.compare_address(settingData.IPAddresses[i], address):
                     del settingData.IPAddresses[i]
                     if version == 4:
                         del settingData.SubnetMasks[i]
@@ -471,31 +455,9 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
     :param gateway: default gateway or None
     :type gateway: str or None
     '''
-    # Check the IP address
-    try:
-        address_int, version = IPy.parseAddress(address)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid IP address: %s" % address)
-    address = IPy.intToIp(address_int, version)
-
-    # Check the prefix
-    try:
-        prefix_int = int(prefix)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    if (version == 4 and prefix_int > 32) or (version == 6 and prefix_int > 128):
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    prefix = str(prefix_int)
-
-    # Check the gateway
-    if gateway:
-        try:
-            gateway_int, gateway_version = IPy.parseAddress(gateway)
-        except ValueError:
-            raise LmiInvalidOptions("Invalid gateway: %s" % gateway)
-        if gateway_version != version:
-            raise LmiInvalidOptions("Invalid gateway, should be IPv%d: %s" % (version, gateway))
-        gateway = IPy.intToIp(gateway_int, version)
+    address, version = util.address_check(address)
+    prefix = util.prefix_check(prefix, version)
+    gateway = _gateway_check(gateway, version)
 
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
@@ -503,7 +465,7 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
         if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
             settingData.IPAddresses = [address]
             if version == 4:
-                settingData.SubnetMasks = [IPy.IP("0.0.0.0/%s" % prefix).netmask().strFullsize()]
+                settingData.SubnetMasks = [util.netmask_from_prefix(prefix)]
             else:
                 settingData.IPv6SubnetPrefixLengths = [prefix]
             if gateway:
