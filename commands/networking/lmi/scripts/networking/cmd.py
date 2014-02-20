@@ -28,6 +28,8 @@ Usage:
     %(cmd)s deactivate <caption> [<device_name>]
     %(cmd)s enslave <master_caption> <device_name>
     %(cmd)s address (--help | <operation> [<args>...])
+    %(cmd)s route (--help | <operation> [<args>...])
+    %(cmd)s dns (--help | <operation> [<args>...])
 
 Commands:
     device           Display information about network devices.
@@ -36,6 +38,8 @@ Commands:
     deactivate       Deactivate the setting.
     enslave          Create new slave setting.
     address          Manipulate the list of IP addresses on given setting.
+    route            Manipulate the list of static routes on given setting.
+    dns              Manipulate the list of DNS servers on given setting.
 """
 
 from lmi.scripts.common import command
@@ -403,6 +407,108 @@ class Address(command.LmiCommandMultiplexer):
     COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress, 'replace': ReplaceAddress }
     OWN_USAGE = True
 
+
+## ROUTE
+
+class AddRoute(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address, prefix, metric, next_hop):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return add_static_route(ns, setting, address, prefix, metric, next_hop)
+
+class RemoveRoute(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return remove_static_route(ns, setting, address)
+
+class ReplaceRoute(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address, prefix, metric, next_hop):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return replace_static_route(ns, setting, address, prefix, metric, next_hop)
+
+class Route(command.LmiCommandMultiplexer):
+    """
+    Manage the list of static routes.
+
+    Usage:
+        %(cmd)s add <caption> <address> <prefix> [<metric>] [<next_hop>]
+        %(cmd)s remove <caption> <address>
+        %(cmd)s replace <caption> <address> <prefix> [<metric>] [<next_hop>]
+
+    Commands:
+        add      Add static route to the existing list of static routes.
+        remove   Remove given static route from the list of static route.
+        replace  Replace all static routes with new route.
+    """
+    COMMANDS = { 'add' : AddRoute, 'remove' : RemoveRoute, 'replace': ReplaceRoute }
+    OWN_USAGE = True
+
+## DNS
+
+class AddDns(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return add_dns_server(ns, setting, address)
+
+class RemoveDns(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return remove_dns_server(ns, setting, address)
+
+class ReplaceDns(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return replace_dns_server(ns, setting, address)
+
+class Dns(command.LmiCommandMultiplexer):
+    """
+    Manage the list of DNS servers.
+
+    Usage:
+        %(cmd)s add <caption> <address>
+        %(cmd)s remove <caption> <address>
+        %(cmd)s replace <caption> <address>
+
+    Commands:
+        add      Add DNS server to the existing list of DNS servers for given setting.
+        remove   Remove given DNS server from the list of DNS servers for given setting.
+        replace  Replace all DNS servers with given DNS server for given setting.
+    """
+    COMMANDS = { 'add': AddDns, 'remove': RemoveDns, 'replace': ReplaceDns }
+    OWN_USAGE = True
+
+class Enslave(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, master_caption, device_name):
+        setting = get_setting_by_caption(ns, master_caption)
+        device = get_device_by_name(ns, device_name)
+        return enslave(ns, setting, device)
+
+    def transform_options(self, options):
+        """
+        Activate takes only one caption and device, get only one element
+        from the list for better readability.
+        """
+        if '<device_name>' in options and len(options['<device_name>']) > 0:
+            options['<device_name>'] = options['<device_name>'][0]
+
 Networking = command.register_subcommands(
     'Networking', __doc__,
     {
@@ -412,5 +518,7 @@ Networking = command.register_subcommands(
         'deactivate': Deactivate,
         'enslave':    Enslave,
         'address':    Address,
+        'route':      Route,
+        'dns':        Dns
     },
 )

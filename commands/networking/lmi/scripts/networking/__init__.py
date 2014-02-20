@@ -318,6 +318,16 @@ def is_setting_active(ns, setting):
             return True
     return False
 
+def get_static_routes(ns, setting):
+    '''
+    Return list of static routes for given setting
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :return: list of static routes
+    :rtype: list of LMI_IPRouteSettingData
+    '''
+    return setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass="LMI_IPRouteSettingData")
+
 def activate(ns, setting, device=None):
     '''
     Activate network setting on given device
@@ -496,4 +506,152 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
             settingData.push()
     if not found:
         raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type.")
+    return 0
+
+
+def add_static_route(ns, setting, address, prefix, metric=None, next_hop=None):
+    '''
+    Add a static route to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    :param int prefix: network prefix.
+    :param metric: metric for the route or None
+    :type gateway: int or None
+    :param next_hop: IPv4 or IPv6 address for the next hop of the route or None
+    :type next_hop: str or None
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+    prefix = util.prefix_check(prefix, version)
+
+    if version == 4:
+        result = setting.LMI_AddStaticIPRoute(
+                AddressType=setting.LMI_AddStaticIPRoute.AddressTypeValues.IPv4,
+                DestinationAddress=address,
+                DestinationMask=util.netmask_from_prefix(prefix))
+    elif version == 6:
+        result = setting.LMI_AddStaticIPRoute(
+                AddressType=setting.LMI_AddStaticIPRoute.AddressTypeValues.IPv6,
+                DestinationAddress=address,
+                PrefixLength=str(prefix))
+    else:
+        raise LmiInvalidOptions("Invalid IP address: %s" % address)
+    if result.rval != 0:
+        raise LmiFailed("Unable to add static route: %s" % (result.errorstr or "unknown error"))
+    route = result.rparams["Route"].to_instance()
+    if metric is not None or next_hop is not None:
+        if metric is not None:
+            route.RouteMetric = metric
+        if next_hop is not None:
+            route.NextHop = next_hop
+        route.push()
+    return 0
+
+def remove_static_route(ns, setting, address):
+    '''
+    Remove static route to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    found = False
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass="LMI_IPRouteSettingData"):
+        if util.compare_address(settingData.DestinationAddress, address):
+            found = True
+            settingData.delete()
+    if not found:
+        raise LmiInvalidOptions("No such route: %s" % address)
+
+    return 0
+
+def replace_static_route(ns, setting, address, prefix, metric=None, next_hop=None):
+    '''
+    Remove all static routes and add given static route to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    :param int prefix: network prefix.
+    :param metric: metric for the route or None
+    :type gateway: int or None
+    :param next_hop: IPv4 or IPv6 address for the next hop of the route or None
+    :type next_hop: str or None
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    # this is workaround for crashing provider, see:
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1067487
+    while 1:
+        settingData = setting.first_associator(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass="LMI_IPRouteSettingData")
+        if settingData is None:
+            break
+        settingData.delete()
+    return add_static_route(ns, setting, address, prefix, metric, next_hop)
+
+def add_dns_server(ns, setting, address):
+    '''
+    Add a dns server to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
+        if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
+            settingData.DNSServerAddresses.append(address)
+            settingData.push()
+            break
+    else:
+        raise LmiInvalidOptions("Can't assign DNS address to setting %s, invalid setting type" % setting.Caption)
+    return 0
+
+def remove_dns_server(ns, setting, address):
+    '''
+    Remove dns server from given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
+        if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
+            for i in range(len(settingData.DNSServerAddresses)):
+                if util.compare_address(settingData.DNSServerAddresses[i], address):
+                    del settingData.DNSServerAddresses[i]
+                    settingData.push()
+                    return 0
+            else:
+                raise LmiInvalidOptions("No DNS with address %s found for setting %s" % (address, setting.Caption))
+    else:
+        raise LmiInvalidOptions("Can't remove DNS address to setting %s, invalid setting type" % setting.Caption)
+    return 0
+
+def replace_dns_server(ns, setting, address):
+    '''
+    Remove all dns servers and add given dns server to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
+        if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
+            settingData.DNSServerAddresses = [address]
+            settingData.push()
+            return 0
+    else:
+        raise LmiInvalidOptions("Can't remove DNS address to setting %s, invalid setting type" % setting.Caption)
     return 0
