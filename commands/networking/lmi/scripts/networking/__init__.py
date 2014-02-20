@@ -326,14 +326,23 @@ def activate(ns, setting, device=None):
     :param device: Device to activate the setting on or None for autodetection
     :type device: LMI_IPNetworkConnection or None
     '''
-    if device is None:
-        device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
-        if device is None:
-            raise LmiFailed("No device is associated with given connection.")
     service = ns.LMI_IPConfigurationService.first_instance()
-    result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
-            IPNetworkConnection=device,
-            Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32768)
+    devices = []
+    if device is not None:
+        devices.append(device)
+    else:
+        devices = get_applicable_devices(ns, setting)
+
+    if len(devices) == 0:
+        raise LmiFailed("No device is associated with given connection.")
+
+    for device in devices:
+        LOG().debug('Activating setting %s on device %s', setting.Caption, device.ElementName)
+        result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
+                IPNetworkConnection=device,
+                Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32768)
+        if result.errorstr:
+            raise LmiFailed("Unable to activate setting: %s" % result.errorstr)
     return 0
 
 def deactivate(ns, setting, device=None):
@@ -344,14 +353,25 @@ def deactivate(ns, setting, device=None):
     :param device: Device to deactivate the setting on
     :type device: LMI_IPNetworkConnection or None
     '''
-    if device is None:
-        device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
-        if device is None:
-            raise LmiFailed("No device is associated with given connection.")
     service = ns.LMI_IPConfigurationService.first_instance()
-    return service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
-            IPNetworkConnection=device, #ns.LMI_IPNetworkConnection.first_instance(),
-            Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
+    devices = []
+    if device is not None:
+        devices.append(device)
+    else:
+        devices = get_applicable_devices(ns, setting)
+
+    if len(devices) == 0:
+        raise LmiFailed("No device is associated with given connection.")
+
+    for device in devices:
+        LOG().debug('Deactivating setting %s on device %s', setting.Caption, device.ElementName)
+        result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
+                IPNetworkConnection=device,
+                Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
+        if result.errorstr:
+            raise LmiFailed("Unable to deactivate setting: %s" % result.errorstr)
+    return 0
+
 
 def create_setting(ns, caption, device, type, ipv4method, ipv6method):
     '''
