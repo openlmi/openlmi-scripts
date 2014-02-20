@@ -43,6 +43,8 @@ Usage:
     %(cmd)s partition-table <cmd> [<args> ...]
     %(cmd)s raid <cmd> [<args> ...]
     %(cmd)s vg <cmd> [<args> ...]
+    %(cmd)s thinpool <cmd> [<args> ...]
+    %(cmd)s thinlv <cmd> [<args> ...]
     %(cmd)s depends [ --deep ] [ <device> ...]
     %(cmd)s list [ <device> ...]
     %(cmd)s provides [ --deep ] [ <device> ...]
@@ -65,6 +67,10 @@ Commands:
     raid        MD RAID management.
 
     vg          Volume Group management.
+
+    thinpool    Thin Pool management.
+
+    thinlv      Thin Logical Volume management.
 
     list        List short information about given device. If no devices
                 are given, all devices are listed.
@@ -133,6 +139,8 @@ import lmi.scripts.storage.cmd.partition
 import lmi.scripts.storage.cmd.partition_table
 import lmi.scripts.storage.cmd.raid
 import lmi.scripts.storage.cmd.vg
+import lmi.scripts.storage.cmd.thinpool
+import lmi.scripts.storage.cmd.thinlv
 
 LOG = get_logger(__name__)
 
@@ -403,6 +411,8 @@ Storage = command.register_subcommands(
           'partition-table': lmi.scripts.storage.cmd.partition_table.PartitionTable,
           'raid'    : lmi.scripts.storage.cmd.raid.Raid,
           'vg'      : lmi.scripts.storage.cmd.vg.VG,
+          'thinpool': lmi.scripts.storage.cmd.thinpool.ThinPool,
+          'thinlv'  : lmi.scripts.storage.cmd.thinlv.ThinLV,
         },
     )
 

@@ -62,6 +62,17 @@ def get_lvs(ns, vgs=None):
             if not lv.ThinlyProvisioned:
                 yield lv
 
+def get_tlvs(ns, tps=None):
+    if tps:
+        for tp in tps:
+            tp = common.str2vg(ns, tp)
+            for tlv in get_vg_lvs(ns, tp):
+                yield tlv
+    else:
+        for tlv in ns.LMI_LVStorageExtent.instances():
+            if tlv.ThinlyProvisioned:
+                yield tlv
+
 def create_lv(ns, vg, name, size):
     """
     Create new Logical Volume on given Volume Group.
@@ -88,6 +99,16 @@ def create_lv(ns, vg, name, size):
                 % (values.value_name(ret),))
     return outparams['TheElement']
 
+def create_tlv(ns, tp, name, size):
+    tp = common.str2vg(ns, tp)
+    args = {'ElementName':name,
+            'ThinPool':tp,
+            'Size':size}
+    service = ns.LMI_StorageConfigurationService.first_instance()
+    (ret, outparams, err) = service.SyncCreateOrModifyThinLV(**args)
+    if ret != 0:
+        raise LmiFailed("Cannot create thin LV: %s." % (err if err else ret))
+    return outparams['TheElement']
 
 def delete_lv(ns, lv):
     """
@@ -172,6 +193,16 @@ def create_vg(ns, devices, name, extent_size=None):
 
     return outparams['Pool']
 
+def create_tp(ns, name, vg, size):
+    vg = common.str2vg(ns, vg)
+    args = {'InPool':vg,
+            'ElementName':name,
+            'Size':size}
+    service = ns.LMI_StorageConfigurationService.first_instance()
+    (ret, outparams, err) = service.SyncCreateOrModifyThinPool(**args)
+    if ret != 0:
+        raise LmiFailed("Cannot create thin pool: %s." % (err if err else ret))
+    return outparams['Pool']
 
 def delete_vg(ns, vg):
     """
@@ -221,3 +252,33 @@ def get_vg_pvs(ns, vg):
     """
     vg = common.str2vg(ns, vg)
     return vg.associators(AssocClass="LMI_VGAssociatedComponentExtent")
+
+def get_vg_tps(ns, vg):
+    """
+    Return Thin Pools of given Volume Group.
+
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: Volume Group to examine.
+    :rtype: list of LMIInstance/CIM_StoragePool
+    """
+    vg = common.str2vg(ns, vg)
+    return vg.associators(AssocClass="LMI_VGAllocatedFromStoragePool")
+
+def get_tps(ns):
+    """
+    Retrieve list of all thin pools on the system.
+
+    :rtype: list of LMIInstance/LMI_VGStoragePool
+    """
+    LOG().debug("get_vgs: Loading list of all thin pools.")
+    for vg in ns.LMI_VGStoragePool.instances():
+        if vg.SpaceLimitDetermination:
+            yield vg
+
+def get_tp_vgs(ns, tp):
+    """
+    Return Volume Groups of given Thin Pool.
+
+    Alias for get_vg_tps.
+    """
+    return get_vg_tps(ns, tp)

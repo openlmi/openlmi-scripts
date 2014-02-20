@@ -176,6 +176,30 @@ def vg_show(ns, vg, human_friendly):
     lvnames = [lv.Name for lv in lvs]
     yield("Logical Volumes", " ".join(lvnames))
 
+    tps = lvm.get_vg_tps(ns, vg)
+    tpnames = [tp.Name for tp in tps]
+    yield("Thin Pools", " ".join(tpnames))
+
+def tp_show(ns, tp, human_friendly):
+    yield("Type", "Thin Pool")
+    tp = common.str2vg(ns, tp)
+    yield("InstanceID", tp.InstanceID)
+    yield("ElementName", tp.ElementName)
+    yield("Extent Size", common.size2str(tp.ExtentSize, human_friendly))
+    yield("Total Size", common.size2str(tp.TotalManagedSpace, human_friendly))
+    yield("Total Extents", tp.TotalExtents)
+    yield("Free Space", common.size2str(tp.RemainingManagedSpace,
+            human_friendly))
+    yield("Free Extents", tp.RemainingExtents)
+
+    vgs = lvm.get_tp_vgs(ns, tp)
+    vgnames = [vg.Name for vg in vgs]
+    yield("Volume Group", " ".join(vgnames))
+
+    lvs = lvm.get_vg_lvs(ns, tp)
+    lvnames = [lv.Name for lv in lvs]
+    yield("Logical Volumes", " ".join(lvnames))
+
 def lv_show(ns, lv, human_friendly):
     """
     Print extended information about the Logical Volume.
@@ -196,6 +220,25 @@ def lv_show(ns, lv, human_friendly):
 
     for line in device_show_data(ns, lv, human_friendly):
         yield line
+
+def tlv_show(ns, tlv, human_friendly):
+    """
+    Print extended information about the Thin Logical Volume.
+
+    :type tlv: LMIInstance/LMI_LVStorageExtent or string
+    :param tlv: Thin Logical Volume to show.
+    """
+    tlv = common.str2device(ns, tlv)
+    yield("Type", "Thin Logical Volume")
+    for line in device_show_device(ns, tlv, human_friendly):
+        yield line
+
+    tp = lvm.get_lv_vg(ns, tlv)
+    yield("Thin Pool", tp.ElementName)
+
+    vgs = lvm.get_tp_vgs(ns, tp)
+    vgnames = [vg.Name for vg in vgs]
+    yield("Volume Group", " ".join(vgnames))
 
 def device_show_device(ns, device, human_friendly):
     """
