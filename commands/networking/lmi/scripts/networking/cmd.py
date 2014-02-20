@@ -22,34 +22,20 @@
 Networking service management.
 
 Usage:
-    %(cmd)s list (device [<device_name> ...] | setting [<caption> ...])
-    %(cmd)s show (device [<device_name> ...] | setting [<caption> ...])
+    %(cmd)s device (--help | show [<device_name> ...] | list [<device_name> ...])
+    %(cmd)s setting (--help | <operation> [<args>...])
     %(cmd)s activate <caption> [<device_name>]
     %(cmd)s deactivate <caption> [<device_name>]
-    %(cmd)s create <caption> <device_name> [(--ethernet | --bridging | --bonding)]
-        [(--ipv4 <ipv4_method>)] [(--ipv6 <ipv6_method>)]
-    %(cmd)s delete <caption>
     %(cmd)s enslave <master_caption> <device_name>
     %(cmd)s address (--help | <operation> [<args>...])
 
 Commands:
-    list             Prints a list of devices or settings.
-    show             Show detailed information about device or setting.
-    activate         Activates setting on given network device.
-    deactivate       Deactivates the setting.
-    create           Create new setting.
-    delete           Delete existing setting.
+    device           Display information about network devices.
+    setting          Manage the network settings.
+    activate         Activate setting on given network device.
+    deactivate       Deactivate the setting.
     enslave          Create new slave setting.
     address          Manipulate the list of IP addresses on given setting.
-
-Options:
-    --ethernet  Create ethernet setting [default].
-    --bridging  Create bridging master setting.
-    --bonding   Create bonding master setting.
-    --ipv4 (disabled | static | dhcp)
-                IPv4 method [default: dhcp].
-    --ipv6 (disabled | static | dhcpv6 | stateless)
-                IPv6 method [default: stateless].
 """
 
 from lmi.scripts.common import command
@@ -86,7 +72,7 @@ def cmd_show_devices(ns, device_names=None):
             yield ("Available Setting", setting.Caption)
 
 
-class DeviceLister(command.LmiLister):
+class ListDevice(command.LmiLister):
     CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_devices'
     COLUMNS = ('ElementName','OperatingStatus','MAC Address')
     def transform_options(self, options):
@@ -96,9 +82,10 @@ class DeviceLister(command.LmiLister):
         """
         options['<device_names>'] = options.pop('<device_name>')
 
-class DeviceShower(command.LmiLister):
+class ShowDevice(command.LmiLister):
     CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_devices'
     COLUMNS = ('Name', 'Value')
+    FMT_NO_HEADINGS = True
 
     def transform_options(self, options):
         """
@@ -107,6 +94,20 @@ class DeviceShower(command.LmiLister):
         """
         options['<device_names>'] = options.pop('<device_name>')
 
+class Device(command.LmiCommandMultiplexer):
+    """
+    Display the devices present on the system.
+
+    Usage:
+        %(cmd)s list [<device_name> ...]
+        %(cmd)s show [<device_name> ...]
+
+    Commands:
+        list     List basic information about devices.
+        show     Show detailed information about devices.
+    """
+    COMMANDS = { 'list': ListDevice, 'show': ShowDevice }
+    OWN_USAGE = True
 
 ## SETTING
 
@@ -192,25 +193,6 @@ def cmd_show_settings(ns, captions=None):
         for device in get_applicable_devices(ns, setting):
             yield ("Device", device.ElementName)
 
-class SettingLister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_settings'
-    COLUMNS = ('Caption', 'Type')
-    def transform_options(self, options):
-        """
-        Rename 'caption' option to 'captions' parameter name for better
-        readability.
-        """
-        options['<captions>'] = options.pop('<caption>')
-
-class SettingShower(command.LmiLister):
-    CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_settings'
-    COLUMNS = ('Name', 'Value')
-    def transform_options(self, options):
-        """
-        Rename 'caption' option to 'captions' parameter name for better
-        readability.
-        """
-        options['<captions>'] = options.pop('<caption>')
 
 ## Activation
 
@@ -237,30 +219,6 @@ def cmd_deactivate(ns, caption, device_name):
     else:
         device = None
     return deactivate(ns, setting, device)
-
-## Mutliplexing
-
-class Lister(command.LmiCommandMultiplexer):
-    """
-    List information about devices or settings.
-
-    Usage:
-        %(cmd)s device [<device_name> ...]
-        %(cmd)s setting [<caption> ...]
-    """
-    COMMANDS = { 'device' : DeviceLister, 'setting' : SettingLister }
-    OWN_USAGE = True
-
-class Shower(command.LmiCommandMultiplexer):
-    """
-    Show detailed information about device or setting.
-
-    Usage:
-        %(cmd)s device [<device_name> ...]
-        %(cmd)s setting [<caption> ...]
-    """
-    COMMANDS = { 'device' : DeviceShower, 'setting' : SettingShower }
-    OWN_USAGE = True
 
 class Activate(command.LmiCheckResult):
     EXPECT = 0
@@ -292,7 +250,30 @@ class Deactivate(command.LmiCheckResult):
         if '<device_name>' in options and len(options['<device_name>']) > 0:
             options['<device_name>'] = options['<device_name>'][0]
 
-class Create(command.LmiCheckResult):
+## SETTING
+
+class ListSetting(command.LmiLister):
+    CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_settings'
+    COLUMNS = ('Caption', 'Type')
+    def transform_options(self, options):
+        """
+        Rename 'caption' option to 'captions' parameter name for better
+        readability.
+        """
+        options['<captions>'] = options.pop('<caption>')
+
+class ShowSetting(command.LmiLister):
+    CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_settings'
+    COLUMNS = ('Name', 'Value')
+    FMT_NO_HEADINGS = True
+    def transform_options(self, options):
+        """
+        Rename 'caption' option to 'captions' parameter name for better
+        readability.
+        """
+        options['<captions>'] = options.pop('<caption>')
+
+class CreateSetting(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption, device_name, _ethernet, _bridging, _bonding, _ipv4, _ipv6):
         type = SETTING_TYPE_ETHERNET
@@ -324,7 +305,7 @@ class Create(command.LmiCheckResult):
         if '<device_name>' in options and len(options['<device_name>']) > 0:
             options['<device_name>'] = options['<device_name>'][0]
 
-class Delete(command.LmiCheckResult):
+class DeleteSetting(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption):
         setting = get_setting_by_caption(ns, caption)
@@ -340,6 +321,37 @@ class Delete(command.LmiCheckResult):
         if '<caption>' in options and len(options['<caption>']) > 0:
             options['<caption>'] = options['<caption>'][0]
 
+class Setting(command.LmiCommandMultiplexer):
+    """
+    Manage the network configuration settings.
+
+    Usage:
+        %(cmd)s list [<caption> ...]
+        %(cmd)s show [<caption> ...]
+        %(cmd)s create <caption> <device_name>
+                      [--ethernet | --bridging | --bonding]
+                      [--ipv4 <ipv4_method>]  [--ipv6 <ipv6_method>]
+        %(cmd)s delete <caption>
+
+    Commands:
+        list     List basic information about settings.
+        show     Show detailed information about settings.
+        create   Create new setting.
+        delete   Delete existing setting.
+
+    Options:
+        --ethernet  Create ethernet setting [default].
+        --bridging  Create bridging master setting.
+        --bonding   Create bonding master setting.
+        --ipv4 (disabled | static | dhcp)
+                    IPv4 method [default: dhcp].
+        --ipv6 (disabled | static | dhcpv6 | stateless)
+                    IPv6 method [default: stateless].
+    """
+    COMMANDS = { 'list': ListSetting, 'show': ShowSetting, 'create' : CreateSetting, 'delete' : DeleteSetting }
+    OWN_USAGE = True
+
+# ADDRESS
 
 class AddAddress(command.LmiCheckResult):
     EXPECT = 0
@@ -379,19 +391,17 @@ class Address(command.LmiCommandMultiplexer):
         remove   Remove given IP address from the list of addresses.
         replace  Replace all IP address with new address.
     """
-
     COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress, 'replace': ReplaceAddress }
     OWN_USAGE = True
 
 Networking = command.register_subcommands(
     'Networking', __doc__,
     {
-        'list':       Lister,
-        'show':       Shower,
+        'device':     Device,
+        'setting':    Setting,
         'activate':   Activate,
         'deactivate': Deactivate,
-        'create':     Create,
-        'delete':     Delete,
-        'address':    Address
+        'enslave':    Enslave,
+        'address':    Address,
     },
 )
