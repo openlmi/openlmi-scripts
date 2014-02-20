@@ -125,10 +125,24 @@ SETTING_TYPE_DESC = {
 }
 
 SETTING_IP_METHOD_DESC = {
+    SETTING_IP_METHOD_DISABLED: 'Disabled',
     SETTING_IP_METHOD_DHCP: 'DHCP',
     SETTING_IP_METHOD_STATIC: 'Static',
     SETTING_IP_METHOD_STATELESS: 'Stateless',
     SETTING_IP_METHOD_DHCPv6: 'DHCPv6'
+}
+
+SETTING_IPv4_METHODS = {
+    "disabled": SETTING_IP_METHOD_DISABLED,
+    "dhcp": SETTING_IP_METHOD_DHCP,
+    "static": SETTING_IP_METHOD_STATIC
+}
+
+SETTING_IPv6_METHODS = {
+    "disabled": SETTING_IP_METHOD_DISABLED,
+    "dhcpv6": SETTING_IP_METHOD_DHCPv6,
+    "static": SETTING_IP_METHOD_STATIC,
+    "stateless": SETTING_IP_METHOD_STATELESS
 }
 
 
@@ -294,13 +308,14 @@ class CreateSetting(command.LmiCheckResult):
             type = SETTING_TYPE_BRIDGE_MASTER
         elif _bonding:
             type = SETTING_TYPE_BOND_MASTER
-        ipv4_method = SETTING_IP_METHOD_DISABLED
-        ipv6_method = SETTING_IP_METHOD_DISABLED
-        for k, v in SETTING_IP_METHOD_DESC.items():
-            if v.lower() == _ipv4:
-                ipv4_method = k
-            if v.lower() == _ipv6:
-                ipv6_method = k
+
+        if _ipv4 not in SETTING_IPv4_METHODS:
+            raise errors.LmiInvalidOptions("Invalid --ipv4 option: %s" % _ipv4)
+        if _ipv6 not in SETTING_IPv6_METHODS:
+            raise errors.LmiInvalidOptions("Invalid --ipv6 option: %s" % _ipv4)
+
+        ipv4_method = SETTING_IPv4_METHODS[_ipv4]
+        ipv6_method = SETTING_IPv6_METHODS[_ipv6]
 
         device = get_device_by_name(ns, device_name)
         if device is None:
