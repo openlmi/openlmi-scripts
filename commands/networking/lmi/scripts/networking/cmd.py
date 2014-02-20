@@ -130,8 +130,6 @@ SETTING_IP_METHOD_DESC = {
 
 def cmd_list_settings(ns, captions=None):
     for setting in list_settings(ns, captions):
-        #import ipdb
-        #ipdb.set_trace()
         yield (setting.Caption, SETTING_TYPE_DESC.get(get_setting_type(ns, setting), 'Unknown'))
 
 def cmd_show_settings(ns, captions=None):
@@ -179,7 +177,7 @@ def cmd_show_settings(ns, captions=None):
                     gateway = subsetting.GatewayAddresses[i] if i < len(subsetting.GatewayAddresses) else None
 
                     if i < len(subsetting.GatewayAddresses) and len(subsetting.GatewayAddresses[i]) > 0:
-                        yield ("%s Address/Netmask Gateway" % version, "%s/%s %s" % (subsetting.IPAddresses[i], mask, subsetting.GatewayAddresses[i]))
+                        yield ("%s Address" % version, "%s/%s %s" % (subsetting.IPAddresses[i], mask, subsetting.GatewayAddresses[i]))
                     else:
                         yield ("%s Address" % version, "%s/%s" % (subsetting.IPAddresses[i], mask))
 
@@ -190,9 +188,20 @@ def cmd_show_settings(ns, captions=None):
                 yield ("Master Setting", subsetting.Caption)
             elif subsetting.classname in ('LMI_BridgingSlaveSettingData', 'LMI_BondingSlaveSettingData'):
                 yield ("Slave Setting", subsetting.Caption)
-        for device in get_applicable_devices(ns, setting):
-            yield ("Device", device.ElementName)
+        # Don't show device for bridge and bond master
+        if setting.classname not in ('LMI_BondingMasterSettingData', 'LMI_BridgingMasterSettingData'):
+            for device in get_applicable_devices(ns, setting):
+                yield ("Device", device.ElementName)
+        if is_setting_active(ns, setting):
+            yield ("Status", "Active")
+        else:
+            yield ("Status", "Inactive")
 
+        for route in get_static_routes(ns, setting):
+            if route.AddressType == ns.LMI_IPRouteSettingData.AddressTypeValues.IPv4:
+                yield ("IPv4 Static Route", "%s/%s %d %s" % (route.DestinationAddress, route.DestinationMask, route.RouteMetric, route.NextHop))
+            else:
+                yield ("IPv6 Static Route", "%s/%s %d %s" % (route.DestinationAddress, route.PrefixLength, route.RouteMetric, route.NextHop))
 
 ## Activation
 

@@ -271,7 +271,41 @@ def get_applicable_devices(ns, setting):
     :return: devices that the setting can be applied to
     :rtype: list of LMI_IPNetworkConnection
     '''
+
+    # Handle bridging/bonding master differently
+    if setting.classname in ('LMI_BridgingMasterSettingData', 'LMI_BondingMasterSettingData'):
+        # return bond/bridge device in the bond/bridge setting is active
+        interface_name = setting.InterfaceName
+        device = ns.LMI_IPNetworkConnection.first_instance({'ElementName': interface_name})
+        if device:
+            return [device]
+        # return all devices associated with slave settings for bridge/bond if not active
+        slave_class = None
+        if setting.classname == 'LMI_BridgingMasterSettingData':
+            slave_class = 'LMI_BridgingSlaveSettingData'
+        elif setting.classname == 'LMI_BondingMasterSettingData':
+            slave_class = 'LMI_BondingSlaveSettingData'
+        if slave_class is not None:
+            devices = []
+        for slave_setting in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass=slave_class):
+            devices += slave_setting.associators(AssocClass="LMI_IPElementSettingData")
+        return devices
+
     return setting.associators(AssocClass="LMI_IPElementSettingData")
+
+def is_setting_active(ns, setting):
+    '''
+    Return true if the setting is currently active
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :retval True: setting is currently active
+    :retval False: setting is not currently active
+    :rtype: bool
+    '''
+    for esd in setting.references(ResultClass="LMI_IPElementSettingData"):
+        if esd.IsCurrent == ns.LMI_IPElementSettingData.IsCurrentValues.IsCurrent:
+            return True
+    return False
 
 def activate(ns, setting, device=None):
     '''
