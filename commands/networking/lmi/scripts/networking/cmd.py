@@ -257,8 +257,6 @@ class Activate(command.LmiCheckResult):
         Activate takes only one caption and device, get only one element
         from the list for better readability.
         """
-        if '<caption>' in options and len(options['<caption>']) > 0:
-            options['<caption>'] = options['<caption>'][0]
         if '<device_name>' in options and len(options['<device_name>']) > 0:
             options['<device_name>'] = options['<device_name>'][0]
 
@@ -272,8 +270,6 @@ class Deactivate(command.LmiCheckResult):
         Activate takes only one caption and device, get only one element
         from the list for better readability.
         """
-        if '<caption>' in options and len(options['<caption>']) > 0:
-            options['<caption>'] = options['<caption>'][0]
         if '<device_name>' in options and len(options['<device_name>']) > 0:
             options['<device_name>'] = options['<device_name>'][0]
 
@@ -330,8 +326,6 @@ class CreateSetting(command.LmiCheckResult):
         """
         if '<caption>' in options and len(options['<caption>']) > 0:
             options['<caption>'] = options['<caption>'][0]
-        if '<device_name>' in options and len(options['<device_name>']) > 0:
-            options['<device_name>'] = options['<device_name>'][0]
 
 class DeleteSetting(command.LmiCheckResult):
     EXPECT = 0
