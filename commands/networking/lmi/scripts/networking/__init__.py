@@ -190,17 +190,17 @@ SETTING_TYPE_UNKNOWN = 0
 SETTING_TYPE_ETHERNET = 1
 ''' Configuration for ethernet '''
 
-SETTING_TYPE_BRIDGE_MASTER = 4
-''' Configuration for bridge master '''
-
-SETTING_TYPE_BRIDGE_SLAVE = 40
-''' Configuration for bridge slave'''
-
-SETTING_TYPE_BOND_MASTER = 5
+SETTING_TYPE_BOND_MASTER = 4
 ''' Configuration for bond master '''
 
-SETTING_TYPE_BOND_SLAVE = 50
+SETTING_TYPE_BOND_SLAVE = 40
 ''' Configuration for bond slave '''
+
+SETTING_TYPE_BRIDGE_MASTER = 5
+''' Configuration for bridge master '''
+
+SETTING_TYPE_BRIDGE_SLAVE = 50
+''' Configuration for bridge slave'''
 
 def get_setting_type(ns, setting):
     '''
