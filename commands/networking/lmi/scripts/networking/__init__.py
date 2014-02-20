@@ -415,6 +415,8 @@ def create_setting(ns, caption, device, type, ipv4method, ipv6method):
                                             Type=type,
                                             IPv4Type=ipv4method,
                                             IPv6Type=ipv6method)
+    if result.rval != 0:
+        raise LmiFailed("Unable to create setting: %s" % result.errorstr)
     return 0
 
 def delete_setting(ns, setting):
