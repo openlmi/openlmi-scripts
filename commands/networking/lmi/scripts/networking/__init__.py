@@ -382,6 +382,19 @@ def deactivate(ns, setting, device=None):
             raise LmiFailed("Unable to deactivate setting: %s" % result.errorstr)
     return 0
 
+def enslave(ns, master_setting, device):
+    '''
+    Create slave setting of the master_setting with given device.
+
+    :param LMI_IPAssignmentSettingData master_setting: Master setting to use
+    :param LMI_IPNetworkConnection device: Device to enslave
+    '''
+    capability = device.first_associator(ResultClass="LMI_IPNetworkConnectionCapabilities",
+                                         AssocClass="LMI_IPNetworkConnectionElementCapabilities")
+    result = capability.LMI_CreateSlaveSetting(MasterSettingData=master_setting)
+    if result.rval != 0:
+        raise LmiFailed("Unable to create setting: %s" % result.errorstr)
+    return 0
 
 def create_setting(ns, caption, device, type, ipv4method, ipv6method):
     '''
