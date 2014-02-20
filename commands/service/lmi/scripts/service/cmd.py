@@ -35,6 +35,8 @@ Usage:
     %(cmd)s show <service>
     %(cmd)s start <service>
     %(cmd)s stop <service>
+    %(cmd)s enable <service>
+    %(cmd)s disable <service>
     %(cmd)s restart [--try] <service>
     %(cmd)s reload <service>
     %(cmd)s reload-or-restart [--try] <service>
@@ -56,12 +58,10 @@ Options:
     --disabled  List only disabled services.
     --try       Whether to abandon the operation if the service is not running.
 """
-import re
+import functools
 
 from lmi.scripts import service as srv
 from lmi.scripts.common import command
-
-RE_SUFFIX = re.compile(r'\.service$')
 
 class Lister(command.LmiInstanceLister):
 
@@ -75,7 +75,7 @@ class Lister(command.LmiInstanceLister):
             kind = 'disabled'
 
         columns = [
-                ('Name', lambda i: RE_SUFFIX.sub('', i.Name)),
+                ('Name', lambda i: srv.RE_SUFFIX.sub('', i.Name)),
                 ('Status', lambda i: srv.get_status_string(ns, i))]
         if kind == 'all':
             columns.append(('Enabled', lambda i: srv.get_enabled_string(ns, i)))
@@ -93,6 +93,20 @@ class Start(command.LmiCheckResult):
 class Stop(command.LmiCheckResult):
     CALLABLE = srv.stop_service
     EXPECT = 0
+
+class Enable(command.LmiCheckResult):
+    CALLABLE = srv.enable_service
+    EXPECT = 0
+
+    def transform_options(self, options):
+        options['<enable>'] = True
+
+class Disable(command.LmiCheckResult):
+    CALLABLE = srv.enable_service
+    EXPECT = 0
+
+    def transform_options(self, options):
+        options['<enable>'] = False
 
 class Restart(command.LmiCheckResult):
     CALLABLE = srv.restart_service
@@ -123,7 +137,7 @@ class Show(command.LmiShowInstance):
 
     def execute(self, ns, service):
         columns = (
-                ('Name', lambda i: RE_SUFFIX.sub('', i.Name)),
+                ('Name', lambda i: srv.RE_SUFFIX.sub('', i.Name)),
                 'Caption',
                 ('Enabled', lambda i: srv.get_enabled_string(ns, i)),
                 ('Status', lambda i: srv.get_status_string(ns, i)))
@@ -136,6 +150,8 @@ Service = command.register_subcommands(
         , 'show'    : Show
         , 'start'   : Start
         , 'stop'    : Stop
+        , 'enable'  : Enable
+        , 'disable' : Disable
         , 'restart' : Restart
         , 'reload'  : Reload
         , 'reload-or-restart' : ReloadOrRestart

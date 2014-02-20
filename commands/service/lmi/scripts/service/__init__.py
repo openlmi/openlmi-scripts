@@ -32,6 +32,7 @@ LMI service provider client library.
 """
 
 import pywbem
+import re
 
 from lmi.shell import LMIInstance
 from lmi.shell import LMIInstanceName
@@ -42,6 +43,11 @@ from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 
 SERVICE_KINDS = {'all', 'enabled', 'disabled'}
+
+REQUESTED_STATE_ENABLED = 2
+REQUESTED_STATE_DISABLED = 3
+
+RE_SUFFIX = re.compile(r'\.service$')
 
 def invoke_on_service(ns, method, service, description):
     """
@@ -57,11 +63,13 @@ def invoke_on_service(ns, method, service, description):
     """
     inst = get_service(ns, service)
     service = inst.Name
-    res = getattr(inst, method)()
-    if res == 0:
-        LOG().debug('%s service "%s" on hostname "%s"',
-                description, service, ns.hostname)
-    return res
+    (rval, _, errorstr) = getattr(inst, method)()
+    if rval == 0:
+        LOG().info('%s service "%s".', description, service)
+    elif errorstr:
+        LOG().error('Operation failed on service "%s": %s.',
+                service, errorstr)
+    return rval
 
 def list_services(ns, kind='enabled'):
     """
@@ -97,7 +105,7 @@ def start_service(ns, service):
     :param service: Service name.
     :type service: string or :py:class:`lmi.shell.LMIInstanceName`
     """
-    return invoke_on_service(ns, 'StartService', service, 'started')
+    return invoke_on_service(ns, 'StartService', service, 'Started')
 
 def stop_service(ns, service):
     """
@@ -106,7 +114,7 @@ def stop_service(ns, service):
     :param string service: Service name or instance.
     :type service: string or :py:class:`lmi.shell.LMIInstanceName`
     """
-    return invoke_on_service(ns, 'StopService', service, 'stopped')
+    return invoke_on_service(ns, 'StopService', service, 'Stopped')
 
 def restart_service(ns, service, just_try=False):
     """
@@ -121,7 +129,7 @@ def restart_service(ns, service, just_try=False):
     method_name = 'RestartService'
     if just_try:
         method_name = 'Try' + method_name
-    return invoke_on_service(ns, method_name, service, 'restarted')
+    return invoke_on_service(ns, method_name, service, 'Restarted')
 
 def reload_service(ns, service, force=False, just_try=False):
     """
@@ -142,7 +150,24 @@ def reload_service(ns, service, force=False, just_try=False):
             method_name = 'ReloadOrRestart'
     else:
         method_name = 'Reload'
-    return invoke_on_service(ns, method_name, service, 'reloaded')
+    return invoke_on_service(ns, method_name, service, 'Reloaded')
+
+def enable_service(ns, service, enable=True):
+    """
+    Enable or disable service.
+
+    :param service: Service name or instance.
+    :type service: string or :py:class:`lmi.shell.LMIInstanceName`
+    :param boolean enable: Whether the service should be enabled or
+        disabled. Enabled service is started on system boot.
+    """
+    if enable:
+        method_name = 'TurnServiceOn'
+        description = 'Enabled'
+    else:
+        method_name = 'TurnServiceOff'
+        description = 'Disabled'
+    return invoke_on_service(ns, method_name, service, description)
 
 def get_service(ns, service):
     """
