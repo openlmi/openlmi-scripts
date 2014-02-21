@@ -41,13 +41,14 @@ Commands:
     all        - List installed and available packages.
     installed  - List installed packages.
     available  - List available packages.
-    repos      - List repositories.
+    repos      - List repositories. Only enabled ones are listed by default.
     files      - List files belonging to a package.
 
 Options:
     --allow-duplicates     Print all possible versions of package found.
                            Normally only the newest version is shown.
     --repoid <repository>  List just packages available in given <repository>.
+    --all                  List all repositories.
     --disabled             List only disabled repositories.
     -t --type (file | directory | device | symlink | fifo)
                            List only particular file type.
