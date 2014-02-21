@@ -88,15 +88,20 @@ def list_services(ns, kind='enabled'):
         raise TypeError("kind must be a string")
     if not kind in SERVICE_KINDS:
         raise ValueError("kind must be one of %s" % SERVICE_KINDS)
-    for service in sorted(ns.LMI_Service.instances(), key=lambda i: i.Name):
-        if kind == 'disabled' and service.EnabledDefault != \
-                ns.LMI_Service.EnabledDefaultValues.Disabled:
-            continue
-        if kind == 'enabled' and service.EnabledDefault != \
-                ns.LMI_Service.EnabledDefaultValues.Enabled:
-            # list only enabled
-            continue
-        yield service
+    try:
+        for service in sorted(ns.LMI_Service.instances(client_filtering=True),
+                key=lambda i: i.Name):
+            if kind == 'disabled' and service.EnabledDefault != \
+                    ns.LMI_Service.EnabledDefaultValues.Disabled:
+                continue
+            if kind == 'enabled' and service.EnabledDefault != \
+                    ns.LMI_Service.EnabledDefaultValues.Enabled:
+                # list only enabled
+                continue
+            yield service
+    except pywbem.CIMError as err:
+        raise LmiFailed('Failed to get service "%s": %s'
+                % (service, err.args[1]))
 
 def start_service(ns, service):
     """
@@ -200,6 +205,9 @@ def get_service(ns, service):
     except pywbem.CIMError as err:
         if err.args[0] == pywbem.CIM_ERR_NOT_FOUND:
             raise LmiFailed('No such service "%s".' % service)
+        else:
+            raise LmiFailed('Failed to get service "%s": %s'
+                    % (service, err.args[1]))
 
     raise TypeError("service must be either string or ``LMIInstanceName``")
 
