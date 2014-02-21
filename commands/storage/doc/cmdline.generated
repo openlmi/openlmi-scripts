@@ -3,274 +3,6 @@
 .. !!! This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
 
 
-fs
---
-
-Filesystem and other data format management.
-
-
-**Usage:**
-
-    **lmi** **fs** **list** [\ **--all**\ ] [ \ *<device>*\  ...]
-
-    **lmi** **fs** **create** [ \ **--label**\ =\ *<label>*\  ] \ *<fstype>*\   \ *<device>*\  ...
-
-    **lmi** **fs** **delete** \ *<device>*\  ...
-
-    **lmi** **fs** list-supported
-
-
-
-**Commands:**
-
-
-    **list**
-        List filesystems and and other data formats (RAID metadata, ...)
-        on given devices.
-        If no devices are provided, all filesystems are listed.
-        If --all option is set, all filesystem, including system ones
-        like tmpfs, cgroups, procfs, sysfs etc are listed.
-
-
-    **create**
-        Format device(s) with given filesystem.
-        If more devices are given, the filesystem will span
-        over these devices (currently supported only by btrfs).
-
-        For list of available filesystem types, see output of
-        lmi fs list-supported.
-
-
-    **delete**
-        Delete given filesystem or data format (like partition table,
-        RAID metadata, LUKS, physical volume metadata etc)
-        on given devices.
-
-
-    **list-supported**
-        
-        List supported filesystems, which can be used as
-        lmi fs create <fstype> option.
-
-partition
----------
-
-Partition management.
-
-
-**Usage:**
-
-    **lmi** **partition** **list** [ \ *<device>*\  ...]
-
-    **lmi** **partition** **create** [ \ **--logical**\  | \ **--extended**\  ] \ *<device>*\  [\ *<size>*\ ]
-
-    **lmi** **partition** **delete** \ *<partition>*\  ...
-
-    **lmi** **partition** **show** [ \ *<partition>*\  ...]
-
-
-
-**Commands:**
-
-
-    **list**
-        List available partitions on given devices.
-        If no devices are provided, all partitions are listed.
-
-
-    **create**
-        Create a partition on given device.
-
-        If no size is given, the resulting partition will occupy the
-        largest available space on disk.
-
-        The command automatically creates extended and logical
-        partitions using these rules:
-
-        * If no partition type (logical or extended) is provided and
-          MS-DOS partition is requested and there is extended partition
-          already on the device, a logical partition is created.
-
-        * If there is no extended partition on the device and there are
-          at most two primary partitions on the device, primary
-          partition is created.
-
-        * If there is no extended partition and three primary partitions
-          already exist, new extended partition with all remaining space
-          is created and a logical partition with requested size is
-          created.
-
-
-    **delete**
-        Delete given partitions.
-
-
-    **show**
-        Show detailed information about given partitions. If no
-        partitions are provided, all of them are displayed.
-
-**Options:**
-
-
-    **size**
-        Size of the partition in sectors.
-
-    **--logical**
-        Override the automatic behavior and request logical partition.
-
-    **--extended**
-        Override the automatic behavior and request extended partition.
-
-partition-table
----------------
-
-Partition management.
-
-
-**Usage:**
-
-    **lmi** **partition-table** **list** [ \ *<device>*\  ...]
-
-    **lmi** **partition-table** **create** [ \ **--gpt**\  | \ **--msdos**\  ] \ *<device>*\  ...
-
-    **lmi** **partition-table** **show**  [ \ *<device>*\  ...]
-
-
-
-**Commands:**
-
-
-    **list**
-        List partition tables on given device.
-        If no devices are provided, all partition tables are listed.
-
-
-    **create**
-        Create a partition table on given devices. The devices must be
-        empty, i.e. must not have any partitions on them. GPT partition
-        table is created by default.
-
-
-    **show**
-        Show detailed information about partition table on given
-        devices. If no devices are provided, all of them are displayed.
-
-raid
-----
-
-MD RAID management.
-
-
-**Usage:**
-
-    **lmi** **raid** list
-
-    **lmi** **raid** **create** [ \ **--name**\ =\ *<name>*\  ] \ *<level>*\  \ *<device>*\  ...
-
-    **lmi** **raid** **delete** \ *<device>*\  ...
-
-    **lmi** **raid** **show** [ \ *<device>*\  ...]
-
-
-
-**Commands:**
-
-
-    **list**
-        List all MD RAID devices on the system.
-
-
-    **create**
-        Create MD RAID array with given RAID level from list of devices.
-
-
-    **delete**
-        Delete given MD RAID devices.
-
-
-    **show**
-        Show detailed information about given MD RAID devices. If no
-        devices are provided, all MD RAID devices are displayed.
-
-lv
---
-
-Logical Volume management.
-
-
-**Usage:**
-
-    **lmi** **lv** **list** [ \ *<vg>*\  ...]
-
-    **lmi** **lv** **create** \ *<vg>*\  \ *<name>*\  \ *<size>*\ 
-
-    **lmi** **lv** **delete** \ *<lv>*\  ...
-
-    **lmi** **lv** **show** [ \ *<lv>*\  ...]
-
-
-
-**Commands:**
-
-
-    **list**
-        List available logical volumes on given volume groups.
-        If no volume groups are provided, all logical volumes are
-        listed.
-
-
-    **create**
-        Create a logical volume on given volume group.
-
-        Size can be specified as number of extents using 'e' suffix,
-        e.g. '100e' is 100 extents.
-
-
-    **delete**
-        Delete given logical volume.
-
-
-    **show**
-        Show detailed information about given Logical Volumes. If no
-        Logical Volumes are provided, all of them are displayed.
-
-vg
---
-
-Volume Group management.
-
-
-**Usage:**
-
-    **lmi** **vg** list
-
-    **lmi** **vg** **create** [ \ **--extent-size**\ =\ *<size>*\  ] \ *<name>*\  \ *<device>*\  ...
-
-    **lmi** **vg** **delete** \ *<vg>*\  ...
-
-    **lmi** **vg** **show** [ \ *<vg>*\  ...]
-
-
-
-**Commands:**
-
-
-    **list**
-        List all volume groups on the system.
-
-
-    **create**
-        Create Volume Group with given name from list of devices.
-
-
-    **delete**
-        Delete given Volume Groups.
-
-
-    **show**
-        Show detailed information about given Volume Groups. If no
-        Volume Groups are provided, all of them are displayed.
-
 storage
 -------
 
@@ -279,9 +11,25 @@ Basic storage device information.
 
 **Usage:**
 
-    **lmi** **storage** **list** [ \ *<device>*\  ...]
+    **lmi** **storage** **fs** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **luks** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **lv** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **mount** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **partition** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **partition-table** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **raid** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **vg** \ *<cmd>*\  [\ *<args>*\  ...]
 
     **lmi** **storage** **depends** [ \ **--deep**\  ] [ \ *<device>*\  ...]
+
+    **lmi** **storage** **list** [ \ *<device>*\  ...]
 
     **lmi** **storage** **provides** [ \ **--deep**\  ] [ \ *<device>*\  ...]
 
@@ -292,6 +40,38 @@ Basic storage device information.
 
 
 **Commands:**
+
+
+    **fs**
+        Filesystem and other data format management.
+
+
+    **luks**
+        LUKS management.
+
+
+    **lv**
+        Logical Volume management.
+
+
+    **mount**
+        Mount management.
+
+
+    **partition**
+        Partition management.
+
+
+    **partition-table**
+        Partition table management.
+
+
+    **raid**
+        MD RAID management.
+
+
+    **vg**
+        Volume Group management.
 
 
     **list**
@@ -308,7 +88,7 @@ Basic storage device information.
         Show devices, which are created from given devices
         (= show children of the devices).
 
-        For example, if disk is provided, all partitions on it are
+        For example, if a disk is provided, all partitions on it are
         returned. If 'deep' is used, all RAIDs, Volume Groups and
         Logical Volumes indirectly allocated from it are returned too.
 
@@ -319,13 +99,11 @@ Basic storage device information.
 
         For example, if a Logical Volume is provided, its Volume Group
         is returned. If 'deep' is used, also all Physical Volumes and
-        disk are returned.
+        appropriate disk(s) are returned.
 
 
     **tree**
         Show tree of devices, similar to lsblk.
-        (Note that the output is really crude and needs to be worked
-        on).
 
         If no device is provided, all devices are shown, starting
         with physical disks.
@@ -333,21 +111,239 @@ Basic storage device information.
         If a device is provided, tree starts with the device
         and all dependent devices are shown.
 
-mount
------
 
-Mounting management functions.
+**Options:**
+
+
+
+    **device**
+        Identifier of the device. Either one of:
+
+        * DeviceID of appropriate CIM_StorageExtent object. This is
+          internal OpenLMI ID of the device and it should be stable
+          across system reboots.
+
+        * Device name directly in /dev directory, such as '/dev/sda'.
+          This device name is available as Name property of
+          CIM_StorageExtent object.
+
+        * Name of MD RAID or logical volume. This method cannot be used
+          when the name is not unique, for example when there are two
+          logical volumes with the same name, allocated from different
+          volume groups. This name is available as ElementName
+          property of CIM_StorageExtent object.
+
+
+    **--deep**
+        Show all ancestors/children the device, not only the immediate
+        ones.
+
+storage fs
+----------
+
+Filesystem and other data format management.
 
 
 **Usage:**
 
-    **lmi** **mount** **list** [ \ **--all**\  ]
+    **lmi** **storage** **fs** **list** [\ **--all**\ ] [ \ *<device>*\  ...]
 
-    **lmi** **mount** **create** \ *<device>*\  \ *<mountpoint>*\  [ (\ **-t**\  \ *<fs_type>*\ ) (\ **-o**\  \ *<options>*\ ) (\ **-p**\  \ *<other_options>*\ ) ]
+    **lmi** **storage** **fs** **create** [ \ **--label**\ =\ *<label>*\  ] \ *<fstype>*\   \ *<device>*\  ...
 
-    **lmi** **mount** **delete** \ *<target>*\ 
+    **lmi** **storage** **fs** **delete** \ *<device>*\  ...
 
-    **lmi** **mount** **show** [ \ **--all**\  ]
+    **lmi** **storage** **fs** list-supported
+
+
+
+**Commands:**
+
+
+    **list**
+        List filesystems and other data formats (RAID metadata,
+        ...)  on given devices.
+        If no devices are provided, all filesystems are listed.
+        If --all option is set, all filesystem, including system
+        ones like tmpfs, cgroups, procfs, sysfs etc are listed.
+
+
+    **create**
+        Format device(s) with given filesystem.
+        If more devices are given, the filesystem will span
+        over these devices (currently supported only by btrfs).
+
+        For list of available filesystem types, see output of
+        lmi storage fs list-supported.
+
+
+    **delete**
+        Delete given filesystem or data format (like partition
+        table, RAID metadata, LUKS, physical volume metadata etc)
+        on given devices.
+
+
+    **list-supported**
+        
+        List supported filesystems, which can be used as
+        lmi storage fs create <fstype> option.
+
+storage luks
+------------
+
+LUKS management
+
+
+**Usage:**
+
+    **lmi** **storage** **luks** list
+
+    **lmi** **storage** **luks** **create** [\ **-p**\  \ *<passphrase>*\ ] \ *<device>*\ 
+
+    **lmi** **storage** **luks** **open** [\ **-p**\  \ *<passphrase>*\ ] \ *<device>*\  \ *<name>*\ 
+
+    **lmi** **storage** **luks** **close** \ *<device>*\ 
+
+    **lmi** **storage** **luks** **addpass** [\ **-p**\  \ *<passphrase>*\ ] [\ **-n**\  \ *<new-passphrase>*\ ] \ *<device>*\ 
+
+    **lmi** **storage** **luks** **deletepass** [\ **-p**\  \ *<passphrase>*\ ]  \ *<device>*\ 
+
+
+
+**Commands:**
+
+
+    **list**
+        List available LUKS formats and their clear-text devices
+        (if any).
+
+
+    **create**
+        Format given device with LUKS format. Any data on the device
+        will be destroyed.
+
+
+    **open**
+        Open given device formatted with LUKS and expose its clear-text
+        data as a new block device.
+
+
+    **close**
+        Close given device formatted with LUKS and destroy its
+        clear-text block device.
+
+
+    **addpass**
+        Add new passphrase to given LUKS-formatted device. Each device
+        can have up to 8 separate passwords and any of them can be used
+        to decrypt the device.
+
+
+    **deletepass**
+        Remove given passphrase from LUKS-formatted device.
+
+**Common options:**
+
+
+    **-p, --passphrase=passphrase**
+        Passphrase. It will be read from the
+        terminal, if it is not provided on command
+        line.
+
+
+    **-n, --new-passphrase=passphrase**
+        New passphrase. It will be read from the
+        terminal, if it is not provided on command
+        line.
+
+**Open options:**
+
+
+    **<device>**
+        Device with LUKS format on it.
+
+
+    **<name>**
+        Name of the clear-text block device to create.
+
+**Close options:**
+
+
+    **<device>**
+        Device with LUKS format on it, previously opened by
+        'lmi storage luks open'.
+
+storage lv
+----------
+
+Logical Volume management.
+
+
+**Usage:**
+
+    **lmi** **storage** **lv** **list** [ \ *<vg>*\  ...]
+
+    **lmi** **storage** **lv** **create** \ *<vg>*\  \ *<name>*\  \ *<size>*\ 
+
+    **lmi** **storage** **lv** **delete** \ *<lv>*\  ...
+
+    **lmi** **storage** **lv** **show** [ \ *<lv>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List available logical volumes on given volume groups.
+        If no volume groups are provided, all logical volumes are
+        listed.
+
+
+    **create**
+        Create a logical volume on given volume group.
+
+
+    **delete**
+        Delete given logical volume.
+
+
+    **show**
+        Show detailed information about given Logical Volumes. If no
+        Logical Volumes are provided, all of them are displayed.
+
+**Options:**
+
+
+    **vg**
+        Name of the volume group, with or without `/dev/` prefix.
+
+
+    **size**
+        Size of the new logical volume, by default in bytes.
+        'T', 'G', 'M' or 'K' suffix can be used to specify other
+        units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
+        (= 1024 bytes).
+        The suffix is case insensitive, i.e. 1g = 1G = 1073741824
+        bytes.
+
+        'E' suffix can be used to specify number of volume group
+        extents, '100e' means 100 extents.
+
+storage mount
+-------------
+
+Mount management.
+
+
+**Usage:**
+
+    **lmi** **storage** **mount** **list** [ \ **--all**\  ] [ \ *<device>*\  ... ]
+
+    **lmi** **storage** **mount** **create** \ *<device>*\  \ *<mountpoint>*\  [ (\ **-t**\  \ *<fs_type>*\ ) (\ **-o**\  \ *<options>*\ ) (\ **-p**\  \ *<other_options>*\ ) ]
+
+    **lmi** **storage** **mount** **delete** \ *<target>*\ 
+
+    **lmi** **storage** **mount** **show** [ \ **--all**\  ] [ \ *<device>*\  ... ]
 
 
 
@@ -400,4 +396,291 @@ Mounting management functions.
     **show**
         Show detailed information about mounted filesystems with a device
         attached to them. Optionally, show all mounted filesystems.
+
+storage partition
+-----------------
+
+Partition management.
+
+
+**Usage:**
+
+    **lmi** **storage** **partition** **list** [ \ *<device>*\  ...]
+
+    **lmi** **storage** **partition** **create** [ \ **--logical**\  | \ **--extended**\  ] \ *<device>*\  [\ *<size>*\ ]
+
+    **lmi** **storage** **partition** **delete** \ *<partition>*\  ...
+
+    **lmi** **storage** **partition** **show** [ \ *<partition>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List available partitions on given devices.
+        If no devices are provided, all partitions are listed.
+
+
+    **create**
+        Create a partition on given device.
+
+        If no size is given, the resulting partition will occupy the
+        largest available space on disk.
+
+        The command automatically creates extended and logical
+        partitions using these rules:
+
+        * If no partition type (logical or extended) is provided and
+          MS-DOS partition is requested and there is extended partition
+          already on the device, a logical partition is created.
+
+        * If there is no extended partition on the device and there are
+          at most two primary partitions on the device, primary
+          partition is created.
+
+        * If there is no extended partition and three primary partitions
+          already exist, new extended partition with all remaining space
+          is created and a logical partition with requested size is
+          created.
+
+
+    **delete**
+        Delete given partitions.
+
+
+    **show**
+        Show detailed information about given partitions. If no
+        partitions are provided, all of them are displayed.
+
+**Options:**
+
+
+    **size**
+        Size of the new partition volume, by default in sectors.
+        'T', 'G', 'M' or 'K' suffix can be used to specify other
+        units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
+        (= 1024 bytes).
+        The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+
+    **device,**
+        
+
+    **partition**
+        Identifier of the device/partition. Either one of:
+
+        * DeviceID of appropriate CIM_StorageExtent object. This is
+          internal OpenLMI ID of the device and it should be stable
+          across system reboots.
+
+        * Device name directly in /dev directory, such as '/dev/sda'.
+          This device name is available as Name property of
+          CIM_StorageExtent object.
+
+        * Name of MD RAID or logical volume. This method cannot be used
+          when the name is not unique, for example when there are two
+          logical volumes with the same name, allocated from different
+          volume groups. This name is available as ElementName
+          property of CIM_StorageExtent object.
+
+
+    **--logical**
+        Override the automatic behavior and request logical partition.
+
+    **--extended**
+        Override the automatic behavior and request extended partition.
+
+storage partition-table
+-----------------------
+
+Partition table management.
+
+
+**Usage:**
+
+    **lmi** **storage** **partition-table** **list** [ \ *<device>*\  ...]
+
+    **lmi** **storage** **partition-table** **create** [ \ **--gpt**\  | \ **--msdos**\  ] \ *<device>*\  ...
+
+    **lmi** **storage** **partition-table** **show**  [ \ *<device>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List partition tables on given device.
+        If no devices are provided, all partition tables are listed.
+
+
+    **create**
+        Create a partition table on given devices. The devices must be
+        empty, i.e. must not have any partitions on them. GPT partition
+        table is created by default.
+
+
+    **show**
+        Show detailed information about partition table on given
+        devices. If no devices are provided, all of them are displayed.
+
+**Options:**
+
+
+    **device**
+        Identifier of the device. Either one of:
+
+        * DeviceID of appropriate CIM_StorageExtent object. This is
+          internal OpenLMI ID of the device and it should be stable
+          across system reboots.
+
+        * Device name directly in /dev directory, such as '/dev/sda'.
+          This device name is available as Name property of
+          CIM_StorageExtent object.
+
+        * Name of MD RAID or logical volume. This method cannot be used
+          when the name is not unique, for example when there are two
+          logical volumes with the same name, allocated from different
+          volume groups. This name is available as ElementName
+          property of CIM_StorageExtent object.
+
+
+    **--gpt**
+        Create GPT partition table (default).
+
+    **--msdos**
+        Create MS-DOS partition table.
+
+storage raid
+------------
+
+MD RAID management.
+
+
+**Usage:**
+
+    **lmi** **storage** **raid** list
+
+    **lmi** **storage** **raid** **create** [ \ **--name**\ =\ *<name>*\  ] \ *<level>*\  \ *<device>*\  ...
+
+    **lmi** **storage** **raid** **delete** \ *<device>*\  ...
+
+    **lmi** **storage** **raid** **show** [ \ *<device>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List all MD RAID devices on the system.
+
+
+    **create**
+        Create MD RAID array with given RAID level from list of devices.
+
+
+    **delete**
+        Delete given MD RAID devices.
+
+
+    **show**
+        Show detailed information about given MD RAID devices. If no
+        devices are provided, all MD RAID devices are displayed.
+
+**Options:**
+
+
+    **device**
+        Identifier of the device. Either one of:
+
+        * DeviceID of appropriate CIM_StorageExtent object. This is
+          internal OpenLMI ID of the device and it should be stable
+          across system reboots.
+
+        * Device name directly in /dev directory, such as '/dev/sda'.
+          This device name is available as Name property of
+          CIM_StorageExtent object.
+
+        * Name of MD RAID or logical volume. This method cannot be used
+          when the name is not unique, for example when there are two
+          logical volumes with the same name, allocated from different
+          volume groups. This name is available as ElementName
+          property of CIM_StorageExtent object.
+
+
+    **level**
+        RAID level. Supported levels are: 0, 1, 4, 5, 6, 10.
+
+storage vg
+----------
+
+Volume Group management.
+
+
+**Usage:**
+
+    **lmi** **storage** **vg** list
+
+    **lmi** **storage** **vg** **create** [ \ **--extent-size**\ =\ *<size>*\  ] \ *<name>*\  \ *<device>*\  ...
+
+    **lmi** **storage** **vg** **delete** \ *<vg>*\  ...
+
+    **lmi** **storage** **vg** **show** [ \ *<vg>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List all volume groups on the system.
+
+
+    **create**
+        Create Volume Group with given name from list of devices.
+
+
+    **delete**
+        Delete given Volume Groups.
+
+
+    **show**
+        Show detailed information about given Volume Groups. If no
+        Volume Groups are provided, all of them are displayed.
+
+**Options:**
+
+
+
+    **device**
+        Identifier of the device. Either one of:
+
+        * DeviceID of appropriate CIM_StorageExtent object. This is
+          internal OpenLMI ID of the device and it should be stable
+          across system reboots.
+
+        * Device name directly in /dev directory, such as '/dev/sda'.
+          This device name is available as Name property of
+          CIM_StorageExtent object.
+
+        * Name of MD RAID or logical volume. This method cannot be used
+          when the name is not unique, for example when there are two
+          logical volumes with the same name, allocated from different
+          volume groups. This name is available as ElementName
+          property of CIM_StorageExtent object.
+
+
+    **vg**
+        Name of the volume group, with or without `/dev/` prefix.
+
+
+    **size**
+        Requested extent size of the new volume group, by default in
+        bytes. 'T', 'G', 'M' or 'K' suffix can be used to specify
+        other units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
+        (=1024 bytes).
+        The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
 

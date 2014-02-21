@@ -40,7 +40,7 @@ Usage:
     %(cmd)s list-supported
 
 Commands:
-    list        List filesystems and and other data formats (RAID metadata,
+    list        List filesystems and other data formats (RAID metadata,
                 ...)  on given devices.
                 If no devices are provided, all filesystems are listed.
                 If --all option is set, all filesystem, including system

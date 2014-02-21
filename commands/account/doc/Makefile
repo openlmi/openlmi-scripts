@@ -6,7 +6,6 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
-COMMAND_NAME := storage
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -15,7 +14,10 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext cmdregen cmdline.generated
+.PHONY: \
+    help clean html dirhtml singlehtml pickle json htmlhelp \
+    qthelp devhelp epub latex latexpdf text man changes linkcheck \
+    doctest gettext cmdline.generated
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -39,29 +41,19 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 	@echo " "
-	@echo "  cmdregen   to regenerate cmdline.generate with actual content from installed lmi help"
+	@echo "  cmdregen   to regenerate cmdline.generated with actual content from installed lmi help"
 
 cmdregen: cmdline.generated
 
 cmdline.generated:
-	if ! python -c 'import lmi.scripts.$(COMMAND_NAME)' >/dev/null; then \
-	    echo "Please install install the command library first." >&2; \
-	    exit 1; \
-	fi
 	( \
 	echo ".."; \
-	echo ""; \
-	echo ".. !!! This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
-	echo ""; \
+	echo "    !!!!!!!!!"; \
+	echo "    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
+	echo "    !!!!!!!!!"; \
 	echo ; \
-	for i in `sed -n '/entry_points/,/)/p' ../setup.py | \
-			sed -n "s/\s*,\?['\"]\s*\([a-z-]\+\)\s*=.*/\1/p"`; do \
-		lmi help $$i | python ../../../tools/help2rst $$i | \
-			tr -d '\033' |sed 's/..1034h//';  \
-	done ; \
-	for i in `grep <../lmi/scripts/storage/storage_cmd.py ":\s*lmi.scripts.storage.cmd" | sed "s/.*['\"]\(.*\)['\"].*/\1/"`; do  \
-		lmi help storage $$i | python ../../../tools/help2rst "storage $$i" | \
-			tr -d '\033' |sed 's/..1034h//';  \
+	for i in user group; \
+		do lmi help $$i | python ../../../tools/help2rst $$i | tr -d '\033' |sed 's/..1034h//' ;  \
 	done \
 	) > $@
 
