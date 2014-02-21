@@ -47,7 +47,7 @@ Commands:
 from lmi.scripts.common import command
 
 class HwBase(command.LmiLister):
-    FMT_NO_HEADINGS = True
+    COLUMNS = []
 
 class All(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_all_info'
