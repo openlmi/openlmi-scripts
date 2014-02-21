@@ -79,6 +79,7 @@ def cmd_show_devices(ns, device_names=None):
 class ListDevice(command.LmiLister):
     CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_devices'
     COLUMNS = ('ElementName','OperatingStatus','MAC Address')
+
     def transform_options(self, options):
         """
         Rename 'device_name' option to 'devices' parameter name for better
@@ -88,8 +89,7 @@ class ListDevice(command.LmiLister):
 
 class ShowDevice(command.LmiLister):
     CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_devices'
-    COLUMNS = ('Name', 'Value')
-    FMT_NO_HEADINGS = True
+    COLUMNS = []
 
     def transform_options(self, options):
         """
@@ -287,8 +287,7 @@ class ListSetting(command.LmiLister):
 
 class ShowSetting(command.LmiLister):
     CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_settings'
-    COLUMNS = ('Name', 'Value')
-    FMT_NO_HEADINGS = True
+    COLUMNS = []
     def transform_options(self, options):
         """
         Rename 'caption' option to 'captions' parameter name for better
