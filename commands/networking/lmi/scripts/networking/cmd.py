@@ -22,34 +22,24 @@
 Networking service management.
 
 Usage:
-    %(cmd)s list (device [<device_name> ...] | setting [<caption> ...])
-    %(cmd)s show (device [<device_name> ...] | setting [<caption> ...])
+    %(cmd)s device (--help | show [<device_name> ...] | list [<device_name> ...])
+    %(cmd)s setting (--help | <operation> [<args>...])
     %(cmd)s activate <caption> [<device_name>]
     %(cmd)s deactivate <caption> [<device_name>]
-    %(cmd)s create <caption> <device_name> [(--ethernet | --bridging | --bonding)]
-        [(--ipv4 <ipv4_method>)] [(--ipv6 <ipv6_method>)]
-    %(cmd)s delete <caption>
     %(cmd)s enslave <master_caption> <device_name>
     %(cmd)s address (--help | <operation> [<args>...])
+    %(cmd)s route (--help | <operation> [<args>...])
+    %(cmd)s dns (--help | <operation> [<args>...])
 
 Commands:
-    list             Prints a list of devices or settings.
-    show             Show detailed information about device or setting.
-    activate         Activates setting on given network device.
-    deactivate       Deactivates the setting.
-    create           Create new setting.
-    delete           Delete existing setting.
+    device           Display information about network devices.
+    setting          Manage the network settings.
+    activate         Activate setting on given network device.
+    deactivate       Deactivate the setting.
     enslave          Create new slave setting.
     address          Manipulate the list of IP addresses on given setting.
-
-Options:
-    --ethernet  Create ethernet setting [default].
-    --bridging  Create bridging master setting.
-    --bonding   Create bonding master setting.
-    --ipv4 (disabled | static | dhcp)
-                IPv4 method [default: dhcp].
-    --ipv6 (disabled | static | dhcpv6 | stateless)
-                IPv6 method [default: stateless].
+    route            Manipulate the list of static routes on given setting.
+    dns              Manipulate the list of DNS servers on given setting.
 """
 
 from lmi.scripts.common import command
@@ -86,7 +76,7 @@ def cmd_show_devices(ns, device_names=None):
             yield ("Available Setting", setting.Caption)
 
 
-class DeviceLister(command.LmiLister):
+class ListDevice(command.LmiLister):
     CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_devices'
     COLUMNS = ('ElementName','OperatingStatus','MAC Address')
     def transform_options(self, options):
@@ -96,9 +86,10 @@ class DeviceLister(command.LmiLister):
         """
         options['<device_names>'] = options.pop('<device_name>')
 
-class DeviceShower(command.LmiLister):
+class ShowDevice(command.LmiLister):
     CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_devices'
     COLUMNS = ('Name', 'Value')
+    FMT_NO_HEADINGS = True
 
     def transform_options(self, options):
         """
@@ -107,6 +98,20 @@ class DeviceShower(command.LmiLister):
         """
         options['<device_names>'] = options.pop('<device_name>')
 
+class Device(command.LmiCommandMultiplexer):
+    """
+    Display the devices present on the system.
+
+    Usage:
+        %(cmd)s list [<device_name> ...]
+        %(cmd)s show [<device_name> ...]
+
+    Commands:
+        list     List basic information about devices.
+        show     Show detailed information about devices.
+    """
+    COMMANDS = { 'list': ListDevice, 'show': ShowDevice }
+    OWN_USAGE = True
 
 ## SETTING
 
@@ -120,17 +125,29 @@ SETTING_TYPE_DESC = {
 }
 
 SETTING_IP_METHOD_DESC = {
+    SETTING_IP_METHOD_DISABLED: 'Disabled',
     SETTING_IP_METHOD_DHCP: 'DHCP',
     SETTING_IP_METHOD_STATIC: 'Static',
     SETTING_IP_METHOD_STATELESS: 'Stateless',
     SETTING_IP_METHOD_DHCPv6: 'DHCPv6'
 }
 
+SETTING_IPv4_METHODS = {
+    "disabled": SETTING_IP_METHOD_DISABLED,
+    "dhcp": SETTING_IP_METHOD_DHCP,
+    "static": SETTING_IP_METHOD_STATIC
+}
+
+SETTING_IPv6_METHODS = {
+    "disabled": SETTING_IP_METHOD_DISABLED,
+    "dhcpv6": SETTING_IP_METHOD_DHCPv6,
+    "static": SETTING_IP_METHOD_STATIC,
+    "stateless": SETTING_IP_METHOD_STATELESS
+}
+
 
 def cmd_list_settings(ns, captions=None):
     for setting in list_settings(ns, captions):
-        #import ipdb
-        #ipdb.set_trace()
         yield (setting.Caption, SETTING_TYPE_DESC.get(get_setting_type(ns, setting), 'Unknown'))
 
 def cmd_show_settings(ns, captions=None):
@@ -178,7 +195,7 @@ def cmd_show_settings(ns, captions=None):
                     gateway = subsetting.GatewayAddresses[i] if i < len(subsetting.GatewayAddresses) else None
 
                     if i < len(subsetting.GatewayAddresses) and len(subsetting.GatewayAddresses[i]) > 0:
-                        yield ("%s Address/Netmask Gateway" % version, "%s/%s %s" % (subsetting.IPAddresses[i], mask, subsetting.GatewayAddresses[i]))
+                        yield ("%s Address" % version, "%s/%s %s" % (subsetting.IPAddresses[i], mask, subsetting.GatewayAddresses[i]))
                     else:
                         yield ("%s Address" % version, "%s/%s" % (subsetting.IPAddresses[i], mask))
 
@@ -189,28 +206,20 @@ def cmd_show_settings(ns, captions=None):
                 yield ("Master Setting", subsetting.Caption)
             elif subsetting.classname in ('LMI_BridgingSlaveSettingData', 'LMI_BondingSlaveSettingData'):
                 yield ("Slave Setting", subsetting.Caption)
-        for device in get_applicable_devices(ns, setting):
-            yield ("Device", device.ElementName)
+        # Don't show device for bridge and bond master
+        if setting.classname not in ('LMI_BondingMasterSettingData', 'LMI_BridgingMasterSettingData'):
+            for device in get_applicable_devices(ns, setting):
+                yield ("Device", device.ElementName)
+        if is_setting_active(ns, setting):
+            yield ("Status", "Active")
+        else:
+            yield ("Status", "Inactive")
 
-class SettingLister(command.LmiLister):
-    CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_settings'
-    COLUMNS = ('Caption', 'Type')
-    def transform_options(self, options):
-        """
-        Rename 'caption' option to 'captions' parameter name for better
-        readability.
-        """
-        options['<captions>'] = options.pop('<caption>')
-
-class SettingShower(command.LmiLister):
-    CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_settings'
-    COLUMNS = ('Name', 'Value')
-    def transform_options(self, options):
-        """
-        Rename 'caption' option to 'captions' parameter name for better
-        readability.
-        """
-        options['<captions>'] = options.pop('<caption>')
+        for route in get_static_routes(ns, setting):
+            if route.AddressType == ns.LMI_IPRouteSettingData.AddressTypeValues.IPv4:
+                yield ("IPv4 Static Route", "%s/%s %d %s" % (route.DestinationAddress, route.DestinationMask, route.RouteMetric, route.NextHop))
+            else:
+                yield ("IPv6 Static Route", "%s/%s %d %s" % (route.DestinationAddress, route.PrefixLength, route.RouteMetric, route.NextHop))
 
 ## Activation
 
@@ -238,30 +247,6 @@ def cmd_deactivate(ns, caption, device_name):
         device = None
     return deactivate(ns, setting, device)
 
-## Mutliplexing
-
-class Lister(command.LmiCommandMultiplexer):
-    """
-    List information about devices or settings.
-
-    Usage:
-        %(cmd)s device [<device_name> ...]
-        %(cmd)s setting [<caption> ...]
-    """
-    COMMANDS = { 'device' : DeviceLister, 'setting' : SettingLister }
-    OWN_USAGE = True
-
-class Shower(command.LmiCommandMultiplexer):
-    """
-    Show detailed information about device or setting.
-
-    Usage:
-        %(cmd)s device [<device_name> ...]
-        %(cmd)s setting [<caption> ...]
-    """
-    COMMANDS = { 'device' : DeviceShower, 'setting' : SettingShower }
-    OWN_USAGE = True
-
 class Activate(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption, device_name):
@@ -272,8 +257,6 @@ class Activate(command.LmiCheckResult):
         Activate takes only one caption and device, get only one element
         from the list for better readability.
         """
-        if '<caption>' in options and len(options['<caption>']) > 0:
-            options['<caption>'] = options['<caption>'][0]
         if '<device_name>' in options and len(options['<device_name>']) > 0:
             options['<device_name>'] = options['<device_name>'][0]
 
@@ -287,12 +270,33 @@ class Deactivate(command.LmiCheckResult):
         Activate takes only one caption and device, get only one element
         from the list for better readability.
         """
-        if '<caption>' in options and len(options['<caption>']) > 0:
-            options['<caption>'] = options['<caption>'][0]
         if '<device_name>' in options and len(options['<device_name>']) > 0:
             options['<device_name>'] = options['<device_name>'][0]
 
-class Create(command.LmiCheckResult):
+## SETTING
+
+class ListSetting(command.LmiLister):
+    CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_settings'
+    COLUMNS = ('Caption', 'Type')
+    def transform_options(self, options):
+        """
+        Rename 'caption' option to 'captions' parameter name for better
+        readability.
+        """
+        options['<captions>'] = options.pop('<caption>')
+
+class ShowSetting(command.LmiLister):
+    CALLABLE = 'lmi.scripts.networking.cmd:cmd_show_settings'
+    COLUMNS = ('Name', 'Value')
+    FMT_NO_HEADINGS = True
+    def transform_options(self, options):
+        """
+        Rename 'caption' option to 'captions' parameter name for better
+        readability.
+        """
+        options['<captions>'] = options.pop('<caption>')
+
+class CreateSetting(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption, device_name, _ethernet, _bridging, _bonding, _ipv4, _ipv6):
         type = SETTING_TYPE_ETHERNET
@@ -300,13 +304,14 @@ class Create(command.LmiCheckResult):
             type = SETTING_TYPE_BRIDGE_MASTER
         elif _bonding:
             type = SETTING_TYPE_BOND_MASTER
-        ipv4_method = SETTING_IP_METHOD_DISABLED
-        ipv6_method = SETTING_IP_METHOD_DISABLED
-        for k, v in SETTING_IP_METHOD_DESC.items():
-            if v.lower() == _ipv4:
-                ipv4_method = k
-            if v.lower() == _ipv6:
-                ipv6_method = k
+
+        if _ipv4 not in SETTING_IPv4_METHODS:
+            raise errors.LmiInvalidOptions("Invalid --ipv4 option: %s" % _ipv4)
+        if _ipv6 not in SETTING_IPv6_METHODS:
+            raise errors.LmiInvalidOptions("Invalid --ipv6 option: %s" % _ipv4)
+
+        ipv4_method = SETTING_IPv4_METHODS[_ipv4]
+        ipv6_method = SETTING_IPv6_METHODS[_ipv6]
 
         device = get_device_by_name(ns, device_name)
         if device is None:
@@ -321,10 +326,8 @@ class Create(command.LmiCheckResult):
         """
         if '<caption>' in options and len(options['<caption>']) > 0:
             options['<caption>'] = options['<caption>'][0]
-        if '<device_name>' in options and len(options['<device_name>']) > 0:
-            options['<device_name>'] = options['<device_name>'][0]
 
-class Delete(command.LmiCheckResult):
+class DeleteSetting(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption):
         setting = get_setting_by_caption(ns, caption)
@@ -340,6 +343,37 @@ class Delete(command.LmiCheckResult):
         if '<caption>' in options and len(options['<caption>']) > 0:
             options['<caption>'] = options['<caption>'][0]
 
+class Setting(command.LmiCommandMultiplexer):
+    """
+    Manage the network configuration settings.
+
+    Usage:
+        %(cmd)s list [<caption> ...]
+        %(cmd)s show [<caption> ...]
+        %(cmd)s create <caption> <device_name>
+                      [--ethernet | --bridging | --bonding]
+                      [--ipv4 <ipv4_method>]  [--ipv6 <ipv6_method>]
+        %(cmd)s delete <caption>
+
+    Commands:
+        list     List basic information about settings.
+        show     Show detailed information about settings.
+        create   Create new setting.
+        delete   Delete existing setting.
+
+    Options:
+        --ethernet  Create ethernet setting [default].
+        --bridging  Create bridging master setting.
+        --bonding   Create bonding master setting.
+        --ipv4 (disabled | static | dhcp)
+                    IPv4 method [default: dhcp].
+        --ipv6 (disabled | static | dhcpv6 | stateless)
+                    IPv6 method [default: stateless].
+    """
+    COMMANDS = { 'list': ListSetting, 'show': ShowSetting, 'create' : CreateSetting, 'delete' : DeleteSetting }
+    OWN_USAGE = True
+
+# ADDRESS
 
 class AddAddress(command.LmiCheckResult):
     EXPECT = 0
@@ -379,19 +413,121 @@ class Address(command.LmiCommandMultiplexer):
         remove   Remove given IP address from the list of addresses.
         replace  Replace all IP address with new address.
     """
-
     COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress, 'replace': ReplaceAddress }
     OWN_USAGE = True
+
+
+## ROUTE
+
+class AddRoute(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address, prefix, metric, next_hop):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return add_static_route(ns, setting, address, prefix, metric, next_hop)
+
+class RemoveRoute(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return remove_static_route(ns, setting, address)
+
+class ReplaceRoute(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address, prefix, metric, next_hop):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return replace_static_route(ns, setting, address, prefix, metric, next_hop)
+
+class Route(command.LmiCommandMultiplexer):
+    """
+    Manage the list of static routes.
+
+    Usage:
+        %(cmd)s add <caption> <address> <prefix> [<metric>] [<next_hop>]
+        %(cmd)s remove <caption> <address>
+        %(cmd)s replace <caption> <address> <prefix> [<metric>] [<next_hop>]
+
+    Commands:
+        add      Add static route to the existing list of static routes.
+        remove   Remove given static route from the list of static route.
+        replace  Replace all static routes with new route.
+    """
+    COMMANDS = { 'add' : AddRoute, 'remove' : RemoveRoute, 'replace': ReplaceRoute }
+    OWN_USAGE = True
+
+## DNS
+
+class AddDns(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return add_dns_server(ns, setting, address)
+
+class RemoveDns(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return remove_dns_server(ns, setting, address)
+
+class ReplaceDns(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, address):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+        return replace_dns_server(ns, setting, address)
+
+class Dns(command.LmiCommandMultiplexer):
+    """
+    Manage the list of DNS servers.
+
+    Usage:
+        %(cmd)s add <caption> <address>
+        %(cmd)s remove <caption> <address>
+        %(cmd)s replace <caption> <address>
+
+    Commands:
+        add      Add DNS server to the existing list of DNS servers for given setting.
+        remove   Remove given DNS server from the list of DNS servers for given setting.
+        replace  Replace all DNS servers with given DNS server for given setting.
+    """
+    COMMANDS = { 'add': AddDns, 'remove': RemoveDns, 'replace': ReplaceDns }
+    OWN_USAGE = True
+
+class Enslave(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, master_caption, device_name):
+        setting = get_setting_by_caption(ns, master_caption)
+        device = get_device_by_name(ns, device_name)
+        return enslave(ns, setting, device)
+
+    def transform_options(self, options):
+        """
+        Activate takes only one caption and device, get only one element
+        from the list for better readability.
+        """
+        if '<device_name>' in options and len(options['<device_name>']) > 0:
+            options['<device_name>'] = options['<device_name>'][0]
 
 Networking = command.register_subcommands(
     'Networking', __doc__,
     {
-        'list':       Lister,
-        'show':       Shower,
+        'device':     Device,
+        'setting':    Setting,
         'activate':   Activate,
         'deactivate': Deactivate,
-        'create':     Create,
-        'delete':     Delete,
-        'address':    Address
+        'enslave':    Enslave,
+        'address':    Address,
+        'route':      Route,
+        'dns':        Dns
     },
 )

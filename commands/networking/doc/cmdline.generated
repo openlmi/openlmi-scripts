@@ -11,52 +11,38 @@ Networking service management.
 
 **Usage:**
 
-    **lmi** **net** **list** **device** [\ *<device_name>*\  ...]
+    **lmi** **net** **device** (\ **--help**\  | **show** [\ *<device_name>*\  ...] | **list** [\ *<device_name>*\  ...])
 
-    **lmi** **net** **list** **setting** [\ *<caption>*\  ...]
-
-    **lmi** **net** **show** **device** [\ *<device_name>*\  ...]
-
-    **lmi** **net** **show** **setting** [\ *<caption>*\  ...]
+    **lmi** **net** **setting** (\ **--help**\  | \ *<operation>*\  [\ *<args>*\ ...])
 
     **lmi** **net** **activate** \ *<caption>*\  [\ *<device_name>*\ ]
 
     **lmi** **net** **deactivate** \ *<caption>*\  [\ *<device_name>*\ ]
 
-    **lmi** **net** **create** \ *<caption>*\  \ *<device_name>*\  [\ **--ethernet**\  | \ **--bridging**\  | \ **--bonding**\ ] [\ **--ipv4**\  \ *<ipv4_method>*\ ]  [\ **--ipv6**\  \ *<ipv6_method>*\ ]
-
-    **lmi** **net** **delete** \ *<caption>*\ 
-
     **lmi** **net** **enslave** \ *<master_caption>*\  \ *<device_name>*\ 
 
-    **lmi** **net** **address** **add** \ *<caption>*\  \ *<address>*\  \ *<prefix>*\  [\ *<gateway>*\ ]
+    **lmi** **net** **address** (\ **--help**\  | \ *<operation>*\  [\ *<args>*\ ...])
 
-    **lmi** **net** **address** **remove** \ *<caption>*\  \ *<address>*\ 
+    **lmi** **net** **route** (\ **--help**\  | \ *<operation>*\  [\ *<args>*\ ...])
 
-    **lmi** **net** **address** **replace** \ *<caption>*\  \ *<address>*\  \ *<prefix>*\  [\ *<gateway>*\ ]
+    **lmi** **net** **dns** (\ **--help**\  | \ *<operation>*\  [\ *<args>*\ ...])
 
 
 
 **Commands:**
 
 
-    **list**
-        Prints a list of devices or settings.
+    **device**
+        Display information about network devices.
 
-    **show**
-        Show detailed information about device or setting.
+    **setting**
+        Manage the network settings.
 
     **activate**
-        Activates setting on given network device.
+        Activate setting on given network device.
 
     **deactivate**
-        Deactivates the setting.
-
-    **create**
-        Create new setting.
-
-    **delete**
-        Delete existing setting.
+        Deactivate the setting.
 
     **enslave**
         Create new slave setting.
@@ -64,32 +50,9 @@ Networking service management.
     **address**
         Manipulate the list of IP addresses on given setting.
 
-    **address add**
-        Add IP address to the existing list of addresses.
+    **route**
+        Manipulate the list of static routes on given setting.
 
-    **address remove**
-        Remove given IP address from the list of addresses.
-
-    **address replace**
-        Replace all IP address with new address.
-
-**Options:**
-
-
-    **--ethernet**
-        Create ethernet setting [default].
-
-    **--bridging**
-        Create bridging master setting.
-
-    **--bonding**
-        Create bonding master setting.
-
-    **--ipv4 (disabled | static | dhcp)**
-        
-        IPv4 method [default: dhcp].
-
-    **--ipv6 (disabled | static | dhcpv6 | stateless)**
-        
-        IPv6 method [default: stateless].
+    **dns**
+        Manipulate the list of DNS servers on given setting.
 

@@ -24,7 +24,9 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of the FreeBSD Project.
-
+#
+# Authors: Radek Novacek <rnovacek@redhat.com>
+#
 """
 LMI networking provider client library.
 """
@@ -32,9 +34,20 @@ LMI networking provider client library.
 from lmi.scripts.common.errors import LmiFailed, LmiInvalidOptions
 from lmi.scripts.common import get_logger
 
-import IPy
+import util
 
 LOG = get_logger(__name__)
+
+def _gateway_check(gateway, version):
+    if gateway is None:
+        return None
+    try:
+        gw, gateway_version = util.address_check(gateway)
+    except util.IPCheckFailed:
+        raise LmiInvalidOptions("Invalid gateway: %s" % gateway)
+    if gateway_version != version:
+        raise LmiInvalidOptions("Invalid gateway, should be IPv%d: %s" % (version, gateway))
+    return gw
 
 def get_device_by_name(ns, device_name):
     '''
@@ -190,17 +203,17 @@ SETTING_TYPE_UNKNOWN = 0
 SETTING_TYPE_ETHERNET = 1
 ''' Configuration for ethernet '''
 
-SETTING_TYPE_BRIDGE_MASTER = 4
-''' Configuration for bridge master '''
-
-SETTING_TYPE_BRIDGE_SLAVE = 40
-''' Configuration for bridge slave'''
-
-SETTING_TYPE_BOND_MASTER = 5
+SETTING_TYPE_BOND_MASTER = 4
 ''' Configuration for bond master '''
 
-SETTING_TYPE_BOND_SLAVE = 50
+SETTING_TYPE_BOND_SLAVE = 40
 ''' Configuration for bond slave '''
+
+SETTING_TYPE_BRIDGE_MASTER = 5
+''' Configuration for bridge master '''
+
+SETTING_TYPE_BRIDGE_SLAVE = 50
+''' Configuration for bridge slave'''
 
 def get_setting_type(ns, setting):
     '''
@@ -271,7 +284,51 @@ def get_applicable_devices(ns, setting):
     :return: devices that the setting can be applied to
     :rtype: list of LMI_IPNetworkConnection
     '''
+
+    # Handle bridging/bonding master differently
+    if setting.classname in ('LMI_BridgingMasterSettingData', 'LMI_BondingMasterSettingData'):
+        # return bond/bridge device in the bond/bridge setting is active
+        interface_name = setting.InterfaceName
+        device = ns.LMI_IPNetworkConnection.first_instance({'ElementName': interface_name})
+        if device:
+            return [device]
+        # return all devices associated with slave settings for bridge/bond if not active
+        slave_class = None
+        if setting.classname == 'LMI_BridgingMasterSettingData':
+            slave_class = 'LMI_BridgingSlaveSettingData'
+        elif setting.classname == 'LMI_BondingMasterSettingData':
+            slave_class = 'LMI_BondingSlaveSettingData'
+        if slave_class is not None:
+            devices = []
+        for slave_setting in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass=slave_class):
+            devices += slave_setting.associators(AssocClass="LMI_IPElementSettingData")
+        return devices
+
     return setting.associators(AssocClass="LMI_IPElementSettingData")
+
+def is_setting_active(ns, setting):
+    '''
+    Return true if the setting is currently active
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :retval True: setting is currently active
+    :retval False: setting is not currently active
+    :rtype: bool
+    '''
+    for esd in setting.references(ResultClass="LMI_IPElementSettingData"):
+        if esd.IsCurrent == ns.LMI_IPElementSettingData.IsCurrentValues.IsCurrent:
+            return True
+    return False
+
+def get_static_routes(ns, setting):
+    '''
+    Return list of static routes for given setting
+
+    :param LMI_IPAssignmentSettingData setting: network setting
+    :return: list of static routes
+    :rtype: list of LMI_IPRouteSettingData
+    '''
+    return setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass="LMI_IPRouteSettingData")
 
 def activate(ns, setting, device=None):
     '''
@@ -281,14 +338,23 @@ def activate(ns, setting, device=None):
     :param device: Device to activate the setting on or None for autodetection
     :type device: LMI_IPNetworkConnection or None
     '''
-    if device is None:
-        device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
-        if device is None:
-            raise LmiFailed("No device is associated with given connection.")
     service = ns.LMI_IPConfigurationService.first_instance()
-    result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
-            IPNetworkConnection=device,
-            Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32768)
+    devices = []
+    if device is not None:
+        devices.append(device)
+    else:
+        devices = get_applicable_devices(ns, setting)
+
+    if len(devices) == 0:
+        raise LmiFailed("No device is associated with given connection.")
+
+    for device in devices:
+        LOG().debug('Activating setting %s on device %s', setting.Caption, device.ElementName)
+        result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
+                IPNetworkConnection=device,
+                Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32768)
+        if result.errorstr:
+            raise LmiFailed("Unable to activate setting: %s" % result.errorstr)
     return 0
 
 def deactivate(ns, setting, device=None):
@@ -299,14 +365,38 @@ def deactivate(ns, setting, device=None):
     :param device: Device to deactivate the setting on
     :type device: LMI_IPNetworkConnection or None
     '''
-    if device is None:
-        device = setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
-        if device is None:
-            raise LmiFailed("No device is associated with given connection.")
     service = ns.LMI_IPConfigurationService.first_instance()
-    return service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
-            IPNetworkConnection=device, #ns.LMI_IPNetworkConnection.first_instance(),
-            Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
+    devices = []
+    if device is not None:
+        devices.append(device)
+    else:
+        devices = get_applicable_devices(ns, setting)
+
+    if len(devices) == 0:
+        raise LmiFailed("No device is associated with given connection.")
+
+    for device in devices:
+        LOG().debug('Deactivating setting %s on device %s', setting.Caption, device.ElementName)
+        result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
+                IPNetworkConnection=device,
+                Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
+        if result.errorstr:
+            raise LmiFailed("Unable to deactivate setting: %s" % result.errorstr)
+    return 0
+
+def enslave(ns, master_setting, device):
+    '''
+    Create slave setting of the master_setting with given device.
+
+    :param LMI_IPAssignmentSettingData master_setting: Master setting to use
+    :param LMI_IPNetworkConnection device: Device to enslave
+    '''
+    capability = device.first_associator(ResultClass="LMI_IPNetworkConnectionCapabilities",
+                                         AssocClass="LMI_IPNetworkConnectionElementCapabilities")
+    result = capability.LMI_CreateSlaveSetting(MasterSettingData=master_setting)
+    if result.rval != 0:
+        raise LmiFailed("Unable to create setting: %s" % result.errorstr)
+    return 0
 
 def create_setting(ns, caption, device, type, ipv4method, ipv6method):
     '''
@@ -327,6 +417,8 @@ def create_setting(ns, caption, device, type, ipv4method, ipv6method):
                                             Type=type,
                                             IPv4Type=ipv4method,
                                             IPv6Type=ipv6method)
+    if result.rval != 0:
+        raise LmiFailed("Unable to create setting: %s" % result.errorstr)
     return 0
 
 def delete_setting(ns, setting):
@@ -348,31 +440,9 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
     :param gateway: default gateway or None
     :type gateway: str or None
     '''
-    # Check the IP address
-    try:
-        address_int, version = IPy.parseAddress(address)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid IP address: %s" % address)
-    address = IPy.intToIp(address_int, version)
-
-    # Check the prefix
-    try:
-        prefix_int = int(prefix)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    if (version == 4 and prefix_int > 32) or (version == 6 and prefix_int > 128):
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    prefix = str(prefix_int)
-
-    # Check the gateway
-    if gateway:
-        try:
-            gateway_int, gateway_version = IPy.parseAddress(gateway)
-        except ValueError:
-            raise LmiInvalidOptions("Invalid gateway: %s" % gateway)
-        if gateway_version != version:
-            raise LmiInvalidOptions("Invalid gateway, should be IPv%d: %s" % (version, gateway))
-        gateway = IPy.intToIp(gateway_int, version)
+    address, version = util.address_check(address)
+    prefix = util.prefix_check(prefix, version)
+    gateway = _gateway_check(gateway, version)
 
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
@@ -380,9 +450,9 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
         if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
             settingData.IPAddresses.append(address)
             if version == 4:
-                settingData.SubnetMasks.append(IPy.IP("0.0.0.0/%s" % prefix).netmask().strFullsize())
+                settingData.SubnetMasks.append(util.netmask_from_prefix(prefix))
             else:
-                settingData.IPv6SubnetPrefixLengths.append(prefix)
+                settingData.IPv6SubnetPrefixLengths.append(str(prefix))
             if gateway:
                 settingData.GatewayAddresses.append(gateway)
             else:
@@ -400,12 +470,7 @@ def remove_ip_address(ns, setting, address):
     :param LMI_IPAssignmentSettingData setting: network setting.
     :param str address: IPv4 or IPv6 address.
     '''
-    # Check the IP address
-    try:
-        address_int, version = IPy.parseAddress(address)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid IP address: %s" % address)
-    address = IPy.intToIp(address_int, version)
+    address, version = util.address_check(address)
 
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
@@ -413,7 +478,7 @@ def remove_ip_address(ns, setting, address):
         if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
             i = 0
             while i < len(settingData.IPAddresses):
-                if settingData.IPAddresses[i] == address:
+                if util.compare_address(settingData.IPAddresses[i], address):
                     del settingData.IPAddresses[i]
                     if version == 4:
                         del settingData.SubnetMasks[i]
@@ -437,31 +502,9 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
     :param gateway: default gateway or None
     :type gateway: str or None
     '''
-    # Check the IP address
-    try:
-        address_int, version = IPy.parseAddress(address)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid IP address: %s" % address)
-    address = IPy.intToIp(address_int, version)
-
-    # Check the prefix
-    try:
-        prefix_int = int(prefix)
-    except ValueError:
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    if (version == 4 and prefix_int > 32) or (version == 6 and prefix_int > 128):
-        raise LmiInvalidOptions("Invalid prefix: %s" % prefix)
-    prefix = str(prefix_int)
-
-    # Check the gateway
-    if gateway:
-        try:
-            gateway_int, gateway_version = IPy.parseAddress(gateway)
-        except ValueError:
-            raise LmiInvalidOptions("Invalid gateway: %s" % gateway)
-        if gateway_version != version:
-            raise LmiInvalidOptions("Invalid gateway, should be IPv%d: %s" % (version, gateway))
-        gateway = IPy.intToIp(gateway_int, version)
+    address, version = util.address_check(address)
+    prefix = util.prefix_check(prefix, version)
+    gateway = _gateway_check(gateway, version)
 
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
@@ -469,7 +512,7 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
         if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
             settingData.IPAddresses = [address]
             if version == 4:
-                settingData.SubnetMasks = [IPy.IP("0.0.0.0/%s" % prefix).netmask().strFullsize()]
+                settingData.SubnetMasks = [util.netmask_from_prefix(prefix)]
             else:
                 settingData.IPv6SubnetPrefixLengths = [prefix]
             if gateway:
@@ -480,4 +523,152 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
             settingData.push()
     if not found:
         raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type.")
+    return 0
+
+
+def add_static_route(ns, setting, address, prefix, metric=None, next_hop=None):
+    '''
+    Add a static route to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    :param int prefix: network prefix.
+    :param metric: metric for the route or None
+    :type gateway: int or None
+    :param next_hop: IPv4 or IPv6 address for the next hop of the route or None
+    :type next_hop: str or None
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+    prefix = util.prefix_check(prefix, version)
+
+    if version == 4:
+        result = setting.LMI_AddStaticIPRoute(
+                AddressType=setting.LMI_AddStaticIPRoute.AddressTypeValues.IPv4,
+                DestinationAddress=address,
+                DestinationMask=util.netmask_from_prefix(prefix))
+    elif version == 6:
+        result = setting.LMI_AddStaticIPRoute(
+                AddressType=setting.LMI_AddStaticIPRoute.AddressTypeValues.IPv6,
+                DestinationAddress=address,
+                PrefixLength=str(prefix))
+    else:
+        raise LmiInvalidOptions("Invalid IP address: %s" % address)
+    if result.rval != 0:
+        raise LmiFailed("Unable to add static route: %s" % (result.errorstr or "unknown error"))
+    route = result.rparams["Route"].to_instance()
+    if metric is not None or next_hop is not None:
+        if metric is not None:
+            route.RouteMetric = metric
+        if next_hop is not None:
+            route.NextHop = next_hop
+        route.push()
+    return 0
+
+def remove_static_route(ns, setting, address):
+    '''
+    Remove static route to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    found = False
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass="LMI_IPRouteSettingData"):
+        if util.compare_address(settingData.DestinationAddress, address):
+            found = True
+            settingData.delete()
+    if not found:
+        raise LmiInvalidOptions("No such route: %s" % address)
+
+    return 0
+
+def replace_static_route(ns, setting, address, prefix, metric=None, next_hop=None):
+    '''
+    Remove all static routes and add given static route to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    :param int prefix: network prefix.
+    :param metric: metric for the route or None
+    :type gateway: int or None
+    :param next_hop: IPv4 or IPv6 address for the next hop of the route or None
+    :type next_hop: str or None
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    # this is workaround for crashing provider, see:
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1067487
+    while 1:
+        settingData = setting.first_associator(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass="LMI_IPRouteSettingData")
+        if settingData is None:
+            break
+        settingData.delete()
+    return add_static_route(ns, setting, address, prefix, metric, next_hop)
+
+def add_dns_server(ns, setting, address):
+    '''
+    Add a dns server to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
+        if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
+            settingData.DNSServerAddresses.append(address)
+            settingData.push()
+            break
+    else:
+        raise LmiInvalidOptions("Can't assign DNS address to setting %s, invalid setting type" % setting.Caption)
+    return 0
+
+def remove_dns_server(ns, setting, address):
+    '''
+    Remove dns server from given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
+        if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
+            for i in range(len(settingData.DNSServerAddresses)):
+                if util.compare_address(settingData.DNSServerAddresses[i], address):
+                    del settingData.DNSServerAddresses[i]
+                    settingData.push()
+                    return 0
+            else:
+                raise LmiInvalidOptions("No DNS with address %s found for setting %s" % (address, setting.Caption))
+    else:
+        raise LmiInvalidOptions("Can't remove DNS address to setting %s, invalid setting type" % setting.Caption)
+    return 0
+
+def replace_dns_server(ns, setting, address):
+    '''
+    Remove all dns servers and add given dns server to the given setting.
+
+    :param LMI_IPAssignmentSettingData setting: network setting.
+    :param str address: IPv4 or IPv6 address.
+    '''
+    # Check the IP address
+    address, version = util.address_check(address)
+
+    protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
+    for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
+        if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
+            settingData.DNSServerAddresses = [address]
+            settingData.push()
+            return 0
+    else:
+        raise LmiInvalidOptions("Can't remove DNS address to setting %s, invalid setting type" % setting.Caption)
     return 0
