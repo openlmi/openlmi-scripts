@@ -1,7 +1,7 @@
-.. OpenLMI Hardware Scripts documentation
+.. OpenLMI Hardware scripts's documentation
 
-OpenLMI Hardware Scripts documentation
-======================================
+OpenLMI Hardware scripts's documentation
+========================================
 
 Contents:
 
