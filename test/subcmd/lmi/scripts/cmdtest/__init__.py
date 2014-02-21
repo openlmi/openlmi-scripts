@@ -71,12 +71,11 @@ class ListRepos(command.LmiLister):
             props = ('Name', 'Enabled')
         else:
             props = ('Name', )
-        def data_gen():
-            for repo in REPOSITORIES:
-                if not fltr(repo):
-                    continue
-                yield tuple(v for _, v in zip(props, repo))
-        return (props, data_gen())
+        yield props
+        for repo in REPOSITORIES:
+            if not fltr(repo):
+                continue
+            yield tuple(v for _, v in zip(props, repo))
 
 class Lister(command.LmiCommandMultiplexer):
     """
@@ -114,7 +113,7 @@ class ShowRepository(command.LmiLister):
             props = ('Name', 'Enabled')
         value_map = {n: v for n, v in zip(props, repod[name])}
 
-        return (props, [tuple(value_map[p] for p in props)])
+        return (props, tuple(value_map[p] for p in props))
 
 class Show(command.LmiCommandMultiplexer):
     COMMANDS = {

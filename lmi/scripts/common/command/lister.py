@@ -55,8 +55,9 @@ class LmiBaseListerCommand(LmiSessionCommand):
         :returns: Column names for resulting table. ``COLUMNS`` property
             will be converted to this class method. If ``None``, the associated
             function shall return column names as the first tuple of returned
-            list.
-        :rtype: list or None
+            list. If empty tuple or list, no header shall be printed and associated
+            function returns just data rows.
+        :rtype: list or tuple or None
         """
         return None
 
@@ -98,12 +99,13 @@ class LmiLister(LmiBaseListerCommand):
         """
         res = self.execute_on_connection(connection, *args, **kwargs)
         columns = self.get_columns()
-        if columns is not None:
+        if isinstance(columns, (tuple, list)) and columns:
             command = fcmd.NewTableHeaderCommand(columns)
             res = chain((command, ), res)
-        else:
-            command = fcmd.NewTableHeaderCommand(res[0])
-            res = chain((command, ), res[1])
+        elif columns is None:
+            resi = iter(res)
+            command = fcmd.NewTableHeaderCommand(resi.next())
+            res = chain((command, ), resi)
         return res
 
 class LmiInstanceLister(LmiBaseListerCommand):

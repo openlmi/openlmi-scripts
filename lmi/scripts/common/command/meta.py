@@ -550,7 +550,18 @@ class ListerMetaClass(SessionCommandMetaClass):
     properties:
 
         ``COLUMNS`` : ``tuple``
-            List of column names. Optional property.
+            List of column names. Optional property. There are special values
+            such as:
+
+                ``None`` or omitted
+                    Associated function provides column names in a first row of
+                    returned list or generator.
+
+                empty list, empty tuple or ``False``
+                    They mean that no headers shall be printed. It is simalar
+                    to using ``FMT_NO_HEADINGS = True``. But in this case all
+                    the rows returned from associated functions are treated as
+                    data.
     """
 
     def __new__(mcs, name, bases, dcl):
@@ -559,7 +570,10 @@ class ListerMetaClass(SessionCommandMetaClass):
             if not isinstance(cols, (list, tuple)):
                 raise errors.LmiCommandInvalidProperty(dcl['__module__'], name,
                         'COLUMNS class property must be either list or tuple')
-            if not all(isinstance(c, basestring) for c in cols):
+            if len(cols) < 1 or cols is False:
+                dcl['FMT_NO_HEADINGS'] = True
+                cols = tuple()
+            elif not all(isinstance(c, basestring) for c in cols):
                 raise errors.LmiCommandInvalidProperty(dcl['__module__'], name,
                         'COLUMNS must contain just column names as strings')
             def _new_get_columns(_cls):
