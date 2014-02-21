@@ -78,6 +78,7 @@ Functions
 
 from collections import defaultdict
 import heapq
+import pywbem
 import re
 import time
 
@@ -469,6 +470,14 @@ def install_package(ns, package, force=False, update=False):
     job = results.rparams['Job'].to_instance()
     _wait_for_job_finished(job)
     if not LMIJob.lmi_is_job_completed(job):
+        if not update:
+            if not isinstance(package, LMIInstance):
+                try:
+                    package = package.to_instance()
+                except pywbem.CIMError:
+                    pass
+            if getattr(package, 'InstallDate', None) is not None:
+                raise LmiFailed('Package "%s" is already installed!' % nevra)
         msg = 'Failed to %s package "%s".' % (
                 'update' if update else 'install', nevra)
         if job.ErrorDescription:
@@ -534,17 +543,22 @@ def remove_package(ns, package):
     """
     if not isinstance(package, (LMIInstance, LMIInstanceName)):
         raise TypeError("package must be an LMIInstance or LMIInstanceName")
-    if isinstance(package, LMIInstanceName):
-        package = package.to_instance()
-    installed_assocs = package.reference_names(
-            Role="InstalledSoftware",
-            ResultClass="LMI_InstalledSoftwareIdentity")
-    if len(installed_assocs) > 0:
-        for assoc in installed_assocs:
-            assoc.to_instance().delete()
+    try:
+        if isinstance(package, LMIInstanceName):
+            package = package.to_instance()
+    except LmiFailed:
+        package = None
     else:
+        installed_assocs = package.reference_names(
+                Role="InstalledSoftware",
+                ResultClass="LMI_InstalledSoftwareIdentity")
+
+    if not package or len(installed_assocs) < 1:
         raise LmiFailed('Given package "%s" is not installed!' %
                 get_package_nevra(package))
+
+    for assoc in installed_assocs:
+        assoc.to_instance().delete()
 
 def render_failed_flags(failed_flags):
     """

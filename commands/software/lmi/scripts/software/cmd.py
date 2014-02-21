@@ -178,19 +178,20 @@ def for_each_package_specs(ns, pkg_specs, info, func,
     Iterate over package specification strings, find them on remote host,
     make them into ``LMI_SoftwareIdentity``, and pass them to given function.
 
-    :param pkg_specs: (``list``) List of package specification strings.
-    :param info: (``str``) What is done with package. This is used in log
-        messages.
-    :param func: (``callable``) Any callable taking instance of
+    :param list pkg_specs: Package specification strings.
+    :param string info: What is done with package. This is used in log messages.
+    :param callable func: Any callable taking instance of
         ``LMI_SoftwareIdentity`` as the first and only argument.
-    :param repoid: (``str``) Optional repository id used in a search
+    :param string repoid: Optional repository id used in a search
         for corresponding software identity.
-    :param just_on_installed: (``bool``) Skip uninstalled software identities
+    :param boolean just_on_installed: Skip uninstalled software identities
         found.
-    :rtype: (``list``) List containing a subset of ``pkg_specs`` with items,
-        that were processed successfuly.
+    :returns: Pair with list containing a subset of ``pkg_specs`` with items,
+        that were processed successfuly and a list of errors for other packages.
+    :rtype: tuple
     """
     done_on = []
+    failed = []
     for pkg_spec in pkg_specs:
         if just_on_installed:
             identities = [
@@ -203,11 +204,15 @@ def for_each_package_specs(ns, pkg_specs, info, func,
             identities = list(software.find_package(ns,
                 pkg_spec=pkg_spec, repoid=repoid))
         if len(identities) < 1:
-            LOG().warn('Failed to find any matching package for "%s",'
-                ' skipping.', pkg_spec)
+            if just_on_installed:
+                msg = 'No such installed package "%s".' % pkg_spec
+            else:
+                msg = 'Failed to find package "%s".' % pkg_spec
+            LOG().warn(msg + ' Skipping.')
+            failed.append(msg)
             continue
         if len(identities) > 1:
-            LOG().warn('More than one package found for "%s": %s',
+            LOG().debug('More than one package found for "%s": %s',
                     pkg_spec,
                     ', '.join(software.get_package_nevra(i)
                         for i in identities))
@@ -216,7 +221,8 @@ def for_each_package_specs(ns, pkg_specs, info, func,
             done_on.append(pkg_spec)
         except errors.LmiFailed as err:
             LOG().warn('Failed to %s "%s": %s', info, pkg_spec, err)
-    return done_on
+            failed.append(err)
+    return done_on, failed
 
 class Install(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
@@ -227,10 +233,13 @@ class Install(command.LmiCheckResult):
             option, this should contain 1 argument equal to --uri. Otherwise we
             expect the same list as ``<package_array>``.
         """
+        done_on, failed = result
         if options['--uri']:
-            return [options['--uri']] == result
-        if options['<package_array>'] != result:
-            return (False, ('failed to install packages: %s' %
+            return [options['--uri']] == done_on
+        if options['<package_array>'] != done_on:
+            if len(options['<package_array>']) == 1:
+                return (False, failed[0])
+            return (False, ('Failed to install packages: %s' %
                     ", ".join(set(options['<package_array>']) - set(result))))
         return True
 
@@ -242,9 +251,10 @@ class Install(command.LmiCheckResult):
         if _uri is not None:
             try:
                 software.install_from_uri(ns, _uri, force=_force)
-                return [_uri]
+                return ([_uri], [])
             except errors.LmiFailed as err:
                 LOG().warn('Failed to install "%s": %s', _uri, err)
+                return ([], [err])
 
         else:
             return for_each_package_specs(ns, package_array, 'install',
@@ -264,8 +274,11 @@ class Update(command.LmiCheckResult):
             option, this should contain 1 argument equal to --uri. Otherwise we
             expect the same list as ``<package_array>``.
         """
-        if options['<package_array>'] != result:
-            return (False, ('failed to update packages: %s' %
+        done_on, failed = result
+        if options['<package_array>'] != done_on:
+            if len(options['<package_array>']) == 1:
+                return (False, failed[0])
+            return (False, ('Failed to update packages: %s' %
                     ", ".join(set(options['<package_array>']) - set(result))))
         return True
 
@@ -284,8 +297,11 @@ class Remove(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
 
     def check_result(self, options, result):
-        if options['<package_array>'] != result:
-            return (False, ('failed to remove packages: %s' %
+        done_on, failed = result
+        if options['<package_array>'] != done_on:
+            if len(options['<package_array>']) == 1:
+                return (False, failed[0])
+            return (False, ('Failed to remove packages: %s' %
                     ", ".join(set(options['<package_array>']) - set(result))))
         return True
 
@@ -332,7 +348,7 @@ class ChangeEnabledState(command.LmiCheckResult):
 
     def check_result(self, options, result):
         if options['<repository_array>'] != result:
-            return (False, ('failed to %s repositories: %s' % (
+            return (False, ('Failed to %s repositories: %s' % (
                 'enable' if self.enable else 'disable',
                 ", ".join(set(options['<repository_array>']) - set(result)))))
         return True
