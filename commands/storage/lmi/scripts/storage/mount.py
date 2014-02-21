@@ -48,7 +48,6 @@ _OPTS = ['AllowExecution',
          'Dump',
          'FileSystemCheckOrder',
          'InterpretDevices',
-         'OtherOptions',
          'Silent',
          'SynchronousDirectoryUpdates',
          'SynchronousIO',
@@ -73,9 +72,10 @@ def build_opts_str(mnt):
             otheropts = v
         elif k in _OPTS:
             opts.append(k + ':' + unicode(v))
-    return (', '.join(sorted(opts)), ', '.join(sorted(otheropts)))
+    opts.extend(o)
+    return ', '.join(sorted(opts))
 
-def get_setting_from_opts(ns, options, other_options):
+def get_setting_from_opts(ns, options):
     """
     Create a setting instance from option strings.
 
@@ -91,20 +91,17 @@ def get_setting_from_opts(ns, options, other_options):
 
     setting = outparams['setting'].to_instance()
 
-    if other_options is not None:
-        setting.OtherOptions = other_options.split(',')
+    other_options = []
 
     if options is None:
         return setting
 
     for opt_pair in options.split(','):
         opts = map(lambda o: o.strip(), opt_pair.split(':'))
-        # bail out if the option is not in 'Option:Value' format
-        # or if the Option is not in supported options
+        # if the option is not in 'Option:Value' format
+        # or is not in supported options, consider it other option
         if len(opts) != 2 or opts[0] not in _OPTS:
-            raise LmiFailed('Invalid option: %s' % opt_pair)
-        # ignore OtherOptions, there is a separate cmdline option for it
-        if opts[0] == 'OtherOptions':
+            other_options.append(opts[0])
             continue
         # insist on using a number with FileSystemCheckOrder
         if opts[0] == 'FileSystemCheckOrder':
@@ -125,6 +122,7 @@ def get_setting_from_opts(ns, options, other_options):
                 opts[1] = False
 
         setattr(setting, opts[0], opts[1])
+    setting.OtherOptions = str(other_options)
 
     return setting
 
@@ -136,7 +134,7 @@ def get_mounts(ns):
     """
     return ns.LMI_MountedFileSystem.instances()
 
-def mount_create(ns, device, mountpoint, fs_type=None, options=None, other_options=None):
+def mount_create(ns, device, mountpoint, fs_type=None, options=None):
     """
     Create a mounted filesystem.
 
@@ -148,8 +146,6 @@ def mount_create(ns, device, mountpoint, fs_type=None, options=None, other_optio
     :param fs_type: filesystem type
     :type options: string
     :param options: comma-separated string of mount options
-    :type other_options: string
-    :param other_options: comma-separated string of filesystem specific mount options
     """
     # Try to convert device name to full device path
     try:
@@ -169,7 +165,7 @@ def mount_create(ns, device, mountpoint, fs_type=None, options=None, other_optio
         fs_type = filesystem.FileSystemType
     service = ns.LMI_MountConfigurationService.first_instance()
 
-    setting = get_setting_from_opts(ns, options, other_options)
+    setting = get_setting_from_opts(ns, options)
     setting.push()
 
     # TODO for now
