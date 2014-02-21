@@ -36,7 +36,7 @@ Mount management.
 
 Usage:
     %(cmd)s list [ --all ] [ <device> ... ]
-    %(cmd)s create <device> <mountpoint> [ (-t <fs_type>) (-o <options>) (-p <other_options>) ]
+    %(cmd)s create <device> <mountpoint> [ (-t <fs_type>) (-o <options>) ]
     %(cmd)s delete <target>
     %(cmd)s show [ --all ] [ <device> ... ]
 
@@ -49,12 +49,12 @@ Commands:
              independent) and filesystem specific options can be provided. If no
              filesystem type is specified, it is automatically detected.
 
-             Common options can be provided as a comma-separated string of
+             Options can be provided as a comma-separated string of
              'option_name:value' items.  Possible option names are:
 
              AllowExecution AllowMandatoryLock AllowSUID AllowUserMount
              AllowWrite Auto Dump FileSystemCheckOrder InterpretDevices
-             OtherOptions Silent SynchronousDirectoryUpdates SynchronousIO
+             Silent SynchronousDirectoryUpdates SynchronousIO
              UpdateAccessTimes UpdateDirectoryAccessTimes UpdateFullAccessTimes
              UpdateRelativeAccessTimes
 
@@ -63,7 +63,8 @@ Commands:
              case insensitive.
              The FileSystemCheckOrder option's value is a number.
 
-             Other options can be specified as a string.
+             In case an option is not recognized as being one of the possible
+             options listed above, it's used as a filesystem dependent option.
 
              Examples:
 
@@ -71,9 +72,9 @@ Commands:
 
              create /dev/vda2 /mnt -o 'FileSystemCheckOrder:2'
 
-             create /dev/vda3 /mnt -p 'user_xattr,barrier=0'
+             create /dev/vda3 /mnt -o 'user_xattr,barrier=0'
 
-             create /dev/vda4 /mnt -o 'Dump:t, AllowMandatoryLock:t' -p 'acl'
+             create /dev/vda4 /mnt -o 'Dump:t, AllowMandatoryLock:t, acl'
 
     delete   Unmount a mounted filesystem. Can be specified either as a device
              path or a mountpoint.
@@ -106,14 +107,8 @@ def get_mounts_for_devices(ns, devices):
     return mounts
 
 class MountList(command.LmiLister):
-    COLUMNS = ('FileSystemSpec', 'FileSystemType', 'MountPointPath', 'Options', 'OtherOptions')
-
-    def transform_options(self, options):
-        """
-        Rename 'device' option to 'devices' parameter name for better
-        readability.
-        """
-        options['<devices>'] = options.pop('<device>')
+    COLUMNS = ('FileSystemSpec', 'FileSystemType', 'MountPointPath', 'Options')
+    ARG_ARRAY_SUFFIX = 's'
 
     def execute(self, ns, devices=None, _all=None):
         """
@@ -139,24 +134,14 @@ class MountList(command.LmiLister):
                 if name in transients:
                     continue
 
-            opts_str = mount.build_opts_str(mnt)
-
             yield(mnt.FileSystemSpec,
                   mnt.FileSystemType,
                   mnt.MountPointPath,
-                  opts_str[0],
-                  opts_str[1])
+                  mount.build_opts_str(mnt))
 
 class MountShow(command.LmiLister):
     COLUMNS = ('Name', 'Value')
-
-    def transform_options(self, options):
-        """
-        Rename 'device' option to 'devices' parameter name for better
-        readability.
-        """
-        options['<devices>'] = options.pop('<device>')
-
+    ARG_ARRAY_SUFFIX = 's'
 
     def execute(self, ns, _all=None, devices=None):
         """
@@ -183,12 +168,9 @@ class MountShow(command.LmiLister):
                 if name in transients:
                     continue
 
-            opts_str = mount.build_opts_str(mnt)
-
             yield('Filesystem', '%s (%s)' % (mnt.FileSystemSpec, mnt.FileSystemType))
             yield('Mountpoint', mnt.MountPointPath)
-            yield('Options', opts_str[0])
-            yield('OtherOptions', opts_str[1])
+            yield('Options', mount.build_opts_str(mnt))
             yield ''
 
 class MountCreate(command.LmiCheckResult):
@@ -202,11 +184,11 @@ class MountCreate(command.LmiCheckResult):
         """
         options['<device>'] = options.pop('<device>')[0]
 
-    def execute(self, ns, device, mountpoint, fs_type=None, options=None, other_options=None):
+    def execute(self, ns, device, mountpoint, fs_type=None, options=None):
         """
         Implementation of 'mount create' command.
         """
-        return mount.mount_create(ns, device, mountpoint, fs_type, options, other_options)
+        return mount.mount_create(ns, device, mountpoint, fs_type, options)
 
 class MountDelete(command.LmiCheckResult):
     EXPECT = None
