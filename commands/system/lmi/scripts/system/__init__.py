@@ -73,12 +73,36 @@ def get_all_instances(ns, class_name):
     """
     return _cache_replies(ns, class_name, 'instances')
 
+def format_memory_size(size):
+    """
+    Returns formatted memory size.
+
+    :param size: Size in bytes
+    :type size: Number
+    :returns: Formatted size string.
+    :rtype: String
+    """
+    if not size:
+        return 'N/A GB'
+    if size >= 1099511627776:
+        sizestr = '%.1f TB' % (float(size) / 1099511627776.0)
+    elif size >= 1073741824:
+        sizestr = '%.1f GB' % (float(size) / 1073741824.0)
+    elif size >= 1048576:
+        sizestr = '%d MB' % (int(size) / 1048576)
+    elif size >= 1024:
+        sizestr = '%d KB' % (int(size) / 1024)
+    else:
+        sizestr = '%d B' % int(size)
+    return sizestr
+
 def get_system_info(ns):
     """
     :returns: Tabular data of all general system information.
     :rtype: List of tuples
     """
     result = get_hostname(ns)
+    result += get_hwinfo(ns)
     return result
 
 def get_hostname(ns):
@@ -88,3 +112,32 @@ def get_hostname(ns):
     """
     i = get_computer_system(ns)
     return [('Computer Name:', i.Name)]
+
+def get_hwinfo(ns):
+    """
+    :returns: Tabular data of system hw info.
+    :rtype: List of tuples
+    """
+    # Chassis
+    chassis = get_single_instance(ns, 'LMI_Chassis')
+    hwinfo = chassis.Manufacturer
+    if chassis.Model and chassis.Model != 'Not Specified' \
+            and chassis.Model != chassis.Manufacturer:
+        hwinfo += ' ' + chassis.Model
+    elif chassis.ProductName and chassis.ProductName != 'Not Specified' \
+            and chassis.ProductName != chassis.Manufacturer:
+        hwinfo += ' ' + chassis.ProductName
+    if chassis.VirtualMachine and chassis.VirtualMachine != 'No':
+        hwinfo += ' (%s virtual machine)' % chassis.VirtualMachine
+    # CPUs
+    cpus = get_all_instances(ns, 'LMI_Processor')
+    cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
+    # Memory
+    memory = get_single_instance(ns, 'LMI_Memory')
+    memory_size = format_memory_size(memory.NumberOfBlocks)
+    # Result
+    result = [
+        ('Hardware:', hwinfo),
+        ('Processors:', cpus_str),
+        ('Memory:', memory_size)]
+    return result

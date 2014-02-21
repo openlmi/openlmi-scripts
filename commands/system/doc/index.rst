@@ -1,7 +1,7 @@
 .. OpenLMI System scripts's documentation
 
 OpenLMI System scripts's documentation
-==================================================
+======================================
 
 Contents:
 
