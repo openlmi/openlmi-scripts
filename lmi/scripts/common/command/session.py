@@ -138,14 +138,14 @@ class LmiSessionCommand(LmiEndPointCommand):
         it just prints errors in a form of list.
 
         :param session: Session object.
-        :type session: :py:class:`lmi.scripts.common.command.session.Session`
+        :type session: :py:class:`lmi.scripts.common.session.Session`
         :param dictionary results: Dictionary of form: ::
 
                 { 'hostname' : (success_flag, result), ... }
 
             where *result* is either an exception or returned value of
             associated function, depending on *success_flag*. See the
-            :py:meth:`Session.process_host_result`.
+            :py:meth:`process_host_result`.
         """
         if not isinstance(session, Session):
             raise TypeError("session must be a Session object")

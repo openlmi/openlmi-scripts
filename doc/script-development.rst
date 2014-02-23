@@ -437,6 +437,68 @@ Next example shows setup with more top-level commands
         ],
     },
 
+Conventions
+-----------
+There are several conventions you should try to follow in your shiny scripts.
+
+Logging messages
+~~~~~~~~~~~~~~~~
+In each module where logging facilities are going to be used, define global
+varibale ``LOG`` like this: ::
+
+    from lmi.scripts.common import get_logger
+
+    LOG = get_logger(__name__)
+
+It's a callable used throughout particular module in this way: ::
+
+    LOG().warn('All the data of "%s" will be lost!', partition)
+
+Each message should be a whole sentence. It shall begin with an upper case
+letter and end with a dot or other sentence terminator.
+
+Bad example: ::
+
+    LOG().info('processing %s', card)
+
+Exceptions
+~~~~~~~~~~
+Again all the exceptions should be initialized with messages forming
+a whole sentence.
+
+They will be catched and printed on *stderr* by lmi meta-command. If the
+*Trace* option in :ref:`sect_main` is on, traceback will be printed. There is
+just one exception. If the exception inherits from
+:py:class:`~lmi.scripts.common.errors.LmiError`, traceback won't be printed
+unless verbosity level is highest: ::
+
+    # self refers to some command
+    self.app.config.verbosity == self.app.config.OUTPUT_DEBUG
+
+This is a feature allowing for common error use-cases to be gracefully
+handled. In your scripts you should stick to using
+:py:class:`~lmi.scripts.common.errors.LmiFailed` for such exceptions.
+
+Following is an example of such a common error-case, where printing traceback
+does not add any interesting information: ::
+
+    iname = ns.LMI_Service.new_instance_name({
+        "Name": service,
+        "CreationClassName" : "LMI_Service",
+        "SystemName" : cs.Name,
+        "SystemCreationClassName" : cs.CreationClassName
+    })
+    inst = iname.to_instance()
+    if inst is None:
+        raise errors.LmiFailed('No such service "%s".' % service)
+    # process the service instance
+
+``service`` is a name provided by user. If such a service is not found,
+``inst`` will be assigned ``None``. In this case we don't want to continue in
+script's execution thus we raise an exception. We provide very clear message
+that needs no other comment. We don't want any traceback to be printed, thus
+the use of :py:class:`~lmi.scripts.common.errors.LmiFailed`.
+
 Detailed description
 --------------------
 These pages provide more details of some aspects:

@@ -150,7 +150,7 @@ Property descriptions
             EXPECT = 0
 
     .. note::
-        
+
         Using own usage strings in subcommands of top-level commands is not
         recommended. It brings a lot of redundancy and may prove problematic
         to modify while keeping consistency among hierarchically nested
@@ -259,6 +259,35 @@ Property descriptions
     Namespace can also be overriden globally in a configuration file or with
     an option on command line.
 
+
+Output rendering
+----------------
+All these options begin with ``FMT_`` which is a shortcut for *formatter* as
+they become options to formatter objects. These can be defined not only in
+end-point commands but also in multiplexers. In the latter case they set the
+defaults for all their direct and indirect child commands.
+
+.. note::
+    These options override configuration settings and command line options.
+    Therefor use them with care.
+
+They are:
+
+.. _fmt_no_headings:
+
+``FMT_NO_HEADINGS`` : ``bool`` (defaults to ``False``)
+    Allows to suppress headings (column or row names) in the output.
+
+    .. note::
+        With :ref:`lmi_lister` command it's preferable to set the *COLUMNS*
+        property to empty list instead. Otherwise associated function is
+        expected to return column headers as a first row in its result.
+
+.. _fmt_human_friendly:
+
+``FMT_HUMAN_FRIENDLY`` : ``bool`` (defaults to ``False``)
+    Forces the output to be more pleasant to read by human beings.
+
 Command specific properties
 ---------------------------
 Each command class can have its own specific properties. Let's take a look on
@@ -295,7 +324,6 @@ them.
 
     Take for example this usage string: ::
 
-        
         """
         Display hardware information.
 
@@ -328,13 +356,18 @@ them.
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. _columns:
 
-``COLUMNS`` : ``tuple`` (mandatory)
+``COLUMNS`` : ``tuple``
     Column names. It's a tuple with name for each column. Each row of data
     shall then contain the same number of items as this tuple. If omitted,
     associated function is expected to provide them in the first row of
     returned list. It's translated to
     :py:meth:`~lmi.scripts.common.command.lister.LmiBaseListerCommand.get_columns`
     class method.
+
+    If set to empty list, no column headers will be printed. Every item of
+    returned list of associated function will be treated as data. Note that
+    setting this to empty list makes the *FMT_NO_HEADINGS* property
+    redundant.
 
 .. _lmi_instance_commands_properties:
 .. _lmi_show_instance_properties:
@@ -345,7 +378,7 @@ them.
 These two classes expect, as a result of their associated function, an instance
 or a list of instances of some CIM class. They take care of rendering them to
 standard output. Thus their properties affect the way how their properties
-are rendered. 
+are rendered.
 
 .. _properties:
 
@@ -477,12 +510,13 @@ method.
 .. seealso::
 
     Docopt_ home page and its git: http://github.org/docopt/docopt.
-    
+
 -------------------------------------------------------------------------------
 
 .. [#] Angle brackets here just mark the boundaries of name components. They
        have nothing to do with arguments.
-.. [#] Application object is accessible through ``app`` property of each command instance.
+.. [#] Application object is accessible through ``app`` property of each
+       command instance.
 
 .. ****************************************************************************
 
