@@ -157,7 +157,7 @@ def _handle_callable(name, bases, dcl):
                         [match.group('func')], 0),
                         match.group('func'))
             except (ImportError, AttributeError):
-                raise errors.LmiCommandImportFailed(
+                raise errors.LmiImportCallableFailed(
                         dcl['__module__'], name, func)
     except KeyError:
         raise errors.LmiCommandMissingCallable(dcl['__module__'], name)

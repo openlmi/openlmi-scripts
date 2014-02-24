@@ -72,11 +72,19 @@ class LmiNoConnections(LmiError):
     """ Raised, when no connection to remote hosts could be made. """
     pass
 
+class LmiCommandImportError(LmiError):
+    """ Exception raised when command can not be imported. """
+    def __init__(self, cmd_name, cmd_path, reason):
+        LmiError.__init__(self, 'Failed to import command "%s" (%s): %s' % (
+                cmd_name, cmd_path, reason))
+
 class LmiCommandError(LmiError):
     """ Generic exception related to command declaration. """
     def __init__(self, module_name, class_name, msg):
-        LmiError.__init__(self, 'Wrong declaration of command "%s.%s": %s'
-                % (module_name, class_name, msg))
+        LmiError.__init__(self, 'Wrong declaration of command "%s": %s'
+                % (    ".".join([module_name, class_name])
+                    if module_name else class_name
+                  , msg))
 
 class LmiCommandInvalidName(LmiCommandError):
     """ Raised, when command gets invalid name. """
@@ -94,7 +102,7 @@ class LmiCommandInvalidProperty(LmiCommandError):
     """ Raised, when any command property contains unexpected value. """
     pass
 
-class LmiCommandImportFailed(LmiCommandInvalidProperty):
+class LmiImportCallableFailed(LmiCommandInvalidProperty):
     """ Raised, when callable object of command could not be imported. """
     def __init__(self, module_name, class_name, callable_prop):
         LmiCommandInvalidProperty.__init__(self, module_name, class_name,
