@@ -27,6 +27,10 @@ Basic storage device information.
 
     **lmi** **storage** **vg** \ *<cmd>*\  [\ *<args>*\  ...]
 
+    **lmi** **storage** **thinpool** \ *<cmd>*\  [\ *<args>*\  ...]
+
+    **lmi** **storage** **thinlv** \ *<cmd>*\  [\ *<args>*\  ...]
+
     **lmi** **storage** **depends** [ \ **--deep**\  ] [ \ *<device>*\  ...]
 
     **lmi** **storage** **list** [ \ *<device>*\  ...]
@@ -72,6 +76,14 @@ Basic storage device information.
 
     **vg**
         Volume Group management.
+
+
+    **thinpool**
+        Thin Pool management.
+
+
+    **thinlv**
+        Thin Logical Volume management.
 
 
     **list**
@@ -339,7 +351,7 @@ Mount management.
 
     **lmi** **storage** **mount** **list** [ \ **--all**\  ] [ \ *<device>*\  ... ]
 
-    **lmi** **storage** **mount** **create** \ *<device>*\  \ *<mountpoint>*\  [ (\ **-t**\  \ *<fs_type>*\ ) (\ **-o**\  \ *<options>*\ ) (\ **-p**\  \ *<other_options>*\ ) ]
+    **lmi** **storage** **mount** **create** \ *<device>*\  \ *<mountpoint>*\  [ (\ **-t**\  \ *<fs_type>*\ ) (\ **-o**\  \ *<options>*\ ) ]
 
     **lmi** **storage** **mount** **delete** \ *<target>*\ 
 
@@ -361,12 +373,12 @@ Mount management.
         independent) and filesystem specific options can be provided. If no
         filesystem type is specified, it is automatically detected.
 
-        Common options can be provided as a comma-separated string of
+        Options can be provided as a comma-separated string of
         'option_name:value' items.  Possible option names are:
 
         AllowExecution AllowMandatoryLock AllowSUID AllowUserMount
         AllowWrite Auto Dump FileSystemCheckOrder InterpretDevices
-        OtherOptions Silent SynchronousDirectoryUpdates SynchronousIO
+        Silent SynchronousDirectoryUpdates SynchronousIO
         UpdateAccessTimes UpdateDirectoryAccessTimes UpdateFullAccessTimes
         UpdateRelativeAccessTimes
 
@@ -375,7 +387,8 @@ Mount management.
         case insensitive.
         The FileSystemCheckOrder option's value is a number.
 
-        Other options can be specified as a string.
+        In case an option is not recognized as being one of the possible
+        options listed above, it's used as a filesystem dependent option.
 
         Examples:
 
@@ -383,9 +396,9 @@ Mount management.
 
         create /dev/vda2 /mnt -o 'FileSystemCheckOrder:2'
 
-        create /dev/vda3 /mnt -p 'user_xattr,barrier=0'
+        create /dev/vda3 /mnt -o 'user_xattr,barrier=0'
 
-        create /dev/vda4 /mnt -o 'Dump:t, AllowMandatoryLock:t' -p 'acl'
+        create /dev/vda4 /mnt -o 'Dump:t, AllowMandatoryLock:t, acl'
 
 
     **delete**
@@ -683,4 +696,113 @@ Volume Group management.
         other units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
         (=1024 bytes).
         The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+storage thinpool
+----------------
+
+Thin Pool management.
+
+
+**Usage:**
+
+    **lmi** **storage** **thinpool** list
+
+    **lmi** **storage** **thinpool** **create** \ *<name>*\  \ *<vg>*\  \ *<size>*\ 
+
+    **lmi** **storage** **thinpool** **delete** \ *<tp>*\  ...
+
+    **lmi** **storage** **thinpool** **show** [ \ *<tp>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List all thin pools on the system.
+
+
+    **create**
+        Create Thin Pool with given name and size from a Volume Group.
+
+
+    **delete**
+        Delete given Thin Pools.
+
+
+    **show**
+        Show detailed information about given Thin Pools. If no
+        Thin Pools are provided, all of them are displayed.
+
+**Options:**
+
+
+    **vg**
+        Name of the volume group, with or without `/dev/` prefix.
+
+
+    **tp**
+        Name of the thin pool, with or without `/dev/` prefix.
+
+
+    **size**
+        Requested extent size of the new volume group, by default in
+        bytes. 'T', 'G', 'M' or 'K' suffix can be used to specify
+        other units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
+        (=1024 bytes).
+        The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+storage thinlv
+--------------
+
+Thin Logical Volume management.
+
+
+**Usage:**
+
+    **lmi** **storage** **thinlv** **list** [ \ *<tp>*\  ...]
+
+    **lmi** **storage** **thinlv** **create** \ *<tp>*\  \ *<name>*\  \ *<size>*\ 
+
+    **lmi** **storage** **thinlv** **delete** \ *<tlv>*\  ...
+
+    **lmi** **storage** **thinlv** **show** [ \ *<tlv>*\  ...]
+
+
+
+**Commands:**
+
+
+    **list**
+        List available thin logical volumes on given thin pools.
+        If no thin pools are provided, all thin logical volumes are
+        listed.
+
+
+    **create**
+        Create a thin logical volume on given thin pool.
+
+
+    **delete**
+        Delete given thin logical volume.
+
+
+    **show**
+        Show detailed information about given Thin Logical Volumes. If no
+        Thin Logical Volumes are provided, all of them are displayed.
+
+**Options:**
+
+
+    **tp**
+        Name of the thin pool, with or without `/dev/` prefix.
+
+
+    **size**
+        Size of the new logical volume, by default in bytes.
+        'T', 'G', 'M' or 'K' suffix can be used to specify other
+        units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
+        (= 1024 bytes).
+        The suffix is case insensitive, i.e. 1g = 1G = 1073741824
+        bytes.
 
