@@ -286,12 +286,15 @@ class TableFormatter(ListFormatter):
         # Compute column sizes
         column_sizes = []
         rows = iter(self.stash)
-        if self.column_names is None:
-            row = rows.next()
-        else:
-            row = self.column_names
-        for i in xrange(len(row)):
-            column_sizes.append(len(row[i]))
+        try:
+            if self.column_names is None:
+                row = rows.next()
+            else:
+                row = self.column_names
+            for i in xrange(len(row)):
+                column_sizes.append(len(row[i]))
+        except StopIteration:
+            pass # empty stash
 
         for row in rows:
             for i in xrange(len(row)):
@@ -302,7 +305,7 @@ class TableFormatter(ListFormatter):
                     column_sizes[i] = row_length
 
         # print headers
-        if not self.no_headings:
+        if not self.no_headings and self.column_names:
             self.print_text_row(self.column_names, column_sizes)
         # print stashed rows
         for row in self.stash:
