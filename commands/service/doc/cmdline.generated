@@ -11,13 +11,17 @@ System service management.
 
 **Usage:**
 
-    **lmi** **service** **list** [\ **--all**\  | \ **--disabled**\  | \ **--oneshot**\ ]
+    **lmi** **service** **list** [(\ **--enabled**\  | \ **--disabled**\ )]
 
     **lmi** **service** **show** \ *<service>*\ 
 
     **lmi** **service** **start** \ *<service>*\ 
 
     **lmi** **service** **stop** \ *<service>*\ 
+
+    **lmi** **service** **enable** \ *<service>*\ 
+
+    **lmi** **service** **disable** \ *<service>*\ 
 
     **lmi** **service** **restart** [\ **--try**\ ] \ *<service>*\ 
 
@@ -57,14 +61,11 @@ System service management.
 **Options:**
 
 
-    **--all**
-        List all services available.
+    **--enabled**
+        List only enabled services.
 
     **--disabled**
         List only disabled services.
-
-    **--oneshot**
-        List only oneshot services.
 
     **--try**
         Whether to abandon the operation if the service is not running.
