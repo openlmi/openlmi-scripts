@@ -69,9 +69,9 @@ def create_raid(ns, devices, level, name=None):
     (ret, outparams, err) = service.SyncCreateOrModifyMDRAID(**args)
     if ret != 0:
         if err:
-            raise LmiFailed("Cannot create the partition: %s." % err)
+            raise LmiFailed("Cannot create the MD RAID: %s." % err)
         values = service.CreateOrModifyMDRAID.CreateOrModifyMDRAIDValues
-        raise LmiFailed("Cannot create the partition: %s."
+        raise LmiFailed("Cannot create the MD RAID: %s."
                 % (values.value_name(ret),))
     return outparams['TheElement']
 
@@ -88,7 +88,7 @@ def delete_raid(ns, raid):
     (ret, _outparams, err) = service.SyncDeleteMDRAID(TheElement=raid)
     if ret != 0:
         if err:
-            raise LmiFailed("Cannot create the partition: %s." % err)
+            raise LmiFailed("Cannot delete the MD RAID: %s." % err)
         raise LmiFailed("Cannot delete the raid: %s."
                 % (service.DeleteMDRAID.DeleteMDRAIDValues.value_name(ret),))
 
