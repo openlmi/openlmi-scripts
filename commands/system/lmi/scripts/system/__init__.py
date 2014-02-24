@@ -123,21 +123,33 @@ def get_hwinfo(ns):
     """
     # Chassis
     chassis = get_single_instance(ns, 'LMI_Chassis')
-    hwinfo = chassis.Manufacturer
-    if chassis.Model and chassis.Model != 'Not Specified' \
-            and chassis.Model != chassis.Manufacturer:
-        hwinfo += ' ' + chassis.Model
-    elif chassis.ProductName and chassis.ProductName != 'Not Specified' \
-            and chassis.ProductName != chassis.Manufacturer:
-        hwinfo += ' ' + chassis.ProductName
-    if chassis.VirtualMachine and chassis.VirtualMachine != 'No':
-        hwinfo += ' (%s virtual machine)' % chassis.VirtualMachine
+    if chassis:
+        hwinfo = chassis.Manufacturer
+        if chassis.Model and chassis.Model != 'Not Specified' \
+                and chassis.Model != chassis.Manufacturer:
+            hwinfo += ' ' + chassis.Model
+        elif chassis.ProductName and chassis.ProductName != 'Not Specified' \
+                and chassis.ProductName != chassis.Manufacturer:
+            hwinfo += ' ' + chassis.ProductName
+        try:
+            if chassis.VirtualMachine and chassis.VirtualMachine != 'No':
+                hwinfo += ' (%s virtual machine)' % chassis.VirtualMachine
+        except AttributeError:
+            pass
+    else:
+        hwinfo = 'N/A'
     # CPUs
     cpus = get_all_instances(ns, 'LMI_Processor')
-    cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
+    if cpus:
+        cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
+    else:
+        cpus_str = 'N/A'
     # Memory
     memory = get_single_instance(ns, 'LMI_Memory')
-    memory_size = format_memory_size(memory.NumberOfBlocks)
+    if memory:
+        memory_size = format_memory_size(memory.NumberOfBlocks)
+    else:
+        memory_size = 'N/A GB'
     # Result
     result = [
         ('Hardware:', hwinfo),
