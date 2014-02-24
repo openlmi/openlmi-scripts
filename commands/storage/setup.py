@@ -32,7 +32,7 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts', 'openlmi-tools'],
+    install_requires=['openlmi-scripts >= 0.2.7', 'openlmi-tools'],
 
     namespace_packages=['lmi', 'lmi.scripts' ],
     packages=[
