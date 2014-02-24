@@ -96,12 +96,12 @@ def process_usage_line(line):
     Parsing usage strings after 'Usage:' and before 'Commands:'.
     Just add formatting to usage strings.
     """
-    if line.startswith("Commands:"):
+    if line.startswith("Commands:") or line.startswith('Options:'):
         print
-        print "**Commands:**"
+        print "**Commands:**" if line.startswith("Commands") else "**Options:**"
         print
         return process_commands_line
- 
+
     # -o and --options should be bold, but they must *not* be preceeded
     # by [a-z] character.
     # I.e. 'partition-table' should be skipped, while '--option' should
