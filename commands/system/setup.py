@@ -10,7 +10,7 @@ except IOError:
 
 setup(
     name='openlmi-scripts-system',
-    version='0.0.1',
+    version='0.0.2',
     description='Display general system information',
     long_description=long_description,
     author=u'Peter Schiffer',
@@ -30,7 +30,7 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts'],
+    install_requires=['openlmi-scripts >= 0.2.7'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
     packages=['lmi', 'lmi.scripts', 'lmi.scripts.system'],
