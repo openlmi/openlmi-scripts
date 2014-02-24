@@ -131,11 +131,9 @@ def get_hwinfo(ns):
         elif chassis.ProductName and chassis.ProductName != 'Not Specified' \
                 and chassis.ProductName != chassis.Manufacturer:
             hwinfo += ' ' + chassis.ProductName
-        try:
-            if chassis.VirtualMachine and chassis.VirtualMachine != 'No':
-                hwinfo += ' (%s virtual machine)' % chassis.VirtualMachine
-        except AttributeError:
-            pass
+        virt = getattr(chassis, 'VirtualMachine', None)
+        if virt and virt != 'No':
+            hwinfo += ' (%s virtual machine)' % virt
     else:
         hwinfo = 'N/A'
     # CPUs

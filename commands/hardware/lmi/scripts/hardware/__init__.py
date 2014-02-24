@@ -187,11 +187,7 @@ def get_system_info(ns):
         model = i.ProductName
     else:
         model = 'N/A'
-    virt = ''
-    try:
-        virt = i.VirtualMachine
-    except AttributeError:
-        pass
+    virt = getattr(i, 'VirtualMachine', None)
     if not virt:
         virt = 'N/A'
     result += [
@@ -265,12 +261,12 @@ def get_memory_info(ns):
     size = format_memory_size(memory.NumberOfBlocks)
 
     slots = ''
-    if phys_memory and len(phys_memory):
+    if phys_memory:
         slots += '%d' % len(phys_memory)
     else:
         slots += 'N/A'
     slots += ' used, '
-    if memory_slots and len(memory_slots):
+    if memory_slots:
         slots += '%d' % len(memory_slots)
     else:
         slots += 'N/A'
@@ -390,15 +386,12 @@ def get_disks_info(ns):
         else:
             smart = get_colored_string('Unknown', YELLOW_COLOR)
 
-        temp = ''
-        try:
-            if hdd.Temperature:
-                temp = '%d' % hdd.Temperature
-        except AttributeError:
-            pass
-        if not temp:
-            temp = 'N/A'
-        temp += u' °C'
+        temp = getattr(hdd, 'Temperature', None)
+        if temp:
+            temp_str = '%d' % temp
+        else:
+            temp_str = 'N/A'
+        temp_str += u' °C'
 
         if not first_disk:
             result.append(EMPTY_LINE)
@@ -419,5 +412,5 @@ def get_disks_info(ns):
             ('    Port Speed:', '%s current, %s max' % \
                 (port_speed_current, port_speed_max)),
             ('    SMART Status:', smart),
-            ('    Temperature:', temp)]
+            ('    Temperature:', temp_str)]
     return result
