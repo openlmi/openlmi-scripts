@@ -174,7 +174,11 @@ def get_system_info(ns):
     :returns: Tabular data of system info, from the ``LMI_Chassis`` instance.
     :rtype: List of tuples
     """
+    result = init_result(ns)
     i = get_single_instance(ns, 'LMI_Chassis')
+    if not i:
+        result.append(('System info:', 'N/A'))
+        return result
     if i.Model and i.ProductName:
         model = '%s (%s)' % (i.Model, i.ProductName)
     elif i.Model:
@@ -183,11 +187,13 @@ def get_system_info(ns):
         model = i.ProductName
     else:
         model = 'N/A'
-    if i.VirtualMachine:
+    virt = ''
+    try:
         virt = i.VirtualMachine
-    else:
+    except AttributeError:
+        pass
+    if not virt:
         virt = 'N/A'
-    result = init_result(ns)
     result += [
           ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
                i.ChassisPackageType)),
@@ -203,17 +209,17 @@ def get_motherboard_info(ns):
     :returns: Tabular data of motherboard info.
     :rtype: List of tuples
     """
+    result = init_result(ns)
     i = get_single_instance(ns, 'LMI_Baseboard')
-    model = ''
-    manufacturer = ''
-    if i:
-        model = i.Model
-        manufacturer = i.Manufacturer
+    if not i:
+        result.append(('Motherboard info:', 'N/A'))
+        return result
+    model = i.Model
+    manufacturer = i.Manufacturer
     if not model:
         model = 'N/A'
     if not manufacturer:
         manufacturer = 'N/A'
-    result = init_result(ns)
     result += [
           ('Motherboard:', model),
           ('Manufacturer:', manufacturer)]
@@ -224,14 +230,17 @@ def get_cpu_info(ns):
     :returns: Tabular data of processor info.
     :rtype: List of tuples
     """
+    result = init_result(ns)
     cpus = get_all_instances(ns, 'LMI_Processor')
     cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
+    if not cpus or not cpu_caps:
+        result.append(('Processor info:', 'N/A'))
+        return result
     cores = 0
     threads = 0
     for i in cpu_caps:
         cores += i.NumberOfProcessorCores
         threads += i.NumberOfHardwareThreads
-    result = init_result(ns)
     result += [
           ('CPU:', cpus[0].Name),
           ('Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
@@ -245,48 +254,52 @@ def get_memory_info(ns):
     :returns: Tabular data of memory info.
     :rtype: List of tuples
     """
+    result = init_result(ns)
     memory = get_single_instance(ns, 'LMI_Memory')
     phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
     memory_slots = get_all_instances(ns, 'LMI_MemorySlot')
+    if not memory:
+        result.append(('Memory info:', 'N/A'))
+        return result
 
     size = format_memory_size(memory.NumberOfBlocks)
 
     slots = ''
-    if len(phys_memory):
+    if phys_memory and len(phys_memory):
         slots += '%d' % len(phys_memory)
     else:
         slots += 'N/A'
     slots += ' used, '
-    if len(memory_slots):
+    if memory_slots and len(memory_slots):
         slots += '%d' % len(memory_slots)
     else:
         slots += 'N/A'
     slots += ' total'
 
     modules = []
-    for m in phys_memory:
-        module = format_memory_size(m.Capacity)
-        if m.MemoryType:
-            module += ', %s' % \
-                ns.LMI_PhysicalMemory.MemoryTypeValues.value_name(m.MemoryType)
-            if m.FormFactor:
-                module += ' (%s)' % \
-                    ns.LMI_PhysicalMemory.FormFactorValues.value_name(
-                    m.FormFactor)
-        if m.ConfiguredMemoryClockSpeed:
-            module += ', %d MHz' % m.ConfiguredMemoryClockSpeed
-        if m.Manufacturer:
-            module += ', %s' % m.Manufacturer
-        if m.BankLabel:
-            module += ', %s' % m.BankLabel
-        if not modules:
-            modules.append(('Modules:', module))
-        else:
-            modules.append(('', module))
+    if phys_memory:
+        for m in phys_memory:
+            module = format_memory_size(m.Capacity)
+            if m.MemoryType:
+                module += ', %s' % \
+                    ns.LMI_PhysicalMemory.MemoryTypeValues.value_name(m.MemoryType)
+                if m.FormFactor:
+                    module += ' (%s)' % \
+                        ns.LMI_PhysicalMemory.FormFactorValues.value_name(
+                        m.FormFactor)
+            if m.ConfiguredMemoryClockSpeed:
+                module += ', %d MHz' % m.ConfiguredMemoryClockSpeed
+            if m.Manufacturer:
+                module += ', %s' % m.Manufacturer
+            if m.BankLabel:
+                module += ', %s' % m.BankLabel
+            if not modules:
+                modules.append(('Modules:', module))
+            else:
+                modules.append(('', module))
     if not modules:
         modules.append(('Modules:', 'N/A'))
 
-    result = init_result(ns)
     result.append(('Memory:', size))
     result += modules
     result.append(('Slots:', slots))
@@ -378,11 +391,14 @@ def get_disks_info(ns):
             smart = get_colored_string('Unknown', YELLOW_COLOR)
 
         temp = ''
-        if hdd.Temperature:
-            temp = '%d' % hdd.Temperature
+        try:
+            if hdd.Temperature:
+                temp = '%d' % hdd.Temperature
+        except AttributeError:
+            pass
         if not temp:
             temp = 'N/A'
-        temp = temp + u' °C'
+        temp += u' °C'
 
         if not first_disk:
             result.append(EMPTY_LINE)
