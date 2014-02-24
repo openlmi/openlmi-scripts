@@ -1,7 +1,7 @@
-.. OpenLMI Hardware scripts's documentation
+.. OpenLMI System scripts's documentation
 
-OpenLMI Hardware scripts's documentation
-========================================
+OpenLMI System scripts's documentation
+======================================
 
 Contents:
 
@@ -18,3 +18,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+

@@ -15,11 +15,13 @@ Display hardware information.
 
     **lmi** **hwinfo** system
 
-    **lmi** **hwinfo** chassis
+    **lmi** **hwinfo** motherboard
 
     **lmi** **hwinfo** cpu
 
     **lmi** **hwinfo** memory
+
+    **lmi** **hwinfo** disks
 
 
 
@@ -30,14 +32,17 @@ Display hardware information.
         Display all available information.
 
     **system**
-        Display system hostname.
+        Display system information.
 
-    **chassis**
-        Display chassis information.
+    **motherboard**
+        Display motherboard information.
 
     **cpu**
         Display processor information.
 
     **memory**
         Display memory information.
+
+    **disks**
+        Display disks information.
 

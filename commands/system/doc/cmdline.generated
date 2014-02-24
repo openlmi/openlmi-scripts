@@ -1,0 +1,15 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
+    !!!!!!!!!
+
+system
+------
+
+Display general system information.
+
+
+**Usage:**
+
+    **lmi** system
+
