@@ -203,7 +203,13 @@ class LevelDispatchingFormatter(object):
             if level < record.levelno:
                 break
             formatter = fmt
-        return formatter.format(record)
+        try:
+            return formatter.format(record)
+        except KeyError:
+            # in some modules or libraries it may happen that logger is
+            # initialized before our logger class is set as default
+            record.cseq = record.creset = ''
+            return formatter.format(record)
 
 def get_logger(module_name):
     """
