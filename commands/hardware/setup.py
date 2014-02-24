@@ -10,7 +10,7 @@ except IOError:
 
 setup(
     name='openlmi-scripts-hardware',
-    version='0.0.2',
+    version='0.0.3',
     description='Hardware information available in OpenLMI hardware providers',
     long_description=long_description,
     author=u'Peter Schiffer',

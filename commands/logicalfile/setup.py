@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 PROJECT = 'openlmi-scripts-logicalfile'
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 from setuptools import setup, find_packages
 

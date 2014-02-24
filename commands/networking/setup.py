@@ -10,7 +10,7 @@ except IOError:
 
 setup(
     name='openlmi-scripts-networking',
-    version='0.0.1',
+    version='0.0.2',
     description='LMI command for network administration.',
     long_description=long_description,
     author=u'Radek Novacek',
