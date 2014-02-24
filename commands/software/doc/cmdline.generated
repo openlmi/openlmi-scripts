@@ -11,19 +11,11 @@ System software management.
 
 **Usage:**
 
-    **lmi** **sw** **list** pkgs
+    **lmi** **sw** **search** [(\ **--repoid**\  \ *<repository>*\ )] [\ **--allow-duplicates**\ ] \ *<package>*\ ...
 
-        [(\ **--available**\  | \ **--all**\ ) [\ **--repoid**\  \ *<repository>*\ ]]
+    **lmi** **sw** **list** (\ **--help**\  | \ *<what>*\  [\ *<args>*\ ...])
 
-        [\ **--allow-duplicates**\ ] [\ *<package>*\  ...]
-
-    **lmi** **sw** **list** **repos** [\ **--disabled**\  | \ **--all**\ ]
-
-    **lmi** **sw** **list** **files** [\ **-t**\  \ *<file_type>*\ ] \ *<package>*\ 
-
-    **lmi** **sw** **show** **pkg** [(\ **--repoid**\  \ *<repository>*\ ) | \ **--installed**\ ] \ *<package>*\ 
-
-    **lmi** **sw** **show** **repo** \ *<repository>*\ 
+    **lmi** **sw** **show** (\ **--help**\  | \ *<what>*\  [\ *<args>*\ ...])
 
     **lmi** **sw** **install** [\ **--force**\ ] [\ **--repoid**\  \ *<repository>*\ ] \ *<package>*\  ...
 
@@ -92,27 +84,26 @@ System software management.
         installed -- make a reinstallation or to downgrade package
         to older version.
 
-    **--repoid**
-        <repository>
+    **--repoid <repository>**
+        
         Select a repository, where the given package will be
         searched for.
 
-    **--uri**
-        <uri>    Operate upon an rpm package available on remote system
+    **--uri <uri>**
+        Operate upon an rpm package available on remote system
         through http or ftp service.
-
-    **-t**
-        --type (file | directory | device | symlink | fifo)
-        List only particular file type.
 
     **--installed**
         Limit the query only on installed packages.
 
+    **--help**
+        Get a detailed help for subcommand.
+
 **Specifying <package>:**
 
 
-    **Package**
-        can be given in one of following notations:
+    **Package can be given in one of following notations:**
+        
 
         * <name>
         * <name>.<arch>
@@ -121,6 +112,89 @@ System software management.
         * <epoch>:<name>-<version>-<release>.<arch>   # envra
 
 
-    **Bottom**
-        most notations allow to precisely identify particular package.
+    **Bottom most notations allow to precisely identify particular package.**
+        
+
+sw list
+-------
+
+List packages, repositories or files.
+
+
+**Usage:**
+
+    **lmi** **sw** **list** [all] [\ **--allow-duplicates**\ ]
+
+    **lmi** **sw** **list** installed
+
+    **lmi** **sw** **list** **available** [\ **--repoid**\  \ *<repository>*\ ] [\ **--allow-duplicates**\ ]
+
+    **lmi** **sw** **list** **repos** [\ **--disabled**\  | \ **--all**\ ]
+
+    **lmi** **sw** **list** **files** [\ **-t**\  \ *<file_type>*\ ] \ *<package>*\ 
+
+
+
+**Commands:**
+
+
+    **all**
+        - List installed and available packages.
+
+    **installed**
+        - List installed packages.
+
+    **available**
+        - List available packages.
+
+    **repos**
+        - List repositories. Only enabled ones are listed by default.
+
+    **files**
+        - List files belonging to a package.
+
+**Options:**
+
+
+    **--allow-duplicates**
+        Print all possible versions of package found.
+        Normally only the newest version is shown.
+
+    **--repoid <repository>**
+        List just packages available in given <repository>.
+
+    **--all**
+        List all repositories.
+
+    **--disabled**
+        List only disabled repositories.
+
+    **-t --type (file | directory | device | symlink | fifo)**
+        
+        List only particular file type.
+
+sw show
+-------
+
+Show details of package or repository.
+
+
+**Usage:**
+
+    **lmi** **sw** **show** **pkg** [\ **--installed**\  | \ **--repoid**\  \ *<repository>*\ ] \ *<package>*\ 
+
+    **lmi** **sw** **show** **repo** \ *<repository>*\ 
+
+
+
+**Options:**
+
+
+    **--installed**
+        Do not search available packages. This speeds up
+        the operation when only installed packages shall
+        be queried.
+
+    **--repoid <repository>**
+        Search just this repository.
 

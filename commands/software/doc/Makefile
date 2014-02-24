@@ -52,9 +52,14 @@ cmdline.generated:
 	echo "    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'"; \
 	echo "    !!!!!!!!!"; \
 	echo ; \
-	for i in sw; \
-		do lmi help $$i | python ../../../tools/help2rst $$i | tr -d '\033' |sed 's/..1034h//' ;  \
-	done \
+	for i in sw; do \
+	    lmi help $$i | python ../../../tools/help2rst $$i | tr -d '\033' |sed 's/..1034h//' ;  \
+	    for subcmd in `lmi help sw | sed -n "/^Usage:/,/^$$/ s/\s\+lmi $$i \([[:alnum:]]\+\).*<args>\.\.\..*/\1/p"`; \
+	    do \
+		echo "$$subcmd" >> cmdregen.log; \
+	        lmi help sw $$subcmd | python ../../../tools/help2rst "$$i $$subcmd"; \
+	    done; \
+	done; \
 	) > $@
 
 clean:
