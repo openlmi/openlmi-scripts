@@ -32,6 +32,9 @@
 LMI hardware provider client library.
 """
 
+import pywbem
+
+from lmi.scripts.common import get_logger
 from lmi.scripts.common import get_computer_system
 
 GREEN_COLOR = 1
@@ -41,6 +44,8 @@ RED_COLOR = 3
 EMPTY_LINE = ('', '')
 # GLOBAL variable - modified in get_all_info(), accessed in init_result()
 STANDALONE = True
+
+LOG = get_logger(__name__)
 
 def _cache_replies(ns, class_name, method):
     """
@@ -83,7 +88,14 @@ def get_all_instances(ns, class_name):
     :returns: List of instances of instance_name
     :rtype: List of :py:class:`lmi.shell.LMIInstance`
     """
-    return _cache_replies(ns, class_name, 'instances')
+    try:
+        return _cache_replies(ns, class_name, 'instances')
+    except pywbem.CIMError as err:
+        if err.args[0] == pywbem.CIM_ERR_NOT_SUPPORTED:
+            LOG().info('System has old openlmi-hardware package installed,'
+                ' class "%s" is not available.', class_name)
+            return []
+        raise
 
 def get_hostname(ns):
     """
