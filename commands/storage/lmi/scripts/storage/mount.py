@@ -72,7 +72,7 @@ def build_opts_str(mnt):
             otheropts = v
         elif k in _OPTS:
             opts.append(k + ':' + unicode(v))
-    opts.extend(o)
+    opts.extend(otheropts)
     return ', '.join(sorted(opts))
 
 def get_setting_from_opts(ns, options):
