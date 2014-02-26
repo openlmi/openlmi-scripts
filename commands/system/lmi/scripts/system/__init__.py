@@ -106,6 +106,7 @@ def get_system_info(ns):
     """
     result = get_hostname(ns)
     result += get_hwinfo(ns)
+    result += get_osinfo(ns)
     return result
 
 def get_hostname(ns):
@@ -153,4 +154,26 @@ def get_hwinfo(ns):
         ('Hardware:', hwinfo),
         ('Processors:', cpus_str),
         ('Memory:', memory_size)]
+    return result
+
+def get_osinfo(ns):
+    """
+    :returns: Tabular data of system OS info.
+    :rtype: List of tuples
+    """
+    # OS
+    os = get_single_instance(ns, 'PG_OperatingSystem')
+    os_str = ''
+    kernel_str = ''
+    if os:
+        os_str = os.Caption
+        kernel_str = os.Version
+    if not os_str:
+        os_str = 'N/A'
+    if not kernel_str:
+        kernel_str = 'N/A'
+    # Result
+    result = [
+        ('OS:', os_str),
+        ('Kernel:', kernel_str)]
     return result
