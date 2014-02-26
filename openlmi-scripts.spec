@@ -1,11 +1,12 @@
-%global         commit bd21016ba88ba9f856e3e4bbb9b02b72fd96af3b
+%global         commit e29c72de5a461b208e06ef34d4e1143a717c9703
 %global         shortcommit %(c=%{commit}; echo ${c:0:7})
-%global         openlmi_scripts_version 0.2.6
-%global         commands logicalfile service software storage hardware networking
+%global         openlmi_scripts_version 0.2.7
+%global         commands logicalfile service software storage hardware
+%global         commands %{commands} networking system account powermanagement
 
 Name:           openlmi-scripts
 Version:        %{openlmi_scripts_version}
-Release:        3%{?dist}
+Release:        5%{?dist}
 Summary:        Client-side python modules and command line utilities
 
 License:        BSD
@@ -19,6 +20,7 @@ BuildRequires:  python-docopt
 BuildRequires:  python-sphinx
 BuildRequires:  python-sphinx-theme-openlmi
 BuildRequires:  openlmi-tools >= 0.9
+BuildRequires:  python-IPy
 Requires:       python2
 Requires:       openlmi-providers >= 0.4.0
 Requires:       openlmi-python-base >= 0.3.0
@@ -37,7 +39,7 @@ This package contains the documents for OpenLMI Scripts.
 
 %package        logicalfile
 Summary:        Client scripts for OpenLMI Logical File provider
-Version:        0.0.2
+Version:        0.0.3
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    logicalfile
@@ -46,7 +48,7 @@ provider and command line wrapper.
 
 %package        service
 Summary:        Client scripts for OpenLMI Service provider
-Version:        0.1.1
+Version:        0.1.2
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    service
@@ -55,7 +57,7 @@ provider and command line wrapper.
 
 %package        software
 Summary:        Client scripts for OpenLMI Software provider
-Version:        0.2.4
+Version:        0.2.5
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    software
@@ -64,7 +66,7 @@ provider and command line wrapper.
 
 %package        storage
 Summary:        Client scripts for OpenLMI Storage provider
-Version:        0.0.3
+Version:        0.0.4
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    storage
@@ -73,7 +75,7 @@ provider and command line wrapper.
 
 %package        hardware
 Summary:        Client scripts for OpenLMI Hardware provider
-Version:        0.0.2
+Version:        0.0.3
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
 
 %description    hardware
@@ -82,11 +84,40 @@ provider and command line wrapper.
 
 %package        networking
 Summary:        Client scripts for OpenLMI Networking provider
-Version:        0.0.1
+Version:        0.0.2
 Requires:       %{name} = %{openlmi_scripts_version}-%{release}
+Requires:       python-IPy
 
 %description    networking
 This packages contains client side python library for OpenLMI Networking
+provider and command line wrapper.
+
+%package        system
+Summary:        Client scripts providing general system informations
+Version:        0.0.2
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
+
+%description    system
+This package contains client side python library for few OpenLMI providers and
+command line wrapper. It's aimed to provide some general informations about
+system.
+
+%package        account
+Summary:        Client scripts for OpenLMI Account provider
+Version:        0.0.1
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
+
+%description    account
+This packages contains client side python library for OpenLMI Account
+provider and command line wrapper.
+
+%package        powermanagement
+Summary:        Client scripts for OpenLMI Power provider
+Version:        0.0.1
+Requires:       %{name} = %{openlmi_scripts_version}-%{release}
+
+%description    powermanagement
+This packages contains client side python library for OpenLMI PowerManagement
 provider and command line wrapper.
 
 %prep
@@ -187,15 +218,54 @@ install -m 644 README.md COPYING Changelog $RPM_BUILD_ROOT/%{_docdir}/%{name}
 %{python_sitelib}/lmi/scripts/networking/
 %{python_sitelib}/openlmi_scripts_networking-*
 
+%files system
+%doc commands/system/README.md COPYING
+%{python_sitelib}/lmi/scripts/system/
+%{python_sitelib}/openlmi_scripts_system-*
+
+%files account
+%doc commands/account/README.md COPYING
+%{python_sitelib}/lmi/scripts/account/
+%{python_sitelib}/openlmi_scripts_account-*
+
+%files powermanagement
+%doc commands/powermanagement/README.md COPYING
+%{python_sitelib}/lmi/scripts/powermanagement/
+%{python_sitelib}/openlmi_scripts_powermanagement-*
+
 %changelog
-* Wed Jan 15 2014 Michal Minar <miminar@redhat.com> 0.2.6-3
+* Wed Feb 26 2014 Michal Minar <miminar@redhat.com> 0.2.7-5
+- Fixed error handling in service scripts.
+- Updated documentation for built-ins commands.
+- Fixed checking for thinlv provisioning in storage scripts.
+
+* Tue Feb 25 2014 Michal Minar <miminar@redhat.com> 0.2.7-4
+- Removed unstable features from hardware scripts.
+
+* Tue Feb 25 2014 Michal Minar <miminar@redhat.com> 0.2.7-3
+- Added account and powermanagement commands.
+
+* Tue Feb 25 2014 Michal Minar <miminar@redhat.com> 0.2.7-2
+- Fixed storage mount list command.
+
+* Tue Feb 25 2014 Michal Minar <miminar@redhat.com> 0.2.7-1
+- Support older OpenLMI Hardware providers.
+- Resolves: bz#1069320
+
+* Mon Feb 24 2014 Michal Minar <miminar@redhat.com> 0.2.7-0
+- New upstream version.
+- Added system library.
+
+* Wed Jan 15 2014 Michal Minar <miminar@redhat.com> 0.2.6-5
 - Added networking library.
 
-* Mon Jan 13 2014 Michal Minar <miminar@redhat.com> 0.2.5-2
-- Added hardware library.
+* Mon Jan 13 2014 Michal Minar <miminar@redhat.com> 0.2.5-4
 - New upstream version.
 
-* Wed Nov 06 2013 Michal Minar <miminar@redhat.com> 0.2.4-1
+* Mon Nov 11 2013 Michal Minar <miminar@redhat.com> 0.2.4a-3
+- Fixed dependency on openlmi-scripts for subpackages.
+
+* Wed Nov 06 2013 Michal Minar <miminar@redhat.com> 0.2.4a-2
 - New upstream version.
 - Require openlmi-tools 0.9.
 
