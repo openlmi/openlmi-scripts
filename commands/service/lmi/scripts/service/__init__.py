@@ -100,8 +100,9 @@ def list_services(ns, kind='enabled'):
                 continue
             yield service
     except pywbem.CIMError as err:
-        raise LmiFailed('Failed to get service "%s": %s'
-                % (service, err.args[1]))
+        if err.args[0] == pywbem.CIM_ERR_NOT_SUPPORTED:
+            raise LmiFailed('Service provider is not installed or registered.')
+        raise LmiFailed('Failed to list services: %s' % err.args[1])
 
 def start_service(ns, service):
     """
@@ -195,12 +196,17 @@ def get_service(ns, service):
             inst = iname.to_instance()
 
         elif isinstance(service, (LMIInstance, LMIInstanceName)):
-            inst = service
-            service = inst.Name
-            if isinstance(inst, LMIInstanceName):
-                inst = inst.to_instance()
+            try:
+                inst = service
+                service = inst.Name
+                if isinstance(inst, LMIInstanceName):
+                    inst = inst.to_instance()
+            except AttributeError:
+                raise ValueError('Invalid service instance name. It\'s missing'
+                        ' Name property.')
 
-        return inst
+        else:
+            raise TypeError("service must be either string or ``LMIInstanceName``")
 
     except pywbem.CIMError as err:
         if err.args[0] == pywbem.CIM_ERR_NOT_FOUND:
@@ -209,7 +215,11 @@ def get_service(ns, service):
             raise LmiFailed('Failed to get service "%s": %s'
                     % (service, err.args[1]))
 
-    raise TypeError("service must be either string or ``LMIInstanceName``")
+    if inst is None:
+        raise LmiFailed('No such service "%s".' % service)
+
+    return inst
+
 
 def get_status_string(ns, service):
     """
