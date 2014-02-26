@@ -104,4 +104,30 @@ Static commands
     |      | argument.                                                        |
     +------+------------------------------------------------------------------+
 
+Changing command namespaces
+---------------------------
+Changing or nesting to some command namespace can be achieved with built-in
+commands ``:cd`` and ``:..``. The latter is just a shortcut for ``:cd ..`` that
+changes to parent namespace. ``:cd`` accepts a path to command. Whole command
+path begins with ``/lmi`` prefix which denotes top-level command. Path
+beginning with a ``'/'`` is an absolute path, which means it contains all
+command names on a path from top-level command to target one. Other paths are
+relative to current command.
+
+Here is a an example of changing command namespaces: ::
+
+    lmi> :pwd
+    /lmi
+    lmi> :cd storage
+    >storage> :pwd
+    /lmi/storage
+    >storage> :cd lv
+    >>lv> :pwd
+    /lmi/storage/lv
+    >>lv> :cd ../raid
+    >>raid> :cd ../../sw/repo
+    >>repo> :..
+    >sw> :cd /storage       # /lmi prefix is optional for absolute paths
+    >storage :cd /
+    lmi>
 
