@@ -37,4 +37,4 @@
 HOSTNAME=$( echo $LMI_CIMOM_URL | sed -e 's!^.*//!!' -e 's!/.*!!')
 PARTITIONS=( $LMI_STORAGE_PARTITIONS )
 
-export LMI="lmi -n --trace --host $LMI_CIMOM_USERNAME:$LMI_CIMOM_PASSWORD@$HOSTNAME"
+export LMI="lmi -n --trace --host \"$LMI_CIMOM_USERNAME:$LMI_CIMOM_PASSWORD@$HOSTNAME\""
