@@ -59,7 +59,11 @@ def get_lvs(ns, vgs=None):
     else:
         # No vgs supplied, list all LVs
         for lv in ns.LMI_LVStorageExtent.instances():
-            if not lv.ThinlyProvisioned:
+            # XXX workaround for https://fedorahosted.org/openlmi/ticket/277
+            supports_thin = 'ThinlyProvisioned' in lv.properties()
+            if not supports_thin:
+                yield lv
+            elif supports_thin and not lv.ThinlyProvisioned:
                 yield lv
 
 def get_tlvs(ns, tps=None):
@@ -261,8 +265,13 @@ def get_vg_tps(ns, vg):
     :param vg: Volume Group to examine.
     :rtype: list of LMIInstance/CIM_StoragePool
     """
+    # XXX workaround for https://fedorahosted.org/openlmi/ticket/276
+    assoc_class = "LMI_VGAllocatedFromStoragePool"
+    if not assoc_class in ns.classes():
+        return []
+
     vg = common.str2vg(ns, vg)
-    return vg.associators(AssocClass="LMI_VGAllocatedFromStoragePool")
+    return vg.associators(AssocClass=assoc_class)
 
 def get_tps(ns):
     """
