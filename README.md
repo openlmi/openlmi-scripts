@@ -37,7 +37,7 @@ Each subdirectory of `commands/` contains library for interfacing with
 particular set of OpenLMI providers. Each contains its own `setup.py` file,
 that handles its installation and registration of command. They have one
 command thing. Each such `setup.py` must pass `entry_points` dictionary to
-the `setup()` function, wich associates commands defined in command library
+the `setup()` function, which associates commands defined in command library
 with its name under `lmi` meta-command.
 
 Dependencies
@@ -48,19 +48,12 @@ There are following python dependencies:
  * openlmi-tools ([PyPI][])
  * python-docopt
 
-### Uploading to PyPI
-Since *PyPI* expects README file to be in a *reStructuredText* markup
-language and the one present is written in *markdown*, it needs to be
-converted to it. So please make sure you have `pandoc` installed before
-running:
-
-    $ python setup.py sdist upload
-
 Installation
 ------------
 Use standard `setuptools` script for installation:
 
     $ cd openlmi-scripts
+    $ make setup
     $ python setup.py install --user
 
 This installs just the *lmi meta-command* and client-side library. To install
@@ -87,7 +80,7 @@ To issue single command on a host, run:
 
     $ lmi --host ${hostname} service list
 
-To start the app in interactive mode:
+To start it in interactive mode:
 
     $ lmi --host ${hostname}
     > service list --disabled
@@ -101,7 +94,7 @@ Developing lmi scripts.
 
 This documents how to quickly develop lmi scripts without the need to
 reinstall python eggs, when anything is changed. This presumes, that the
-development process takes place in a git repotory checked out from [git][].
+development process takes place in a git repository checked out from [git][].
 It can be located anywhere on system.
 
 Before we start with setting up an environment, please double check, that you
@@ -144,15 +137,58 @@ Let's setup an environment:
      openlmi-scripts repository.
   5. Install them and any commands you want -- possibly your own
 
-        $ python setup.py develop --install-dir=$WSP
-        $ for cmd in service storage; do
-        >     pushd commands/$cmd
-        >     python setup.py develop --install-dir=$WSP
-        >     popd
-        > done
+        $ DEVELOPDIR=$WSP make develop-all
 
-Now any change made to openlmi-scripts is immediately reflected in `lmi`
-meta-command.
+Now any change made to openlmi-scripts is immediately reflected in LMI
+Meta-command.
+
+### Uploading to PyPI
+Since *PyPI* expects README file to be in a *reStructuredText* markup
+language and the one present is written in *markdown*, it needs to be
+converted to it. So please make sure you have `pandoc` installed before
+running:
+
+    $ make upload
+
+### Versioning
+All the scripts share the same version. Version string resides in `VERSION`
+file in root directory. When changed, all `setup.py` scripts need to be
+regenerated. This is done with:
+
+    $ make setup-all
+
+### Makefile rules
+There are various rules provided to ease the development. Most of them may
+be applied to all commands/libraries at once. They are:
+
+  * `clean` - remove temporary and generated files
+  * `develop` - install library in developing mode
+  * `doc` - build documentation
+  * `readme` - create `README.txt` file out of `README.md`
+  * `sdist` - creates source tarball in `dist` directory
+  * `setup` - writes a `setup.py` and `doc/conf.py` files from their skeletons
+  * `upload` - upload to *PyPI*
+  * `upload_docs` - upload documentation to [pythonhosted]
+
+Each script's `Makefile` has the same interface. The root `Makefile` is an
+exception. It takes care of LMI Meta-command and its library. It defines all
+the rules above but also contains few more. They are all variations of above
+commands, have the same name but end with `-all` suffix. They operate on LMI
+Meta-command and all subcommands at once. Such rules are:
+
+  * `clean-all`
+  * `develop-all`
+  * `setup-all`
+  * `upload-all`
+  * `upload\_docs-all`
+
+To limit the set of commands they shall operate on, the `COMMANDS` environment
+variable may be used. For example following command:
+
+    $ COMMANDS='storage software networking' make clean-all
+
+Will clean storage, software and networking directories and LMI Meta-command as
+well.
 
 ------------------------------------------------------------------------------
 [git]:           https://github.com/openlmi/openlmi-scripts                 "openlmi-scripts"
