@@ -1,9 +1,7 @@
 #!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 
-PROJECT = 'openlmi-scripts-storage'
-VERSION = '0.0.5'
-
-from setuptools import setup, find_packages
+from setuptools import setup
 
 try:
     long_description = open('README.md', 'rt').read()
@@ -11,14 +9,14 @@ except IOError:
     long_description = ''
 
 setup(
-    name=PROJECT,
-    version=VERSION,
-    description='LMI command for system storage administration.',
+    name='openlmi-scripts-hardware',
+    version='@@VERSION@@',
+    description='Hardware information available in OpenLMI hardware providers',
     long_description=long_description,
-    author='Jan Safranek',
-    author_email='jsafrane@redhat.com',
-    url='https://github.com/openlmi/openlmi-scripts',
-    download_url='https://github.com/openlmi/openlmi-scripts/tarball/master',
+    author=u'Peter Schiffer',
+    author_email='pschiffe@redhat.com',
+    url='https://github.com/openlmi/openlmi-hardware',
+    download_url='https://github.com/openlmi/openlmi-hardware/tarball/master',
     platforms=['Any'],
     license="BSD",
     classifiers=[
@@ -32,20 +30,15 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts >= 0.2.7', 'openlmi-tools'],
+    install_requires=['openlmi-scripts >= 0.2.7'],
 
-    namespace_packages=['lmi', 'lmi.scripts' ],
-    packages=[
-        'lmi',
-        'lmi.scripts',
-        'lmi.scripts.storage',
-        'lmi.scripts.storage.cmd',
-    ],
+    namespace_packages=['lmi', 'lmi.scripts'],
+    packages=['lmi', 'lmi.scripts', 'lmi.scripts.hardware'],
     include_package_data=True,
 
     entry_points={
         'lmi.scripts.cmd': [
-            'storage = lmi.scripts.storage.storage_cmd:Storage',
+            'hwinfo = lmi.scripts.hardware.cmd:Hardware',
             ],
         },
     )

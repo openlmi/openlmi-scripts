@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 try:
     long_description = open('README.md', 'rt').read()
@@ -9,12 +8,12 @@ except IOError:
     long_description = ''
 
 setup(
-    name='openlmi-scripts-networking',
-    version='0.0.2',
-    description='LMI command for network administration.',
+    name='openlmi-scripts-software',
+    version='@@VERSION@@',
+    description='LMI command for system software administration.',
     long_description=long_description,
-    author=u'Radek Novacek',
-    author_email='rnovacek@redhat.com',
+    author='Michal Minar',
+    author_email='miminar@redhat.com',
     url='https://github.com/openlmi/openlmi-scripts',
     download_url='https://github.com/openlmi/openlmi-scripts/tarball/master',
     platforms=['Any'],
@@ -30,15 +29,15 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts >= 0.2.7', 'IPy'],
+    install_requires=['openlmi-scripts >= 0.2.7', 'openlmi-tools >= 0.9'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
-    packages=['lmi', 'lmi.scripts', 'lmi.scripts.networking'],
+    packages=['lmi', 'lmi.scripts', 'lmi.scripts.software'],
     include_package_data=True,
 
     entry_points={
         'lmi.scripts.cmd': [
-                'net = lmi.scripts.networking.cmd:Networking',
+            'sw = lmi.scripts.software.cmd:Software',
             ],
         },
     )

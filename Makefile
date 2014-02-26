@@ -1,25 +1,14 @@
-PYTHONPATH?=$(HOME)/workspace/python_sandbox
-DEVELOPDIR?=$(shell echo $(PYTHONPATH) | cut -d : -f 1)
+include Makefile.inc
 
-.PHONY: readme sdist develop upload_docs clean all
+COMMANDS ?= $(shell find commands -mindepth 1 -maxdepth 1 -type d)
+# all rules executable on meta-command and commands
+RULES := setup upload upload_docs clean
+MASSRULES := $(foreach rule,$(RULES),$(rule)-all)
 
-all: sdist
+.PHONY: $(MASSRULES)
 
-sdist:
-	python setup.py sdist
-
-develop:
-	python setup.py develop --install-dir=$(DEVELOPDIR)
-
-readme: README.txt
-
-%.txt: %.md
-	pandoc --from=markdown --to=rst -o $@ $?
-
-upload_docs:
-	make -C doc html
-	python setup.py upload_docs
-
-clean:
-	-rm README.txt
-	make -C doc clean
+$(MASSRULES): %-all: %
+	# executes rule for metacommand and for all commands found
+	for cmd in $(COMMANDS); do \
+	    make -C $$cmd $*; \
+	done

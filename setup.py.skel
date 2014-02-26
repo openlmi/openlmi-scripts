@@ -5,9 +5,6 @@ import subprocess
 import sys
 from setuptools import setup, find_packages
 
-PROJECT = 'openlmi-scripts'
-VERSION = '0.2.7'
-
 long_description = ''
 try:
     try:
@@ -29,8 +26,8 @@ except IOError:
     pass
 
 setup(
-    name=PROJECT,
-    version=VERSION,
+    name='openlmi-scripts',
+    version='@@VERSION@@',
     description='Client-side library and command-line client',
     long_description=long_description,
     author='Michal Minar',

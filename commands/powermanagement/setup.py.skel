@@ -9,14 +9,14 @@ except IOError:
     long_description = ''
 
 setup(
-    name='openlmi-scripts-system',
-    version='0.0.2',
-    description='Display general system information',
+    name='openlmi-scripts-powermanagement',
+    version='@@VERSION@@',
+    description='LMI command for power management.',
     long_description=long_description,
-    author=u'Peter Schiffer',
-    author_email='pschiffe@redhat.com',
-    url='https://github.com/openlmi/openlmi-system',
-    download_url='https://github.com/openlmi/openlmi-system/tarball/master',
+    author=u'Radek Novacek',
+    author_email='rnovacek@redhat.com',
+    url='https://github.com/openlmi/openlmi-scripts',
+    download_url='https://github.com/openlmi/openlmi-scripts/tarball/master',
     platforms=['Any'],
     license="BSD",
     classifiers=[
@@ -30,15 +30,15 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts >= 0.2.7', 'openlmi-scripts-service'],
+    install_requires=['openlmi-scripts'],
 
     namespace_packages=['lmi', 'lmi.scripts'],
-    packages=['lmi', 'lmi.scripts', 'lmi.scripts.system'],
+    packages=['lmi', 'lmi.scripts', 'lmi.scripts.powermanagement'],
     include_package_data=True,
 
     entry_points={
         'lmi.scripts.cmd': [
-            'system = lmi.scripts.system.cmd:System',
+                'power = lmi.scripts.powermanagement.cmd:PowerManagement',
             ],
         },
     )

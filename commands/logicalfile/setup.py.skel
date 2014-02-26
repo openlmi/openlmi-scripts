@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-PROJECT = 'openlmi-scripts-software'
-VERSION = '0.2.5'
-
 from setuptools import setup, find_packages
 
 try:
@@ -11,12 +8,12 @@ except IOError:
     long_description = ''
 
 setup(
-    name=PROJECT,
-    version=VERSION,
-    description='LMI command for system software administration.',
+    name='openlmi-scripts-logicalfile',
+    version='@@VERSION@@',
+    description='LMI command for system logical file administration.',
     long_description=long_description,
-    author='Michal Minar',
-    author_email='miminar@redhat.com',
+    author='Jan Synacek',
+    author_email='jsynacek@redhat.com',
     url='https://github.com/openlmi/openlmi-scripts',
     download_url='https://github.com/openlmi/openlmi-scripts/tarball/master',
     platforms=['Any'],
@@ -32,15 +29,15 @@ setup(
         'Environment :: Console',
     ],
 
-    install_requires=['openlmi-scripts >= 0.2.7', 'openlmi-tools >= 0.9'],
+    install_requires=['openlmi-scripts >= 0.2.4'],
 
-    namespace_packages=['lmi', 'lmi.scripts'],
-    packages=['lmi', 'lmi.scripts', 'lmi.scripts.software'],
+    namespace_packages=['lmi', 'lmi.scripts' ],
+    packages=['lmi', 'lmi.scripts', 'lmi.scripts.logicalfile'],
     include_package_data=True,
 
     entry_points={
         'lmi.scripts.cmd': [
-            'sw = lmi.scripts.software.cmd:Software',
+            'file = lmi.scripts.logicalfile.lf_cmd:Lf',
             ],
         },
     )
