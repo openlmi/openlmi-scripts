@@ -551,7 +551,7 @@ def add_static_route(ns, setting, address, prefix, metric=None, next_hop=None):
         result = setting.LMI_AddStaticIPRoute(
                 AddressType=setting.LMI_AddStaticIPRoute.AddressTypeValues.IPv6,
                 DestinationAddress=address,
-                PrefixLength=str(prefix))
+                PrefixLength=prefix)
     else:
         raise LmiInvalidOptions("Invalid IP address: %s" % address)
     if result.rval != 0:
