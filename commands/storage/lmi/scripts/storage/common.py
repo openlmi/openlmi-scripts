@@ -354,6 +354,15 @@ def get_parents(ns, obj, deep=False):
                 yield parent
 
     elif lmi_isinstance(obj, ns.CIM_StoragePool):
+        # find VGs of the thin pool
+        assoc_class = "LMI_VGAllocatedFromStoragePool"
+        if assoc_class in ns.classes():
+            parents = obj.associators(
+                    AssocClass=assoc_class,
+                    Role="Dependent")
+            for parent in parents:
+                yield parent
+
         # find physical volumes of the VG
         parents = obj.associators(
                 AssocClass="LMI_VGAssociatedComponentExtent",
@@ -438,6 +447,15 @@ def get_children(ns, obj, deep=False):
                     yield c
 
     elif lmi_isinstance(obj, ns.CIM_StoragePool):
+        # find thin pools from the VG
+        assoc_class = "LMI_VGAllocatedFromStoragePool"
+        if assoc_class in ns.classes():
+            children = obj.associators(
+                    AssocClass=assoc_class,
+                    Role="Antecedent")
+            for child in children:
+                yield child
+
         # find LVs allocated from the VG
         children = obj.associators(
                 AssocClass="LMI_LVAllocatedFromStoragePool",
