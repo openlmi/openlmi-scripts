@@ -134,7 +134,7 @@ rlPhaseStartTest "Test static settings"
     rlRun "$LMI net setting delete 'XXX Test Static'"
     rlRun -s "$LMI net setting list"
     rlAssertNotGrep "XXX Test Static" $rlRun_LOG
-rlPhaseStartCleanup
+rlPhaseEnd
 
 rlPhaseStartTest "Test DHCP(v6) settings"
     rlLogInfo "Create setting with IPv4 DHCP"
