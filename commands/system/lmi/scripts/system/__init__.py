@@ -32,6 +32,7 @@ LMI system client library.
 """
 
 from lmi.scripts.common import get_computer_system
+from lmi.scripts.service import get_service
 
 def _cache_replies(ns, class_name, method):
     """
@@ -107,6 +108,7 @@ def get_system_info(ns):
     result = get_hostname(ns)
     result += get_hwinfo(ns)
     result += get_osinfo(ns)
+    result += get_servicesinfo(ns)
     return result
 
 def get_hostname(ns):
@@ -176,4 +178,37 @@ def get_osinfo(ns):
     result = [
         ('OS:', os_str),
         ('Kernel:', kernel_str)]
+    return result
+
+def get_servicesinfo(ns):
+    """
+    :returns: Tabular data of some system services.
+    :rtype: List of tuples
+    """
+    # Firewall
+    fw = ''
+    firewalld = get_service(ns, 'firewalld.service')
+    if firewalld and firewalld.Status == 'OK':
+        fw = 'on (firewalld)'
+    else:
+        iptables = get_service(ns, 'iptables.service')
+        if iptables and iptables.Status == 'OK':
+            fw = 'on (iptables)'
+    if not fw:
+        fw = 'off'
+    # Logging
+    logging = ''
+    journald = get_service(ns, 'systemd-journald.service')
+    if journald and journald.Status == 'OK':
+        logging = 'on (journald)'
+    else:
+        rsyslog = get_service(ns, 'rsyslog.service')
+        if rsyslog and rsyslog.Status == 'OK':
+            logging = 'on (rsyslog)'
+    if not logging:
+        logging = 'off'
+    # Result
+    result = [
+        ('Firewall:', fw),
+        ('Logging:', logging)]
     return result
