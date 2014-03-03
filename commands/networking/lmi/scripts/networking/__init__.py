@@ -447,7 +447,10 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
-        if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
+        if (settingData.ProtocolIFType is not None and
+                int(settingData.ProtocolIFType) == protocol and
+                hasattr(settingData, "IPAddresses")):
+
             settingData.IPAddresses.append(address)
             if version == 4:
                 settingData.SubnetMasks.append(util.netmask_from_prefix(prefix))
@@ -475,7 +478,10 @@ def remove_ip_address(ns, setting, address):
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
-        if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
+        if (settingData.ProtocolIFType is not None and
+                int(settingData.ProtocolIFType) == protocol and
+                hasattr(settingData, "IPAddresses")):
+
             i = 0
             while i < len(settingData.IPAddresses):
                 if util.compare_address(settingData.IPAddresses[i], address):
@@ -509,7 +515,10 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
-        if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
+        if (settingData.ProtocolIFType is not None and
+                int(settingData.ProtocolIFType) == protocol and
+                hasattr(settingData, "IPAddresses")):
+
             settingData.IPAddresses = [address]
             if version == 4:
                 settingData.SubnetMasks = [util.netmask_from_prefix(prefix)]
