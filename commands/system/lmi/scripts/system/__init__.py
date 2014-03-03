@@ -33,6 +33,7 @@ LMI system client library.
 
 from lmi.scripts.common import get_computer_system
 from lmi.scripts.service import get_service
+from lmi.shell.LMIExceptions import LMIClassNotFound
 
 def _cache_replies(ns, class_name, method):
     """
@@ -125,7 +126,10 @@ def get_hwinfo(ns):
     :rtype: List of tuples
     """
     # Chassis
-    chassis = get_single_instance(ns, 'LMI_Chassis')
+    try:
+        chassis = get_single_instance(ns, 'LMI_Chassis')
+    except LMIClassNotFound:
+        chassis = None
     if chassis:
         hwinfo = chassis.Manufacturer
         if chassis.Model and chassis.Model != 'Not Specified' \
@@ -140,13 +144,19 @@ def get_hwinfo(ns):
     else:
         hwinfo = 'N/A'
     # CPUs
-    cpus = get_all_instances(ns, 'LMI_Processor')
+    try:
+        cpus = get_all_instances(ns, 'LMI_Processor')
+    except LMIClassNotFound:
+        cpus = None
     if cpus:
         cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
     else:
         cpus_str = 'N/A'
     # Memory
-    memory = get_single_instance(ns, 'LMI_Memory')
+    try:
+        memory = get_single_instance(ns, 'LMI_Memory')
+    except LMIClassNotFound:
+        memory = None
     if memory:
         memory_size = format_memory_size(memory.NumberOfBlocks)
     else:
@@ -164,7 +174,10 @@ def get_osinfo(ns):
     :rtype: List of tuples
     """
     # OS
-    os = get_single_instance(ns, 'PG_OperatingSystem')
+    try:
+        os = get_single_instance(ns, 'PG_OperatingSystem')
+    except LMIClassNotFound:
+        os = None
     os_str = ''
     kernel_str = ''
     if os:
@@ -186,27 +199,33 @@ def get_servicesinfo(ns):
     :rtype: List of tuples
     """
     # Firewall
-    fw = ''
-    firewalld = get_service(ns, 'firewalld.service')
-    if firewalld and firewalld.Status == 'OK':
-        fw = 'on (firewalld)'
-    else:
-        iptables = get_service(ns, 'iptables.service')
-        if iptables and iptables.Status == 'OK':
-            fw = 'on (iptables)'
-    if not fw:
-        fw = 'off'
+    try:
+        fw = ''
+        firewalld = get_service(ns, 'firewalld.service')
+        if firewalld and firewalld.Status == 'OK':
+            fw = 'on (firewalld)'
+        else:
+            iptables = get_service(ns, 'iptables.service')
+            if iptables and iptables.Status == 'OK':
+                fw = 'on (iptables)'
+        if not fw:
+            fw = 'off'
+    except LMIClassNotFound:
+        fw = 'N/A'
     # Logging
-    logging = ''
-    journald = get_service(ns, 'systemd-journald.service')
-    if journald and journald.Status == 'OK':
-        logging = 'on (journald)'
-    else:
-        rsyslog = get_service(ns, 'rsyslog.service')
-        if rsyslog and rsyslog.Status == 'OK':
-            logging = 'on (rsyslog)'
-    if not logging:
-        logging = 'off'
+    try:
+        logging = ''
+        journald = get_service(ns, 'systemd-journald.service')
+        if journald and journald.Status == 'OK':
+            logging = 'on (journald)'
+        else:
+            rsyslog = get_service(ns, 'rsyslog.service')
+            if rsyslog and rsyslog.Status == 'OK':
+                logging = 'on (rsyslog)'
+        if not logging:
+            logging = 'off'
+    except LMIClassNotFound:
+        logging = 'N/A'
     # Result
     result = [
         ('Firewall:', fw),
