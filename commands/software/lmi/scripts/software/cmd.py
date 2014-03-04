@@ -102,7 +102,7 @@ from lmi.scripts.software.cmd_list import Lister
 LOG = get_logger(__name__)
 
 class Search(command.LmiInstanceLister):
-    ARRAY_SUFFIX = '_array'
+    ARG_ARRAY_SUFFIX = '_array'
     PROPERTIES = (
             ('NEVRA', 'ElementName'),
             ('Installed', lambda i: i.InstallDate is not None),
@@ -115,7 +115,7 @@ class Search(command.LmiInstanceLister):
                     allow_duplicates=_allow_duplicates,
                     exact_match=False,
                     pkg_spec=pkg_spec):
-                yield pkg
+                yield pkg.to_instance()
 
 class PkgInfo(command.LmiShowInstance):
     DYNAMIC_PROPERTIES = True
