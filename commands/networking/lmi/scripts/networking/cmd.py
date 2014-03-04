@@ -309,7 +309,7 @@ class CreateSetting(command.LmiCheckResult):
         if _ipv4 not in SETTING_IPv4_METHODS:
             raise errors.LmiInvalidOptions("Invalid --ipv4 option: %s" % _ipv4)
         if _ipv6 not in SETTING_IPv6_METHODS:
-            raise errors.LmiInvalidOptions("Invalid --ipv6 option: %s" % _ipv4)
+            raise errors.LmiInvalidOptions("Invalid --ipv6 option: %s" % _ipv6)
 
         ipv4_method = SETTING_IPv4_METHODS[_ipv4]
         ipv6_method = SETTING_IPv6_METHODS[_ipv6]
