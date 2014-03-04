@@ -326,7 +326,9 @@ class TableFormatter(ListFormatter):
 
         :param string hostname: Hostname to print.
         """
-        self.print_stash()
+        if len(self.stash):
+            # without a check, this would print headers for empty stash
+            self.print_stash()
         super(TableFormatter, self).print_host(hostname)
 
     def print_table_title(self, title):
@@ -335,7 +337,9 @@ class TableFormatter(ListFormatter):
 
         :param string title: Title to print.
         """
-        self.print_stash()
+        if len(self.stash):
+            # without a check, this would print headers for empty stash
+            self.print_stash()
         if self.table_counter > 0 or self.line_counter > 0:
             self.out.write('\n')
         self.out.write("%s:\n" % title)

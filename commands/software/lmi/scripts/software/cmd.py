@@ -315,7 +315,7 @@ class Remove(command.LmiCheckResult):
 
 class Verify(command.LmiLister):
     ARG_ARRAY_SUFFIX = '_array'
-    COLUMNS = ('Result', 'Failed file path')
+    COLUMNS = []
 
     def execute(self, ns, package_array):
         failed_identity_checks = []
