@@ -64,8 +64,10 @@ def cmd_show_devices(ns, device_names=None):
         yield fcmd.NewTableCommand(title="Device %s" % device.ElementName)
         yield ("Operating Status", ns.LMI_IPNetworkConnection.OperatingStatusValues.value_name(device.OperatingStatus))
         yield ("MAC Address", get_mac(ns, device))
-        for ip, prefix_or_mask in get_ip_addresses(ns, device):
-            yield ("IP Address", "%s/%s" % (ip, prefix_or_mask))
+        for ip, prefix in get_ipv4_addresses(ns, device):
+            yield ("IPv4 Address", "%s/%s" % (ip, prefix))
+        for ip, mask in get_ipv6_addresses(ns, device):
+            yield ("IPv6 Address", "%s/%s" % (ip, mask))
         for gw in get_default_gateways(ns, device):
             yield ("Default Gateway", gw)
         for dns in get_dns_servers(ns, device):

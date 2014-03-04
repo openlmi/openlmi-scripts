@@ -129,6 +129,31 @@ def get_ip_addresses(ns, device):
         elif endpoint.ProtocolIFType == ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv6:
             yield (endpoint.IPv6Address, endpoint.IPv6SubnetPrefixLength)
 
+def get_ipv4_addresses(ns, device):
+    '''
+    Get a list of IPv4 addresses assigned to given device
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: IPv4 addresses with subnet masks that is assigned to the device.
+    :rtype: list of tuple (IPAddress, SubnetMask)
+    '''
+    for endpoint in device.associators(AssocClass="LMI_NetworkSAPSAPDependency", ResultClass="LMI_IPProtocolEndpoint"):
+        if endpoint.ProtocolIFType == ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv4:
+            yield (endpoint.IPv4Address, endpoint.SubnetMask)
+
+def get_ipv6_addresses(ns, device):
+    '''
+    Get a list of IPv6 addresses assigned to given device
+
+    :param LMI_IPNetworkConnection device: network device
+    :return: IPv6 addresses with prefixes that is assigned to the device.
+    :rtype: list of tuple (IPAddress, Prefix)
+    '''
+    for endpoint in device.associators(AssocClass="LMI_NetworkSAPSAPDependency", ResultClass="LMI_IPProtocolEndpoint"):
+        if endpoint.ProtocolIFType == ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv6:
+            yield (endpoint.IPv6Address, endpoint.IPv6SubnetPrefixLength)
+
+
 def get_default_gateways(ns, device):
     '''
     Get a list of default gateways assigned to given device
@@ -447,7 +472,10 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
-        if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
+        if (settingData.ProtocolIFType is not None and
+                int(settingData.ProtocolIFType) == protocol and
+                hasattr(settingData, "IPAddresses")):
+
             settingData.IPAddresses.append(address)
             if version == 4:
                 settingData.SubnetMasks.append(util.netmask_from_prefix(prefix))
@@ -475,7 +503,10 @@ def remove_ip_address(ns, setting, address):
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
-        if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
+        if (settingData.ProtocolIFType is not None and
+                int(settingData.ProtocolIFType) == protocol and
+                hasattr(settingData, "IPAddresses")):
+
             i = 0
             while i < len(settingData.IPAddresses):
                 if util.compare_address(settingData.IPAddresses[i], address):
@@ -509,7 +540,10 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
     protocol = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.values_dict()["IPv%s" % version]
     found = False
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
-        if int(settingData.ProtocolIFType) == protocol and hasattr(settingData, "IPAddresses"):
+        if (settingData.ProtocolIFType is not None and
+                int(settingData.ProtocolIFType) == protocol and
+                hasattr(settingData, "IPAddresses")):
+
             settingData.IPAddresses = [address]
             if version == 4:
                 settingData.SubnetMasks = [util.netmask_from_prefix(prefix)]
