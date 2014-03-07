@@ -307,6 +307,8 @@ class Tree(command.LmiLister):
         # Add *all* LMI_VGStoragePools.
         for vg in lvm.get_vgs(ns):
             devices[self.get_obj_id(ns, vg)] = vg
+        for tp in lvm.get_tps(ns):
+            devices[self.get_obj_id(ns, tp)] = tp
 
         # deps = array of tuples (parent devid, child devid)
         # Load all dependencies, calling get_children iteratively is slow
@@ -354,6 +356,14 @@ class Tree(command.LmiLister):
                 (self.get_obj_id(ns, i.PartComponent),
                  self.get_obj_id(ns, i.GroupComponent))
                         for i in ns.LMI_VGAssociatedComponentExtent.instances()]
+
+        # Add VG-ThinPool dependencies from LMI_VGAllocatedFromStoragePool
+        if "LMI_VGAllocatedFromStoragePool" in ns.classes():
+            LOG().debug("Loading VGAllocatedFromStoragePool associations.")
+            deps += [
+                    (self.get_obj_id(ns, i.Antecedent),
+                     self.get_obj_id(ns, i.Dependent))
+                            for i in ns.LMI_VGAllocatedFromStoragePool.instances()]
 
         # queue = array of tuples (devid, level), queue of items to inspect
         # and display

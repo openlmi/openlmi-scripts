@@ -279,10 +279,11 @@ def get_tps(ns):
 
     :rtype: list of LMIInstance/LMI_VGStoragePool
     """
-    LOG().debug("get_vgs: Loading list of all thin pools.")
-    for vg in ns.LMI_VGStoragePool.instances():
-        if vg.SpaceLimitDetermination:
-            yield vg
+    if "LMI_VGAllocatedFromStoragePool" in ns.classes():
+        LOG().debug("get_tps: Loading list of all thin pools.")
+        for vg in ns.LMI_VGStoragePool.instances():
+            if vg.SpaceLimitDetermination:
+                yield vg
 
 def get_tp_vgs(ns, tp):
     """
