@@ -68,7 +68,7 @@ function test_raid() {
 
         rlLogInfo "Check lmi storage raid show output"
         rlRun -s "$LMI -NHL csv storage raid show $name"
-        rlAssertGrep "\"DeviceID\",\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
+        rlAssertGrep "\"DeviceID\",\"/dev/disk/by-id/md-name-.*$name\"" $rlRun_LOG
         rlAssertGrep "\"Name\",\"/dev/md/$name\"" $rlRun_LOG
         rlAssertGrep "\"ElementName\",\"$name\"" $rlRun_LOG
         rlAssertGrep "\"RAID Level\",$level" $rlRun_LOG
@@ -93,7 +93,7 @@ function test_raid() {
 
         rlLogInfo "Check lmi storage raid show output"
         rlRun -s "$LMI -NHL csv storage raid show $name" 1
-        rlAssertNotGrep "\"DeviceID\",\"/dev/disk/by-id/md-name-.*:$name\"" $rlRun_LOG
+        rlAssertNotGrep "\"DeviceID\",\"/dev/disk/by-id/md-name-.*$name\"" $rlRun_LOG
         rlAssertNotGrep "\"Name\",\"/dev/md/$name\"" $rlRun_LOG
     rlPhaseEnd
 }
