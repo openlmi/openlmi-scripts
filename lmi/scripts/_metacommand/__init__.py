@@ -133,8 +133,9 @@ class MetaCommand(object):
         if self._session is None:
             if (   not self._options['--host']
                and not self._options['--hosts-file']):
-                LOG().info('No hosts given, using "localhost".')
-                self._options['--host'] = ['localhost']
+                self._options['--host'] = [util.get_default_hostname()]
+                LOG().info('No hosts given, using "%s".',
+                        self._options['--host'][0])
             hostnames = []
             # credentials loaded from file
             credentials = {}

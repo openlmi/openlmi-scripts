@@ -33,9 +33,11 @@ Meta-command utility module.
 
 import logging
 import logging.config
+import os
 import pkg_resources
 import platform
 import re
+import socket
 import sys
 import urlparse
 
@@ -44,6 +46,8 @@ from lmi.scripts.common import get_logger
 from lmi.scripts.common import lmi_logging
 
 PYTHON_EGG_NAME = "openlmi-scripts"
+#: Service name identifying tcp port used to connect to CIMOM.
+DEFAULT_BROKER_SERVICE_NAME = 'wbem-https'
 
 RE_NETLOC = re.compile(r'^((?P<username>[^:@]+)(:(?P<password>[^@]+))?@)?'
         r'(?P<hostname>[^:]+)(:(?P<port>\d+))?$')
@@ -226,3 +230,35 @@ def parse_hosts_file(hosts_file):
         hostnames.append(line.strip())
     return get_hosts_credentials(hostnames)
 
+def get_default_hostname(port=None):
+    """
+    Choose default hostname to connect to. If logged as root, this will default
+    to localhost, which results in unix socket being used for connection.
+    Otherwise use full qualified domain name and hostname will be tried in this
+    order. If they are not address-resolvable, '127.0.0.1' is returned.
+
+    This function shall be used only if no uri is specified on command line.
+
+    :param port: Port of desired service running on host (CIMOM broker).
+        This defaults to :py:attr:`DEFAULT_BROKER_SERVICE_NAME`
+    :type port: string or int
+    """
+    if port is None:
+        port = DEFAULT_BROKER_SERVICE_NAME
+    # Functions used to get hostname. first resolvable result will be used.
+    name_getters = []
+    if os.getuid() != 0:
+        # Use non-'localhost' name only if we'are not logged in as root
+        # for it prevents the use of unix socket.
+        name_getters.extend([socket.getfqdn, socket.gethostname])
+    name_getters.append(lambda: 'localhost')
+    for name_func in name_getters:
+        try:
+            hostname = name_func()
+            socket.getaddrinfo(hostname, port)
+            break
+        except socket.gaierror:
+            pass
+    else:
+        hostname = '127.0.0.1'
+    return hostname
