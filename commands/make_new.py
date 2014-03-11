@@ -7,8 +7,6 @@ Usage:
     {cmd} [options] <command>
 
 Options:
-    -v --version <version>  Version of script library.
-                            Defaults to {default_version}.
     -a --author <author>    Full name of library's author.
     -e --email <email>      Author's email address.
     -d --description <description>
@@ -27,8 +25,6 @@ from sphinx import quickstart
 RE_COMMAND_NAME = re.compile(r'^([a-z]+(_[a-z]+)*)$')
 RE_RST_STATEMENT = re.compile(r'^\s*(:[^:]+:.*)')
 
-DEFAULT_VERSION = '0.0.1'
-
 SETUP_TEMPLATE = \
 u"""#!/usr/bin/env python
 # -*- encoding: utf-8 -*-
@@ -42,7 +38,7 @@ except IOError:
 
 setup(
     name='openlmi-scripts-{name}',
-    version={version!r},
+    version='@@VERSION@@',
     {_description}description={description!r},
     long_description=long_description,
     {_author}author=u'{author}',
@@ -76,6 +72,11 @@ setup(
             ],
         }},
     )
+"""
+
+SETUP_CFG_TEMPLATE = """\
+[upload_docs]
+upload-dir = doc/_build/html
 """
 
 BSD_LICENSE_HEADER = \
@@ -185,6 +186,10 @@ def write_setup(config, output_path):
     with open(output_path, 'w') as setup_file:
         setup_file.write(SETUP_TEMPLATE.format(**values).encode('utf-8'))
 
+def write_setup_cfg(config, output_path):
+    with open(output_path, 'w') as setup_file:
+        setup_file.write(SETUP_CFG_TEMPLATE)
+
 def write_empty(config, output_path):
     with open(output_path, 'w'):
         pass
@@ -192,6 +197,10 @@ def write_empty(config, output_path):
 def write_cmdline(config, output_path):
     with open(output_path, 'w') as cmdline_file:
         cmdline_file.write(DOC_CMDLINE)
+
+def write_makefile(config, output_path):
+    with open(output_path, 'w') as cmdline_file:
+        cmdline_file.write('include ../../Makefile.inc')
 
 def modify_doc_makefile(config, path):
     s_add_cmd, s_add_phony, s_add_cmdregen, s_wait_help_end, s_done = range(5)
@@ -230,7 +239,8 @@ def modify_doc_index(config, path):
                 if state == s_wait_toc and line.startswith('.. toctree::'):
                     state = s_wait_empty_line
                     new.write(line)
-                elif state == s_wait_empty_line and RE_RST_STATEMENT.match(line):
+                elif (  state == s_wait_empty_line
+                     and RE_RST_STATEMENT.match(line)):
                     new.write('    ' +
                             RE_RST_STATEMENT.match(line).group(1) + '\n')
                 elif state == s_wait_empty_line and line == '\n':
@@ -248,8 +258,8 @@ def make_doc_directory(config, path):
             'dot'            : '_',
             'project'        : config['project_name'],
             'author'         : config['author'],
-            'version'        : config['version'],
-            'release'        : config['version'],
+            'version'        : '@@VERSION@@',
+            'release'        : '@@VERSION@@',
             'suffix'         : '.rst',
             'master'         : 'index',
             'epub'           : True,
@@ -265,6 +275,7 @@ def make_doc_directory(config, path):
             'makefile'       : True,
             'batchfile'      : True}
     quickstart.generate(sphinx_conf)
+    os.rename(os.path.join(path, 'conf.py'), os.path.join(path, 'conf.py.skel'))
     write_cmdline(config, os.path.join(path, 'cmdline.rst'))
     modify_doc_makefile(config, os.path.join(path, 'Makefile'))
     modify_doc_index(config, os.path.join(path, 'index.rst'))
@@ -272,7 +283,7 @@ def make_doc_directory(config, path):
 STRUCTURE = {
         'doc' : make_doc_directory,
             # {
-            #     'conf.py'     : ...,
+            #     'conf.py.skel': ...,
             #     'cmdline.rst' : ...,
             #     'python.rst'  : ...,
             #     'index.rst'   : ...,
@@ -287,8 +298,10 @@ STRUCTURE = {
                 }
             }
         },
-        'setup.py' : write_setup,
-        'README.md' : write_empty
+        'setup.py.skel' : write_setup,
+        'setup.cfg'     : write_setup_cfg,
+        'README.md'     : write_empty,
+        'Makefile'      : write_makefile,
 }
 
 def make_file(config, filepath, prescription):
@@ -309,29 +322,25 @@ def make_command(config, base_dir):
 def parse_command_line(args=None):
     if args is None:
         args = sys.argv[1:]
-    usage = __doc__.format(
-            cmd=os.path.basename(sys.argv[0]),
-            default_version=DEFAULT_VERSION)
+    usage = __doc__.format(cmd=os.path.basename(sys.argv[0]))
     options = docopt(usage, args)
-    for opt_name in ('version', 'author', 'email', 'description'):
+    for opt_name in ('author', 'email', 'description'):
         options[opt_name] = options.pop('--' + opt_name)
     options['command'] = options.pop('<command>')
     options['project_name'] = options.pop('--project-name')
 
     if not RE_COMMAND_NAME.match(options['command']):
-        die("command name must match regular expression {!r}", RE_COMMAND_NAME.pattern)
+        die("command name must match regular expression {!r}",
+                RE_COMMAND_NAME.pattern)
 
     for info, question, default_value in (
-            ('version', 'Library version [{default_version}]: ',
-                DEFAULT_VERSION),
             ('author',      'Your name:  ', None),
             ('email',       'Your email: ', None),
             ('description', 'Description: ', None)):
         if options.get(info, None):
             continue
         try:
-            options[info] = ask(
-                    question.format(default_version=DEFAULT_VERSION))
+            options[info] = ask(question)
         except EOFError:
             pass
         if not options[info]:
