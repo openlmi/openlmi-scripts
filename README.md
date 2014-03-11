@@ -1,103 +1,60 @@
 openlmi-scripts
 ===============
-Client-side python modules and command line utilities.
+Client-side python libraries for system management through OpenLMI providers.
 
-It comprises of one binary called `lmi` and a common library. `lmi`
-meta-command allows to run commands on a set of OpenLMI providers. These
-commands can be installed separately in a modular way.
+It comprises of small python eggs targeted on one or more OpenLMI providers. We
+call these eggs scripts. They are installed separately although they can depend
+on each other.
 
-`lmi` is a command line application allowing to run single command on a set
-of hosts with just one statement from `shell` or it can run in an
-interactive way.
+They contain python library itself as well as command line interface. This
+interface is registered with LMI Meta-command which is a part of OpenLMI Tools.
+LMI Meta-command loads it and offers to interface with broker through command
+line.
 
-For more information please refer to online documentation on [pythonhosted][]
-or build your own in `doc/` directory.
+For more information please refer to online documentation on [pythonhosted][].
 
 Structure
 ---------
-Following diagram depicts directory structure.
-
-    openlmi-tools
-    ├── commands        # base directory for lmi subcommands
-    │   ├── service     # service provider comand (service)
-    │   │   └── lmi
-    │   │       └── scripts
-    │   │           └── service
-    │   └── software    # software provider command (sw)
-    │       └── lmi
-    │           └── scripts
-    │               └── software
-    ├── config          # configuration files for lmi meta-command
-    └── lmi             # common client-side library
-        └── scripts
-            ├── common
-            └── _metacommand    # functionality of lmi meta-command
-
 Each subdirectory of `commands/` contains library for interfacing with
 particular set of OpenLMI providers. Each contains its own `setup.py` file,
-that handles its installation and registration of command. They have one
-command thing. Each such `setup.py` must pass `entry_points` dictionary to
-the `setup()` function, which associates commands defined in command library
-with its name under `lmi` meta-command.
+that handles its installation and registration of script. They have one common
+feature. Each such `setup.py` must pass `entry_points` dictionary to the
+`setup()` function, wich associates commands defined in script with its name
+with LMI Meta-command.
 
 Dependencies
 ------------
 Code base is written for `python 2.7`.
 There are following python dependencies:
 
- * openlmi-tools ([PyPI][])
+ * openlmi-tools >= 0.9.1 ([tools-PyPI][PyPI])
  * python-docopt
+ * pandoc
 
 Installation
 ------------
 Use standard `setuptools` script for installation:
 
-    $ cd openlmi-scripts
+    $ cd openlmi-scripts/commands/$CMD
     $ make setup
     $ python setup.py install --user
 
-This installs just the *lmi meta-command* and client-side library. To install
-subcommands, you need to do the same procedure for each particular command
-under `commands/` directory.
+This installs particular client library and command line interface for
+LMI Meta-command.
 
 Script eggs are also available on *PyPI*, install them with:
 
-    $ pip install --user openlmi-scripts
     $ # add any provider you want to interact with
     $ pip install --user openlmi-scripts-service openlmi-scripts-software
 
-Usage
------
-To get a help and see available commands, run:
-
-    $ lmi help
-
-To get a help for particular command, run:
-
-    $ lmi help service
-
-To issue single command on a host, run:
-
-    $ lmi --host ${hostname} service list
-
-To start it in interactive mode:
-
-    $ lmi --host ${hostname}
-    > service list --disabled
-    ...
-    > service start svnserve.service
-    ...
-    > quit
-
 Developing lmi scripts.
 -----------------------
+This documents how to quickly develop lmi scripts without the need to reinstall
+python eggs, when anything is changed. This presumes, that the development
+process takes place in a git repository checked out from [git][]. It can be
+located anywhere on system.
 
-This documents how to quickly develop lmi scripts without the need to
-reinstall python eggs, when anything is changed. This presumes, that the
-development process takes place in a git repository checked out from [git][].
-It can be located anywhere on system.
-
-Before we start with setting up an environment, please double check, that you
+Before we start with setting up an environment, please double check that you
 don't have installed anything from openlmi-scripts in system path
 (`/usr/lib/python2.7/site-packages/lmi/scripts` should not exist). And make
 sure, that user path is also cleared:
@@ -105,15 +62,10 @@ sure, that user path is also cleared:
     $ rm -rf $HOME/.local/lib/python2.7/site-packages/lmi*
     $ rm -rf $HOME/.local/lib/python2.7/site-packages/openlmi*
 
-Install all dependencies:
+Install all dependencies (named above).
 
-  * python-docopt
-  * openlmi-python-base
-  * openlmi-tools
-
-Either via rpms or from respective git repositories. For openlmi-python-base
-package contained in [providers-git][] repository the setup script is
-located at `src/python/setup.py`. In future these will be available from PyPi.
+Either via rpms (on Fedora or RHEL) or from respective git repositories or from
+[PyPI][].
 
 Let's setup an environment:
 
@@ -127,17 +79,17 @@ Let's setup an environment:
   2. Add workspace to your python path to make all modules installed there
      importable (you can add this to your `~/.bashrc`):
 
-        $ export PYTHONPATH=$WSP:$PYTHONPATH
+        $ export PYTHONPATH="$WSP:$PYTHONPATH"
 
   3. Add workspace to your PATH, so the installed binaries can be run:
 
-        $ export PATH=$WSP:$PATH
+        $ export PATH="$WSP:$PATH"
 
   4. Now let's "install" to our workspace. First `cd` to checked out
-     openlmi-scripts repository.
+     `openlmi-scripts` repository.
   5. Install them and any commands you want -- possibly your own
 
-        $ DEVELOPDIR=$WSP make develop-all
+        $ DEVELOPDIR="$WSP" make develop-all
 
 Now any change made to openlmi-scripts is immediately reflected in LMI
 Meta-command.
@@ -171,10 +123,8 @@ be applied to all commands/libraries at once. They are:
   * `upload_docs` - upload documentation to [pythonhosted]
 
 Each script's `Makefile` has the same interface. The root `Makefile` is an
-exception. It takes care of LMI Meta-command and its library. It defines all
-the rules above but also contains few more. They are all variations of above
-commands, have the same name but end with `-all` suffix. They operate on LMI
-Meta-command and all subcommands at once. Such rules are:
+exception. It takes care of command libraries. It defines all the rules above
+with `-all` suffix. They operate on all subcommands at once. Such rules are:
 
   * `clean-all`
   * `develop-all`
@@ -182,16 +132,15 @@ Meta-command and all subcommands at once. Such rules are:
   * `upload-all`
   * `upload\_docs-all`
 
-To limit the set of commands they shall operate on, the `COMMANDS` environment
-variable may be used. For example following command:
+To limit the set of commands that shall be processed, the `COMMANDS`
+environment variable may be used. For example following command:
 
     $ COMMANDS='storage software networking' make clean-all
 
-Will clean storage, software and networking directories and LMI Meta-command as
-well.
+Will clean storage, software and networking directories.
 
 ------------------------------------------------------------------------------
-[git]:           https://github.com/openlmi/openlmi-scripts                 "openlmi-scripts"
-[providers-git]: https://fedorahosted.org/openlmi/browser/openlmi-providers "openlmi-providers"
-[pythonhosted]:  http://pythonhosted.org/openlmi-scripts/index.html         "python hosted"
-[PyPI]:          https://pypi.python.org/pypi/openlmi-tools                 "PyPI"
+[git]:           https://github.com/openlmi/openlmi-scripts                  "openlmi-scripts"
+[pythonhosted]:  http://pythonhosted.org/openlmi-tools/index.html            "Python Hosted"
+[tools-PyPI]:    https://pypi.python.org/pypi/openlmi-tools                  "Tools on PyPI"
+[PyPI]:          https://pypi.python.org/pypi?%3Aaction=search&term=openlmi-scripts&submit=search "Scripts on PyPI"
