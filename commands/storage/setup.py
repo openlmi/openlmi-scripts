@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 PROJECT = 'openlmi-scripts-storage'
-VERSION = '0.0.4'
+VERSION = '0.0.5'
 
 from setuptools import setup, find_packages
 
