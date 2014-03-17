@@ -35,14 +35,15 @@
 Mount management.
 
 Usage:
-    %(cmd)s list [ --all ] [ <device> ... ]
+    %(cmd)s list [ --all ] [ <target> ... ]
     %(cmd)s create <device> <mountpoint> [ (-t <fs_type>) (-o <options>) ]
     %(cmd)s delete <target>
-    %(cmd)s show [ --all ] [ <device> ... ]
+    %(cmd)s show [ --all ] [ <target> ... ]
 
 Commands:
     list     List mounted filesystems with a device attached to them.
-             Optionally, show all mounted filesystems.
+             <target> can be specified either as device names
+             or mountpoints.
 
     create   Mount a specified device on the path given by mountpoint.
              Optionally, filesystem type, common options (filesystem
@@ -80,7 +81,9 @@ Commands:
              path or a mountpoint.
 
     show     Show detailed information about mounted filesystems with a device
-             attached to them. Optionally, show all mounted filesystems.
+             attached to them. <target> can be specified either as device names
+             or mountpoints.
+             <spec>. Optionally, show all mounted filesystems.
 """
 
 from lmi.shell.LMIUtil import lmi_isinstance
@@ -90,32 +93,45 @@ from lmi.scripts.common.formatter import command as fcmd
 from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
 from lmi.scripts.storage.common import (size2str, get_devices, get_children,
         get_parents, str2device, str2size, str2vg)
+from lmi.scripts.common.errors import LmiFailed
 
 LOG = get_logger(__name__)
 
-def get_mounts_for_devices(ns, devices):
+def get_mounts_for_targets(ns, targets):
     """
-    Return list of LMI_MountedFilesystem instances for given devices.
+    Return list of LMI_MountedFilesystem instances for given devices or
+    directories.
+    :type mntspec: List of strings or LMIInstance/CIM_StorageExtents.
+    :param mntspec: Mount specifications. If a string is provided as a mount
+                    specification, it can be either device name or mount
+                    directory.
     """
     mounts = []
-    for device in devices:
-        device = str2device(ns, device)
-        filesystems = device.associators(AssocClass="LMI_ResidesOnExtent",
-                Role="Antecedent")
-        for fs in filesystems:
-            mounts += fs.associators(ResultClass="LMI_MountedFileSystem")
+    for target in targets:
+        try:
+            device = str2device(ns, target)
+            if device:
+                target = device.Name
+        except LmiFailed:
+            # we did not find CIM_StorageExtent for the device, it must be non
+            # device filesystem specification
+            pass
+
+        mnts = ns.LMI_MountedFileSystem.instances({'FileSystemSpec':target}) + \
+            ns.LMI_MountedFileSystem.instances({'MountPointPath':target})
+        mounts += mnts
     return mounts
 
 class MountList(command.LmiLister):
     COLUMNS = ('FileSystemSpec', 'FileSystemType', 'MountPointPath', 'Options')
     ARG_ARRAY_SUFFIX = 's'
 
-    def execute(self, ns, devices=None, _all=None):
+    def execute(self, ns, targets=None, _all=None):
         """
         Implementation of 'mount list' command.
         """
-        if devices:
-            mounts = get_mounts_for_devices(ns, devices)
+        if targets:
+            mounts = get_mounts_for_targets(ns, targets)
         else:
             mounts = mount.get_mounts(ns)
 
@@ -143,12 +159,12 @@ class MountShow(command.LmiLister):
     COLUMNS = ('Name', 'Value')
     ARG_ARRAY_SUFFIX = 's'
 
-    def execute(self, ns, _all=None, devices=None):
+    def execute(self, ns, _all=None, targets=None):
         """
         Implementation of 'mount show' command.
         """
-        if devices:
-            mounts = get_mounts_for_devices(ns, devices)
+        if targets:
+            mounts = get_mounts_for_targets(ns, targets)
         else:
             mounts = mount.get_mounts(ns)
 
