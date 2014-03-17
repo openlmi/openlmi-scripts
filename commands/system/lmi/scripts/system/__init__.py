@@ -110,6 +110,7 @@ def get_system_info(ns):
     result += get_hwinfo(ns)
     result += get_osinfo(ns)
     result += get_servicesinfo(ns)
+    result += get_networkinfo(ns)
     return result
 
 def get_hostname(ns):
@@ -230,4 +231,48 @@ def get_servicesinfo(ns):
     result = [
         ('Firewall:', fw),
         ('Logging:', logging)]
+    return result
+
+def get_networkinfo(ns):
+    """
+    :returns: Tabular data of networking status.
+    :rtype: List of tuples
+    """
+    result = [('', ''), ('Networking', '')]
+    try:
+        lan_endpoints = get_all_instances(ns, 'LMI_LANEndpoint')
+    except LMIClassNotFound:
+        result.append(('  N/A', ''))
+        return result
+    nic = 1
+    for lan_endpoint in lan_endpoints:
+        if lan_endpoint.Name == 'lo':
+            continue
+        result += [
+            ('  NIC %d' % nic, ''),
+            ('    Name:', lan_endpoint.Name)]
+        try:
+            ip_net_con = lan_endpoint.associators(
+                ResultClass='LMI_IPNetworkConnection')[0]
+            result.append(('    Status:',
+                ns.LMI_IPNetworkConnection.OperatingStatusValues.value_name(
+                ip_net_con.OperatingStatus)))
+        except LMIClassNotFound:
+            pass
+        try:
+            for ip_protocol_endpoint in lan_endpoint.associators(
+                    ResultClass='LMI_IPProtocolEndpoint'):
+                if ip_protocol_endpoint.ProtocolIFType == \
+                        ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv4:
+                    result.append(('    IPv4 Address:',
+                        ip_protocol_endpoint.IPv4Address))
+                elif ip_protocol_endpoint.ProtocolIFType == \
+                        ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv6:
+                    result.append(('    IPv6 Address:',
+                        ip_protocol_endpoint.IPv6Address))
+        except LMIClassNotFound:
+            pass
+        result += [
+            ('    MAC Address:', lan_endpoint.MACAddress)]
+        nic += 1
     return result
