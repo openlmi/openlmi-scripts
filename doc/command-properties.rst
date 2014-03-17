@@ -288,6 +288,8 @@ They are:
 ``FMT_HUMAN_FRIENDLY`` : ``bool`` (defaults to ``False``)
     Forces the output to be more pleasant to read by human beings.
 
+.. _specifying_requirements:
+
 Command specific properties
 ---------------------------
 Each command class can have its own specific properties. Let's take a look on
@@ -349,6 +351,50 @@ them.
     the usage string. Adding it to command properties causes this multiplexer
     to behave exactly as ``All`` subcommand in case that no command
     is given on command line.
+
+.. _lmi_select_command_properties:
+
+``LmiSelectCommand`` properties
+-------------------------------
+Following properties allow to define profile and class requirements for
+commands.
+
+.. _select:
+
+``SELECT`` : ``list`` (mandatory)
+    Is a list of pairs ``(condition, command)`` where ``condition`` is an
+    expression in *LMIReSpL* language. And ``command`` is either a string with
+    absolute path to command that shall be loaded or the command class itself.
+
+    Small example: ::
+
+        SELECT = [
+              ( 'OpenLMI-Hardware < 0.4.2'
+              , 'lmi.scripts.hardware.pre042.PreCmd'
+              )
+            , ('OpenLMI-Hardware >= 0.4.2 & class LMI_Chassis == 0.3.0'
+              , HwCmd
+              )
+        ]
+
+    It says: Let the ``PreHwCmd`` command do the job on brokers having
+    ``openlmi-hardware`` package older than ``0.4.2``. Use the ``HwCmd``
+    anywhere else where also the ``LMI_Chassis`` CIM class in version ``0.3.0``
+    is available.
+
+    First matching condition wins and assigned command will be passed all the
+    arguments. If no condition can be satisfied and no default command is set,
+    an exception will be raised.
+
+    .. seealso::
+        Definition of *LMIReSpL* mini-language:
+        :py:mod:`~lmi.scripts.common.versioncheck.parser`
+
+.. _default:
+
+``DEFAULT`` : ``string`` or reference to command class
+    Defines fallback command used in case no condition in ``SELECT`` can be
+    satisfied.
 
 .. _lmi_lister_properties:
 

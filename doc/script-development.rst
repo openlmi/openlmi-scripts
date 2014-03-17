@@ -306,6 +306,116 @@ of options to it. In this way we can create arbitrarily tall command trees.
 
 Top-level command is nothing else than a subclass of ``LmiCommandMultiplexer``.
 
+Specifying profile and class requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Most commands require some provider installed on managed machine to work
+properly. Each such provider should be represented by an instance of
+``CIM_RegisteredProfile`` on remote broker. This instance looks like
+this (in MOF syntax): ::
+
+    instance of CIM_RegisteredProfile {
+        InstanceID = "OpenLMI+OpenLMI-Software+0.4.2";
+        RegisteredOrganization = 1;
+        OtherRegisteredOrganization = "OpenLMI";
+        RegisteredVersion = "0.4.2";
+        AdvertiseTypes = [2];
+        RegisteredName = "OpenLMI-Software";
+    };
+
+We are interested just in ``RegisteredName`` and ``RegisteredVersion``
+properties that we'll use for requirement specification.
+
+Requirement is written in *LMIReSpL* language. For its formal definition
+refer to documentation of :py:mod:`~lmi.scripts.common.versioncheck.parser`.
+Since the language is quite simple, few examples should suffice:
+
+    ``'OpenLMI-Software < 0.4.2'``
+        Requires OpenLMI Software provider to be installed in version lower
+        than ``0.4.2``.
+    ``'OpenLMI-Hardware == 0.4.2 & Openlmi-Software >= 0.4.2'``
+        Requires both hardware and software providers to be installed in
+        particular version. Short-circuit evaluation is utilized here. It
+        means that in this example OpenLMI Software won't be queried unless
+        OpenLMI Hardware is installed and having desired version.
+    ``'profile "OpenLMI-Logical File" > 0.4.2'``
+        If you have spaces in the name of profile, surround it in double
+        quotes. ``profile`` keyword is optional. It could be also present in
+        previous examples.
+
+Version requirements are not limited to profiles only. CIM classes may be
+specified as well:
+
+    ``'class LMI_SoftwareIdentity >= 0.3.0 & OpenLMI-LogicalFile'``
+        In case of class requirements the ``class`` keyword is mandatory. As
+        you can see, version requirement is optional.
+    ``'! (class LMI_SoftwareIdentity | class LMI_UnixFile)'``
+        Complex expressions can be created with the use of brackets and other
+        operators.
+
+One requirement is evaluated in these steps:
+
+    Profile requirement
+        1. Query ``CIM_RegisteredProfile`` for instances with
+           ``RegisteredName`` matching given name. If found, go to 2. Otherwise
+           query ``CIM_RegisteredSubProfile`` [#subprof]_ for instances with
+           ``RegisteredName`` matching given name. If not found return
+           ``False``.
+        2. Select the (sub)profile with highest version and go to 3.
+        3. If the requirement has version specification then compare it to the
+           value of ``RegisteredVersion`` using given operator. If the relation
+           does not apply, return ``False``.
+        4. Return ``True``.
+
+    Class requirement
+        1. Get specified class. If not found, return ``False``.
+        2. If the requirement has version specification then compare it to the
+           value of ``Version`` [#missing_version]_ qualifier of
+           obtained class using given operator. And if the relation
+           does not apply, return ``False``.
+        3. Return ``True``.
+
+Now let's take a look, where these requirements can be specified.
+There is special select command used to specify which command to load
+for particular version on remote broker. It's defined like this: ::
+
+    from lmi.scripts.common.command import LmiSelectCommand
+
+    class SoftwareCMD(LmiSelectCommand):
+
+        SELECT = [
+              ( 'OpenLMI-Software >= 0.4.2' & 'OpenLMI-LogicalFile'
+              , 'lmi.scripts.software.current.SwLFCmd')
+            , ( 'OpenLMI-Software >= 0.4.2'
+              , 'lmi.scripts.software.current.SwCmd')
+            , ('OpenLMI-Software', 'lmi.scripts.software.pre042.SwCmd')
+        ]
+
+It says to load ``SwLFCmd`` command in case both OpenLMI Software and
+OpenLMI LogicalFile providers are installed. If not, load the ``SwCMD`` from
+``current`` module for OpenLMI Software with recent version and fallback to
+``SwCmd`` for anything else. If the OpenLMI Software provider is not available
+at all, no command will be loaded and exception will be raised.
+
+Previous command could be used as an entry point in your ``setup.py`` script
+(see the :ref:`entry_points`). There is also a utility that makes it look
+better: ::
+
+    from lmi.scripts.common.command import select_command
+
+    SoftwareCMD = select_command('SoftwareCMD',
+          ( 'OpenLMI-Software >= 0.4.2' & 'OpenLMI-LogicalFile'
+          , 'lmi.scripts.software.current.SwLFCmd'),
+          ( 'OpenLMI-Software >= 0.4.2', 'lmi.scripts.software.current.SwCmd'),
+          ('OpenLMI-Software', 'lmi.scripts.software.pre042.SwCmd')
+    )
+
+.. seealso::
+    Documentation of
+    :py:class:`~lmi.scripts.common.command.select.LmiSelectCommand` and
+    :py:class:`~lmi.scripts.common.command.helper.select_command`.
+   
+    And also notes on related :ref:`lmi_select_command_properties`.
+
 Command wrappers module
 ~~~~~~~~~~~~~~~~~~~~~~~
 Usually consists of:
@@ -413,6 +523,8 @@ Follows a minimal example of ``setup.py`` script for service library. ::
 
 .. _entry_points:
 
+Entry points
+~~~~~~~~~~~~
 The most notable argument here is ``entry_points`` which is a dictionary
 containing python namespaces where plugins are registered. In this case, we
 register single top-level command (see `Top-level commands`_) called
@@ -540,6 +652,11 @@ Tutorial
 .. [#] If logging to a file is enabled in configuration.
 .. [#] Precisely in an ``__init__.py`` module of this package.
 .. [#] These names must exactly match the names in usage strings.
+
+.. [#subprof] This is a subclass of ``CIM_RegisteredProfile`` thus it has the
+              same properties.
+.. [#missing_version] If the Version qualifier is missing, -1 will be used
+                      for comparison instead of empty string.
 
 .. ****************************************************************************
 
