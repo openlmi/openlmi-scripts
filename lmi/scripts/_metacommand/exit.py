@@ -42,6 +42,7 @@ EXIT_CODE_FAILURE = 1
 EXIT_CODE_KEYBOARD_INTERRUPT = 2
 EXIT_CODE_COMMAND_NOT_FOUND = 3
 EXIT_CODE_INVALID_SYNTAX = 4
+EXIT_CODE_UNSATISFIED_DEPENDENCIES = 5
 
 def _execute_exit(exit_code):
     """ Associated function with ``Exit`` command. """

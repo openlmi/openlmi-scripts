@@ -49,18 +49,23 @@ DEFAULT_FORMATTER_OPTIONS = {
 
 class LmiBaseCommand(object):
     """
-    Abstract base class for all commands handling command line arguemtns.
+    Abstract base class for all commands handling command line arguments.
     Instances of this class are organized in a tree with root element being the
     ``lmi`` meta-command (if not running in interactive mode). Each such
     instance can have more child commands if its
-    :py:meth:`LmiBaseCommand.is_end_point` method return ``False``. Each has
+    :py:meth:`LmiBaseCommand.is_multiplexer` method return ``True``. Each has
     one parent command except for the top level one, whose :py:attr:`parent`
     property returns ``None``.
 
-    Set of commands is organized in a tree, where each command
-    (except for the root) has its own parent. :py:meth:`is_end_point` method
-    distinguish leaves from nodes. The path from root command to the
-    leaf is a sequence of commands passed to command line.
+    Set of commands is organized in a tree, where each command (except for the
+    root) has its own parent. :py:meth:`is_end_point` method distinguishes
+    leaves from nodes. The path from root command to the leaf is a sequence of
+    commands passed to command line.
+
+    There is also a special command called selector. Its :py:meth:`is_selector`
+    method returns ``True``. It selects proper command that shall be passed all
+    the arguments based on expression with profile requirements. It shares its
+    name and parent with selected child.
 
     If the :py:meth:`LmiBaseCommand.has_own_usage` returns ``True``, the parent
     command won't process the whole command line and the remainder will be
@@ -94,6 +99,32 @@ class LmiBaseCommand(object):
         :rtype: boolean
         """
         return True
+
+    @classmethod
+    def is_multiplexer(cls):
+        """
+        Is this command a multiplexer? Note that only one of
+        :py:meth:`is_end_point`, :py:meth:`is_selector` and this method can
+        evaluate to``True``.
+
+        :returns: ``True`` if this command is not an end-point command and it's
+            a multiplexer. It contains one or more subcommands. It consumes the
+            first argument from command-line arguments and passes the rest to
+            one of its subcommands.
+        :rtype: boolean
+        """
+        return not cls.is_end_point()
+
+    @classmethod
+    def is_selector(cls):
+        """
+        Is this command a selector?
+
+        :returns: ``True`` if this command is a subclass of
+            :py:class:`lmi.scripts.common.command.select.LmiSelectCommand`.
+        :rtype: boolean
+        """
+        return not cls.is_end_point() and not cls.is_multiplexer()
 
     @classmethod
     def has_own_usage(cls):
@@ -300,7 +331,7 @@ class LmiBaseCommand(object):
         """
         Allows to override session object. This is useful for especially for
         conditional commands (subclasses of
-        :py:class:`~lmi.scripts.common.command.LmiSelectCommand`) that devide
+        :py:class:`~lmi.scripts.common.command.select.LmiSelectCommand`) that devide
         connections to groups satisfying particular expression. These groups
         are turned into session proxies containing just a subset of connections
         in global session object.

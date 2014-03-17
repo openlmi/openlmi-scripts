@@ -45,6 +45,16 @@ class LmiFailed(LmiError):
     """
     pass
 
+class LmiUnsatisfiedDependencies(LmiFailed):
+    """
+    Raised when no guarded command in
+    :py:class:`~.command.select.LmiSelectCommand` can be loaded due to
+    unsatisfied requirements.
+    """
+    def __init__(self, uris):
+        LmiFailed.__init__(self, "Profile and class dependencies were not"
+                " satisfied for this session (%s)." % ', '.join(uris))
+
 class LmiUnexpectedResult(LmiError):
     """
     Raised, when command's associated function returns something unexpected.
@@ -112,6 +122,15 @@ class LmiCommandInvalidCallable(LmiCommandInvalidProperty):
     """ Raised, when given callback is not callable. """
     def __init__(self, module_name, class_name, msg):
         LmiCommandInvalidProperty.__init__(self, module_name, class_name, msg)
+
+class LmiBadSelectExpression(LmiCommandError):
+    """
+    Raised, when expression of :py:class:`~.command.select.LmiSelectCommand`
+    could not be evaluated.
+    """
+    def __init__(self, module_name, class_name, expr):
+        LmiCommandError.__init__(self, module_name, class_name,
+                "Bad select expression: %s" % expr)
 
 class LmiTerminate(Exception):
     """

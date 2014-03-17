@@ -1,4 +1,6 @@
-# Copyright (C) 2013-2014 Red Hat, Inc. All rights reserved.
+#!/bin/bash
+#
+# Copyright (c) 2014, Red Hat, Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,24 +28,42 @@
 # policies, either expressed or implied, of the FreeBSD Project.
 #
 # Authors: Michal Minar <miminar@redhat.com>
-#
-"""
-This subpackage defines base classes and utility functions for declaring
-commands. These serve as wrappers for functions in libraries specific to
-particular provider.
 
-Tree of these commands build a command line interface for this library.
-"""
+. ./base.sh
 
-from lmi.scripts.common.command.base import LmiBaseCommand
-from lmi.scripts.common.command.checkresult import LmiCheckResult
-from lmi.scripts.common.command.endpoint import LmiEndPointCommand
-from lmi.scripts.common.command.lister import LmiInstanceLister
-from lmi.scripts.common.command.lister import LmiLister
-from lmi.scripts.common.command.multiplexer import LmiCommandMultiplexer
-from lmi.scripts.common.command.session import LmiSessionCommand
-from lmi.scripts.common.command.select import LmiSelectCommand
-from lmi.scripts.common.command.show import LmiShowInstance
+# Set the full test name
+TEST="openlmi-scripts/test/test_cmd.sh"
 
-from lmi.scripts.common.command.helper import make_list_command
-from lmi.scripts.common.command.helper import register_subcommands
+PACKAGE="openlmi-scripts"
+
+rlJournalStart
+
+rlPhaseStartSetup
+    rlLogInfo "Creating temporary python sandbox"
+    sandbox=`mktemp -d`
+    export PYTHONPATH="$sandbox"
+    pushd ..
+    rlLogInfo "Installing lmi meta-command"
+    rlRun "python setup.py develop --install-dir=$sandbox" 
+    popd
+    export "$sandbox:$PATH"
+rlPhaseEnd
+
+rlPhaseStartTest
+    rlLogInfo "Running unittests"
+
+    pushd unit
+    for i in test_*.py; do
+        rlRun "python $i"
+    done
+    popd # unit
+
+rlPhaseEnd
+
+rlPhaseStartCleanup
+    rlLogInfo "Removing temporary python sandbox"
+    rm -rf "$sandbox"
+rlPhaseEnd
+
+rlJournalPrintText
+rlJournalEnd

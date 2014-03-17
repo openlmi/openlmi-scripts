@@ -54,6 +54,7 @@ RE_CALLABLE = re.compile(
         re.IGNORECASE)
 RE_ARRAY_SUFFIX = re.compile(r'^(?:[a-z_]+[a-z0-9_]*)?$', re.IGNORECASE)
 RE_OPTION = re.compile(r'^-+(?P<name>[^-+].*)$')
+RE_MODULE_PATH = re.compile(r'([a-zA-z_]\w+\.)+[a-zA-z_]\w+')
 
 FORMAT_OPTIONS = ('no_headings', 'human_friendly')
 
@@ -486,6 +487,85 @@ def _handle_format_options(name, bases, dcl):
     for key in format_options:
         dcl.pop('FMT_' + key.upper())
 
+def _handle_select(name, dcl):
+    """
+    Process properties of :py:class:`.select.LmiSelectCommand`.
+    Currently handled properties are:
+
+        ``SELECT`` : ``list``
+            Is a list of pairs ``(condition, command)`` where ``condition`` is
+            an expression in *LMIReSpL* language. And ``command`` is either a
+            string with absolute path to command that shall be loaded or the
+            command class itself.
+
+            Small example: ::
+
+                SELECT = [
+                      ( 'OpenLMI-Hardware < 0.4.2'
+                      , 'lmi.scripts.hardware.pre042.PreCmd'
+                      )
+                    , ('OpenLMI-Hardware >= 0.4.2 & class LMI_Chassis == 0.3.0'
+                      , HwCmd
+                      )
+                ]
+
+            It says: Let the ``PreHwCmd`` command do the job on brokers having
+            ``openlmi-hardware`` package older than ``0.4.2``. Use the
+            ``HwCmd`` anywhere else where also the ``LMI_Chassis`` CIM class in
+            version ``0.3.0`` is available.
+
+            First matching condition wins and assigned command will be passed
+            all the arguments.
+
+        ``DEFAULT`` : ``str`` or :py:class:`~.base.LmiBaseCommand`
+            Defines fallback command used in case no condition can be
+            satisfied.
+
+    They will be turned into ``get_conditionals()`` method.
+    """
+    module_name = dcl.get('__module__', name)
+    if not 'SELECT' in dcl:
+        raise errors.LmiCommandError(module_name, name,
+                "Missing SELECT property.")
+    def inv_prop(msg, *args):
+        return errors.LmiCommandInvalidProperty(module_name, name, msg % args)
+    expressions = dcl.pop('SELECT')
+    if not isinstance(expressions, (list, tuple)):
+        raise inv_prop('SELECT must be list or tuple.')
+    if len(expressions) < 1:
+        raise inv_prop('SELECT must contain at least one condition!')
+    for index, item in enumerate(expressions):
+        if not isinstance(item, tuple):
+            raise inv_prop('Items of SELECT must be tuples, not %s!' %
+                    getattr(type(item), '__name__', 'UNKNOWN'))
+        if len(item) != 2:
+            raise inv_prop('Expected pair in SELECT on index %d!' % index)
+        expr, cmd = item
+        if not isinstance(expr, basestring):
+            raise inv_prop('Expected expression string on index %d'
+                    ' in SELECT!' % index)
+        if isinstance(cmd, basestring) and not RE_MODULE_PATH.match(cmd):
+            raise inv_prop('Second item of conditional pair on index %d'
+                    ' in SELECT does not look as an importable path!' % cmd)
+        if (   not isinstance(cmd, basestring)
+           and not issubclass(cmd, (basestring, base.LmiBaseCommand))):
+            raise inv_prop('Expected subclass of LmiBaseCommand (or its import'
+                    ' path) as a second item of a pair on index %d in SELECT!'
+                    % index)
+
+    default = dcl.pop('DEFAULT', None)
+    if isinstance(default, basestring) and not RE_MODULE_PATH.match(default):
+        raise inv_prop('DEFAULT "%s" does not look as an importable path!'
+            % default)
+    if (   default is not None and not isinstance(default, basestring)
+       and not issubclass(default, (basestring, base.LmiBaseCommand))):
+        raise inv_prop('Expected subclass of LmiBaseCommand'
+                ' (or its import path) as a value of DEFAULT!')
+    def _new_get_conditionals(self):
+        return expressions, default
+
+    dcl['get_conditionals'] = _new_get_conditionals
+
 class EndPointCommandMetaClass(abc.ABCMeta):
     """
     End point command does not have any subcommands. It's a leaf of
@@ -711,7 +791,7 @@ class MultiplexerMetaClass(abc.ABCMeta):
                             'COMMANDS dictionary must be composed of'
                             ' LmiBaseCommand subclasses, failed class: "%s"'
                             % cmd.__name__)
-                if not cmd.is_end_point() and not cmd.has_own_usage():
+                if cmd.is_multiplexer() and not cmd.has_own_usage():
                     LOG().warn('Command "%s.%s" is missing usage string.'
                             ' It will be inherited from parent command.',
                             cmd.__module__, cmd.__name__)
@@ -726,3 +806,34 @@ class MultiplexerMetaClass(abc.ABCMeta):
             _handle_format_options(name, bases, dcl)
 
         return super(MultiplexerMetaClass, mcs).__new__(mcs, name, bases, dcl)
+
+class SelectMetaClass(abc.ABCMeta):
+    """
+    Meta class for select commands with guarded commands. Additional handled
+    properties:
+
+        ``SELECT`` : ``list``
+            List of commands guarded with expressions representing requirements
+            on server's side that need to be met.
+        ``DEFAULT`` : ``str`` or :py:class:`~.base.LmiBaseCommand`
+            Defines fallback command used in case no condition can is
+            satisfied.
+    """
+
+    def __new__(mcs, name, bases, dcl):
+        if dcl.get('__metaclass__', None) is not SelectMetaClass:
+            module_name = dcl.get('__module__', name)
+            if not '__doc__' in dcl:
+                LOG().warn('Command selector "%s.%s" is missing short'
+                    ' description string (__doc__).',
+                        module_name, name)
+                default = dcl.get('DEFAULT', None)
+                if (    default is not None
+                        and issubclass(default, base.LmiBaseCommand)
+                        and getattr(dcl['DEFAULT'], '__doc__', None)):
+                    LOG().warn('Using __doc__ string from default command for'
+                        ' selector "%s.%s".', module_name, name)
+                    dcl['__doc__'] = dcl['DEFAULT'].__doc__
+            _handle_select(name, dcl)
+        return super(SelectMetaClass, mcs).__new__(mcs, name, bases, dcl)
+

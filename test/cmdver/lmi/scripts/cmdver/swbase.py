@@ -24,26 +24,28 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of the FreeBSD Project.
-#
-# Authors: Michal Minar <miminar@redhat.com>
-#
 """
-This subpackage defines base classes and utility functions for declaring
-commands. These serve as wrappers for functions in libraries specific to
-particular provider.
+Software testing command.
 
-Tree of these commands build a command line interface for this library.
+Usage: %(cmd)s
 """
 
-from lmi.scripts.common.command.base import LmiBaseCommand
-from lmi.scripts.common.command.checkresult import LmiCheckResult
-from lmi.scripts.common.command.endpoint import LmiEndPointCommand
-from lmi.scripts.common.command.lister import LmiInstanceLister
-from lmi.scripts.common.command.lister import LmiLister
-from lmi.scripts.common.command.multiplexer import LmiCommandMultiplexer
-from lmi.scripts.common.command.session import LmiSessionCommand
-from lmi.scripts.common.command.select import LmiSelectCommand
-from lmi.scripts.common.command.show import LmiShowInstance
+import pywbem
+from lmi.scripts.common import command
 
-from lmi.scripts.common.command.helper import make_list_command
-from lmi.scripts.common.command.helper import register_subcommands
+def get_sw_profile_version(ns):
+    try:
+        return ns.connection.root.interop.wql('SELECT * FROM PG_RegisteredProfile'
+            ' WHERE RegisteredName="OpenLMI-Software"')[0].RegisteredVersion
+    except pywbem.CIMError, IndexError:
+        return None
+
+class SwCmdBase(command.LmiLister):
+    OWN_USAGE = __doc__
+    COLUMNS = []
+    ADDITIONAL_VERSION_INFO = ''
+
+    def execute(self, ns):
+        return [('Prov version',
+            get_sw_profile_version(ns) + self.ADDITIONAL_VERSION_INFO)]
+

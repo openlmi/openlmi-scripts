@@ -221,6 +221,8 @@ class MetaCommand(object):
         try:
             retval = cmd.run(argv)
         except Exception as exc:
+            if isinstance(exc, errors.LmiUnsatisfiedDependencies):
+                retval = exit.EXIT_CODE_UNSATISFIED_DEPENDENCIES
             LOG().exception(str(exc))
         if isinstance(retval, bool) or not isinstance(retval, (int, long)):
             return (    exit.EXIT_CODE_SUCCESS if bool(retval) or retval is None

@@ -64,6 +64,13 @@ class Help(LmiEndPointCommand):
                 index = 0
                 try:
                     while index < len(subcommand) and not node.is_end_point():
+                        while node.is_selector():
+                            cmd_factory, _ = node.select_cmds().next()
+                            node = cmd_factory(self.app, node.cmd_name,
+                                    node.parent)
+                        # selector may return either multiplexer or end-point
+                        if node.is_end_point():
+                            break
                         cmd_factory = cmdutil.get_subcommand_factory(node,
                                 subcommand[index])
                         node = cmd_factory(self.app, subcommand[index], node)

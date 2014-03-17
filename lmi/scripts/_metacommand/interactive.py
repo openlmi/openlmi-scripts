@@ -292,6 +292,10 @@ class Interactive(cmd.Cmd):
             LOG().error(str(err))
             self._last_exit_code = exit.EXIT_CODE_COMMAND_NOT_FOUND
 
+        except errors.LmiUnsatisfiedDependencies as err:
+            LOG().error(str(err))
+            self._last_exit_code = exit.EXIT_CODE_UNSATISFIED_DEPENDENCIES
+
         except errors.LmiError as err:
             LOG().error(str(err))
             self._last_exit_code = exit.EXIT_CODE_FAILURE
