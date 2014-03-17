@@ -33,6 +33,7 @@ Module with convenient function for defining user commands.
 
 from lmi.scripts.common.command import LmiLister
 from lmi.scripts.common.command import LmiCommandMultiplexer
+from lmi.scripts.common.command import util
 
 def make_list_command(func,
         name=None,
@@ -62,7 +63,9 @@ def make_list_command(func,
             name = func.__name__
         if not name.startswith('_'):
             name = '_' + name.capitalize()
-    props = { 'COLUMNS' : columns, 'CALLABLE' : func }
+    props = { 'COLUMNS' : columns
+            , 'CALLABLE' : func
+            , '__module__' : util.get_module_name() }
     if verify_func:
         props['verify_options'] = verify_func
     if transform_func:
@@ -89,6 +92,7 @@ def register_subcommands(command_name, usage, command_map,
     props = { 'COMMANDS'         : command_map
             , 'OWN_USAGE'        : True
             , '__doc__'          : usage
+            , '__module__'       : util.get_module_name()
             , 'FALLBACK_COMMAND' : fallback_command }
     return LmiCommandMultiplexer.__metaclass__(command_name,
             (LmiCommandMultiplexer, ), props)

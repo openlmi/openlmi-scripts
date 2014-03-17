@@ -31,6 +31,8 @@
 Utility functions used in command sub-package.
 """
 
+import inspect
+import os
 import re
 
 #: Regular expression matching bracket argument such as ``<arg_name>``.
@@ -79,3 +81,29 @@ def is_abstract_method(clss, method, missing_is_abstract=False):
                 return False
     return missing_is_abstract
 
+def get_module_name(frame_level=2):
+    """
+    Get a module name of caller from particular outer frame.
+
+    :param integer frame_level: Number of nested frames to skip when searching
+        for called function scope by inspecting stack upwards. When the result
+        of this function is applied directly on the definition of function,
+        it's value should be 1. When used from inside of some other factory, it
+        must be increased by 1.
+
+        Level 0 returns name of this module. Level 1 returns module name of
+        caller. Level 2 returns module name of caller's caller.
+    :returns: Module name.
+    :rtype: string
+    """
+    frame = inspect.currentframe()
+    while frame_level > 0 and frame.f_back:
+        frame = frame.f_back
+        frame_level -= 1
+    module = getattr(frame, 'f_globals', {}).get('__name__', None)
+    if module is None:
+        if hasattr(frame, 'f_code'):
+            module = os.path.basename(frame.f_code.co_filename.splitext())[0]
+        else:
+            module = '_unknown_'
+    return module
