@@ -59,7 +59,7 @@ FORMAT_OPTIONS = ('no_headings', 'human_friendly')
 
 LOG = get_logger(__name__)
 
-def _handle_usage(name, dcl):
+def _handle_usage(name, bases, dcl):
     """
     Take care of ``OWN_USAGE`` property. Supported values:
 
@@ -95,6 +95,12 @@ def _handle_usage(name, dcl):
                     """ Get the usage string for ``doctopt`` parser. """
                     return hlp
                 dcl['get_usage'] = _new_get_usage
+        has_own_usage = True
+    elif (   dcl.get('__node__', None) is None
+         and any(getattr(b, 'has_own_usage', lambda: False)() for b in bases)):
+        # inherit doc string of base class
+        dcl['__doc__'] = (  b.__doc__ for b in bases
+                         if getattr(b, 'has_own_usage', lambda: False)()).next()
         has_own_usage = True
     if has_own_usage:
         if not 'has_own_usage' in dcl:
@@ -503,7 +509,7 @@ class EndPointCommandMetaClass(abc.ABCMeta):
     """
 
     def __new__(mcs, name, bases, dcl):
-        _handle_usage(name, dcl)
+        _handle_usage(name, bases, dcl)
         _handle_callable(name, bases, dcl)
         _handle_opt_preprocess(name, dcl)
         _handle_format_options(name, bases, dcl)
@@ -538,7 +544,7 @@ class SessionCommandMetaClass(EndPointCommandMetaClass):
             associated function.
     """
     def __new__(mcs, name, bases, dcl):
-        _handle_usage(name, dcl)
+        _handle_usage(name, bases, dcl)
         _handle_namespace(dcl)
         _handle_callable(name, bases, dcl)
 
@@ -715,7 +721,7 @@ class MultiplexerMetaClass(abc.ABCMeta):
                 return cmds
             dcl['child_commands'] = classmethod(_new_child_commands)
 
-            _handle_usage(name, dcl)
+            _handle_usage(name, bases, dcl)
             _handle_fallback_command(name, bases, dcl)
             _handle_format_options(name, bases, dcl)
 
