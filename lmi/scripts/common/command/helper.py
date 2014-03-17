@@ -33,6 +33,7 @@ Module with convenient function for defining user commands.
 
 from lmi.scripts.common.command import LmiLister
 from lmi.scripts.common.command import LmiCommandMultiplexer
+from lmi.scripts.common.command import LmiSelectCommand
 from lmi.scripts.common.command import util
 
 def make_list_command(func,
@@ -96,4 +97,41 @@ def register_subcommands(command_name, usage, command_map,
             , 'FALLBACK_COMMAND' : fallback_command }
     return LmiCommandMultiplexer.__metaclass__(command_name,
             (LmiCommandMultiplexer, ), props)
+
+def select_command(command_name, *args, **kwargs):
+    """
+    Create command selector that loads command whose requirements are met.
+
+    Example of invocation: ::
+
+        Hardware = select_command('Hardware',
+            ("Openlmi-Hardware >= 0.4.2", "lmi.scripts.hardware.current.Cmd"),
+            ("Openlmi-Hardware < 0.4.2" , "lmi.scripts.hardware.pre042.Cmd"),
+            default=HwMissing
+        )
+
+    Above example checks remote broker for OpenLMI-Hardware provider. If it is
+    installed and its version is equal or higher than 0.4.2, command from
+    ``current`` module will be used. For older registered versions command
+    contained in ``pre042`` module will be loaded. If hardware provider is not
+    available, HwMissing command will be loaded instead.
+
+    .. seealso::
+        Check out the grammer describing language used in these conditions at
+        :py:mod:`lmi.scripts.common.versioncheck.parser`.
+
+    :param args: List of pairs ``(condition, command)`` that are inspected in
+        given order until single condition is satisfied. Associated command is
+        then loaded. Command is either a reference to command class or path to
+        it given as string. In latter case last dot divides module's import
+        path and command name.
+    :param default: This command will be loaded when no condition from *args*
+        is satisfied.
+    """
+    props = { 'SELECT'         : args
+            , 'DEFAULT'        : kwargs.get('default', None)
+            , '__module__'     : util.get_module_name()
+            }
+    return LmiSelectCommand.__metaclass__(command_name,
+            (LmiSelectCommand, ), props)
 

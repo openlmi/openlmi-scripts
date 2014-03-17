@@ -47,3 +47,4 @@ from lmi.scripts.common.command.show import LmiShowInstance
 
 from lmi.scripts.common.command.helper import make_list_command
 from lmi.scripts.common.command.helper import register_subcommands
+from lmi.scripts.common.command.helper import select_command
