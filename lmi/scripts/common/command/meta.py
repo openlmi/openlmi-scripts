@@ -442,7 +442,7 @@ def _handle_fallback_command(name, bases, dcl):
                     usage_string = cmd.__doc__
             if not usage_string:
                 errors.LmiCommandError(dcl['__module__'], name,
-                        "missing usage string")
+                        "Missing usage string.")
             fallback.__doc__ = usage_string
             fallback.has_own_usage = lambda cls: True
         dcl['fallback_command'] = staticmethod(lambda: fallback)
@@ -461,7 +461,7 @@ def _handle_format_options(name, bases, dcl):
             if opt_name not in FORMAT_OPTIONS:
                 raise errors.LmiCommandInvalidProperty(
                         dcl['__module__'], name,
-                        'formatting option "%s" is not supported' %
+                        'Formatting option "%s" is not supported.' %
                         opt_name)
             if (   opt_name in ('no_headings', 'human_friendly')
                and not isinstance(value, bool)):
@@ -693,15 +693,15 @@ class MultiplexerMetaClass(abc.ABCMeta):
             # check COMMANDS property and make it a classmethod
             if not 'COMMANDS' in dcl:
                 raise errors.LmiCommandError(module_name, name,
-                        'missing COMMANDS property')
+                        'Missing COMMANDS property.')
             cmds = dcl.pop('COMMANDS')
             if not isinstance(cmds, dict):
                 raise errors.LmiCommandInvalidProperty(module_name, name,
                         'COMMANDS must be a dictionary')
             if not all(isinstance(c, basestring) for c in cmds.keys()):
                 raise errors.LmiCommandInvalidProperty(module_name, name,
-                        'keys of COMMANDS dictionary must contain command'
-                        ' names as strings')
+                        'Keys of COMMANDS dictionary must contain command'
+                        ' names as strings.')
             for cmd_name, cmd in cmds.items():
                 if not util.RE_COMMAND_NAME.match(cmd_name):
                     raise errors.LmiCommandInvalidName(
