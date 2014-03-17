@@ -134,7 +134,7 @@ class LmiCheckResult(LmiSessionCommand):
         pass
 
     def process_session_results(self, session, results):
-        if len(self.app.session) > 1:
+        if len(self.session) > 1:
             LOG().debug('Successful runs: %d\n',
                     len([r for r in results.values() if r[0]]))
         LmiSessionCommand.process_session_results(self, session, results)

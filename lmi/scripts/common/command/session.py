@@ -127,7 +127,7 @@ class LmiSessionCommand(LmiEndPointCommand):
             successful invocation or an exception.
         """
         if success:
-            if len(self.app.session) > 1:
+            if len(self.session) > 1:
                 self.formatter.print_host(hostname)
             self.produce_output(result)
 
@@ -187,7 +187,7 @@ class LmiSessionCommand(LmiEndPointCommand):
         desired and modifies connection accordingly.
 
         :param connection: Connection to single host.
-        :type connection: :py:class:`lmi.shell.LMIConnection` 
+        :type connection: :py:class:`lmi.shell.LMIConnection`
         :param list args: Arguments handed over to associated function.
         :param dictionary kwargs: Keyword arguments handed over to associated
             function.
@@ -202,5 +202,5 @@ class LmiSessionCommand(LmiEndPointCommand):
         return self.execute(connection, *args, **kwargs)
 
     def run_with_args(self, args, kwargs):
-        return self.process_session(self.app.session, args, kwargs)
+        return self.process_session(self.session, args, kwargs)
 

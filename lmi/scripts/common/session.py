@@ -35,6 +35,7 @@ from collections import defaultdict
 
 from lmi.scripts.common import errors
 from lmi.scripts.common import get_logger
+from lmi.scripts.common.util import FilteredDict
 from lmi.shell.LMIConnection import connect
 
 LOG = get_logger(__name__)
@@ -76,26 +77,29 @@ class Session(object):
             ``None`` if connection can not be made.
         """
         if self._connections[hostname] is None:
-            self._connections[hostname] = self._connect(
-                    hostname, interactive=True)
+            try:
+                self._connections[hostname] = self._connect(
+                        hostname, interactive=True)
+            except Exception as exc:
+                LOG().error('Failed to make a connection to "%s": %s',
+                        hostname, exc)
         return self._connections[hostname]
 
     def __len__(self):
         """ Get the number of hostnames in session. """
         return len(self._connections)
 
+    def __contains__(self, uri):
+        return uri in self._connections
+
     def __iter__(self):
         """ Yields connection objects. """
         successful_connections = 0
         for hostname in self._connections:
-            try:
-                connection = self[hostname]
-                if connection is not None:
-                    yield connection
-                    successful_connections += 1
-            except Exception as exc:
-                LOG().error('Failed to make a connection to "%s": %s',
-                        hostname, exc)
+            connection = self[hostname]
+            if connection is not None:
+                yield connection
+                successful_connections += 1
         if successful_connections == 0:
             raise errors.LmiNoConnections('No successful connection made.')
 
@@ -159,4 +163,28 @@ class Session(object):
         :rtype: list
         """
         return [h for h, c in self._connections.items() if c is None]
+
+class SessionProxy(Session):
+    """
+    Behaves like a session. But it just encapsulates other session object and
+    provides access to a subset of its items.
+
+    :param session: Session object or even another session proxy.
+    :param list uris: Subset of uris in encapsulated session object.
+    """
+
+    def __init__(self, session, uris):
+        uris = set(uris)
+        if not all(isinstance(uri, basestring) for uri in uris):
+            raise ValueError("uris must be iterable of uris")
+        for uri in uris:
+            if not uri in session:
+                raise ValueError('uri "%s" needs to belong to given session'
+                        % uri)
+        Session.__init__(self, session._app, uris, session._credentials,
+                session._same_credentials)
+        self._origin = session
+        self._connections = FilteredDict(uris, session._connections)
+        # let the credentials propagage to original session
+        self._credentials = session._credentials
 

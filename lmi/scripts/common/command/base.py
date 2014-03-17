@@ -173,6 +173,20 @@ class LmiBaseCommand(object):
             options = self.parent.format_options
         return options
 
+    @property
+    def session(self):
+        """
+        :returns: Session object. Session for command and all of its children
+            may be overriden with a call to :py:meth:`set_session_proxy`.
+        :rtype: :py:class:`lmi.scripts.common.session.Session`
+        """
+        proxy = getattr(self, '_session_proxy', None)
+        if proxy:
+            return proxy
+        if self.parent is not None:
+            return self.parent.session
+        return self.app.session
+
     def get_cmd_name_parts(self, all_parts=False, demand_own_usage=True,
             for_docopt=False):
         """
@@ -281,3 +295,16 @@ class LmiBaseCommand(object):
         :rtype: integer
         """
         raise NotImplementedError("run method must be overriden in subclass")
+
+    def set_session_proxy(self, session):
+        """
+        Allows to override session object. This is useful for especially for
+        conditional commands (subclasses of
+        :py:class:`~lmi.scripts.common.command.LmiSelectCommand`) that devide
+        connections to groups satisfying particular expression. These groups
+        are turned into session proxies containing just a subset of connections
+        in global session object.
+
+        :param session: Session object.
+        """
+        self._session_proxy = session
