@@ -35,6 +35,7 @@ import cmd
 import docopt
 import itertools
 import os
+import readline
 import shlex
 
 from lmi.scripts.common import errors
@@ -90,6 +91,7 @@ class Interactive(cmd.Cmd):
         self._last_exit_code = exit.EXIT_CODE_SUCCESS
         self.doc_header = 'Static commands'
         self.app.active_command = top_level_cmd
+        self.load_history()
 
     # *************************************************************************
     # Properties
@@ -253,6 +255,10 @@ class Interactive(cmd.Cmd):
                 if not text or n.startswith(text))
         return completions
 
+    def clear_history(self):
+        """ Clear readline history. """
+        readline.clear_history()
+
     def default(self, line):
         """
         This is run, when line contains unknown command to ``cmd.Cmd``. It
@@ -392,6 +398,26 @@ class Interactive(cmd.Cmd):
         finally:
             self.app.active_command = cur_node
 
+    def load_history(self):
+        """
+        Load a readline history file.
+        """
+        if      (   self.app.config.history_max_length == 0
+                or not os.path.exists(self.app.config.history_file)):
+            return
+        LOG().debug('Reading history file "%s"', self.app.config.history_file)
+        try:
+            readline.read_history_file(self.app.config.history_file)
+            if      (   self.app.config.history_max_length > 0
+                    and   readline.get_current_history_length()
+                        > self.app.config.history_max_length):
+                readline.set_history_length(self.app.config.history_max_length)
+                readline.write_history_file(self.app.config.history_file)
+                readline.read_history_file(self.app.config.history_file)
+        except (IOError, OSError) as err:
+            LOG().warn('Failed to read history file "%s".',
+                    self.app.config.history_file, exc_info=err)
+
     def postcmd(self, stop, _line):
         """
         This is called after the ``do_*`` command to postprocess its result and
@@ -430,3 +456,20 @@ class Interactive(cmd.Cmd):
                 raise
         cmd_inst = cmd_factory(self.app, args[0], parent)
         return cmd_inst.run(args[1:])
+
+    def save_history(self):
+        """
+        Saves current history of commands into the history file. If the length
+        of history exceeds a maximum history file length, the history will be
+        truncated.
+        """
+        if self.app.config.history_max_length != 0:
+            LOG().debug('Writing history file "%s"',
+                    self.app.config.history_file)
+            if self.app.config.history_max_length > 0:
+                readline.set_history_length(self.app.config.history_max_length)
+            try:
+                readline.write_history_file(self.app.config.history_file)
+            except (IOError, OSError), err:
+                LOG().warn('Failed to write history file "%s".',
+                        self.app.config.history_file, exc_info=err)

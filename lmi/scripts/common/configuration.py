@@ -58,6 +58,7 @@ class Configuration(BaseConfiguration):
     """
 
     USER_CONFIG_FILE_PATH = "~/.lmirc"
+    HISTORY_FILE = "~/.lmi_history"
 
     OUTPUT_SILENT  = -1
     OUTPUT_WARNING = 0
@@ -79,6 +80,7 @@ class Configuration(BaseConfiguration):
         self._lister_format = None
         self._no_headings = None
         self._log_file = None
+        self._history_max_length = None
 
     @classmethod
     def provider_prefix(cls):
@@ -95,6 +97,7 @@ class Configuration(BaseConfiguration):
         defaults["CommandNamespace"] = 'lmi.scripts.cmd'
         defaults["Trace"] = "False"
         defaults["Verbosity"] = "0"
+        defaults["HistoryMaxLength"] = "4000"
         # [Log] options
         defaults['ConsoleFormat'] = DEFAULT_FORMAT_STRING
         defaults['ConsoleInfoFormat'] = '%(message)s'
@@ -140,6 +143,16 @@ class Configuration(BaseConfiguration):
     # *************************************************************************
     # [Main] options
     # *************************************************************************
+    @property
+    def history_file(self):
+        """ Path to a file with history of interactive mode. """
+        return os.path.expanduser(self.HISTORY_FILE)
+
+    @property
+    def history_max_length(self):
+        """ Maximum number of lines kept in history file. """
+        return self.get_safe('Main', 'HistoryMaxLength', int)
+
     @property
     def silent(self):
         """ Whether to suppress all output messages except for errors. """

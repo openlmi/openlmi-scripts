@@ -131,12 +131,16 @@ class TopLevelCommand(base.LmiBaseCommand):
         iapp = Interactive(self)
         while True:
             try:
-                return iapp.cmdloop()
+                ret = iapp.cmdloop()
+                break
             except errors.LmiTerminate as err:
-                return err.args[0]
+                ret = err.args[0]
+                break
             except KeyboardInterrupt as err:
                 LOG().debug('%s: %s', err.__class__.__name__, str(err))
                 self.app.stdout.write('\n')
+        iapp.save_history()
+        return ret
 
     def run(self, args):
         """
