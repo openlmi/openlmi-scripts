@@ -151,11 +151,11 @@ def reload_service(ns, service, force=False, just_try=False):
     """
     if force:
         if just_try:
-            method_name = 'ReloadOrTryRestart'
+            method_name = 'ReloadOrTryRestartService'
         else:
-            method_name = 'ReloadOrRestart'
+            method_name = 'ReloadOrRestartService'
     else:
-        method_name = 'Reload'
+        method_name = 'ReloadService'
     return invoke_on_service(ns, method_name, service, 'Reloaded')
 
 def enable_service(ns, service, enable=True):
