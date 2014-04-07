@@ -30,6 +30,7 @@
 """
 LMI networking provider client library.
 """
+import time
 
 from lmi.scripts.common.errors import LmiFailed, LmiInvalidOptions
 from lmi.scripts.common import get_logger
@@ -364,6 +365,33 @@ def activate(ns, setting, device=None):
     :type device: LMI_IPNetworkConnection or None
     '''
     service = ns.LMI_IPConfigurationService.first_instance()
+    if (setting.classname in ('LMI_BridgingMasterSettingData', 'LMI_BondingMasterSettingData')
+            and device is None):
+
+        if setting.classname == 'LMI_BridgingMasterSettingData':
+            slave_class = 'LMI_BridgingSlaveSettingData'
+        elif setting.classname == 'LMI_BondingMasterSettingData':
+            slave_class = 'LMI_BondingSlaveSettingData'
+
+        # Autodetect and activate slaves
+        for slave_setting in setting.associators(AssocClass='LMI_OrderedIPAssignmentComponent', ResultClass=slave_class):
+            device = slave_setting.first_associator(AssocClass="LMI_IPElementSettingData")
+            LOG().debug('Activating setting %s on device %s', setting.Caption, device.ElementName)
+            result = service.SyncApplySettingToIPNetworkConnection(SettingData=slave_setting,
+                    IPNetworkConnection=device,
+                    Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32768)
+            if result.errorstr:
+                raise LmiFailed("Unable to activate setting: %s" % result.errorstr)
+        # TODO: rework using indications
+        isCurrent = False
+        while not isCurrent:
+            for esd in setting.references(ResultClass="LMI_IPElementSettingData"):
+                if esd.IsCurrent == ns.LMI_IPElementSettingData.IsCurrentValues.IsCurrent:
+                    isCurrent = True
+                    break
+            time.sleep(1)
+        return 0
+
     devices = []
     if device is not None:
         devices.append(device)
@@ -391,19 +419,15 @@ def deactivate(ns, setting, device=None):
     :type device: LMI_IPNetworkConnection or None
     '''
     service = ns.LMI_IPConfigurationService.first_instance()
-    devices = []
     if device is not None:
-        devices.append(device)
-    else:
-        devices = get_applicable_devices(ns, setting)
-
-    if len(devices) == 0:
-        raise LmiFailed("No device is associated with given connection.")
-
-    for device in devices:
         LOG().debug('Deactivating setting %s on device %s', setting.Caption, device.ElementName)
         result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
                 IPNetworkConnection=device,
+                Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
+        if result.errorstr:
+            raise LmiFailed("Unable to deactivate setting: %s" % result.errorstr)
+    else:
+        result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
                 Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
         if result.errorstr:
             raise LmiFailed("Unable to deactivate setting: %s" % result.errorstr)
