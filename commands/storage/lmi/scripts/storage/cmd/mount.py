@@ -201,6 +201,15 @@ class MountCreate(command.LmiCheckResult):
 class MountDelete(command.LmiCheckResult):
     EXPECT = None
 
+    def transform_options(self, options):
+        """
+        There is only one <target> option, but docopt passes it as array
+        (because in other commands it is used with '...'). So let's
+        transform it to scalar.
+        """
+        options['<target>'] = options.pop('<target>')[0]
+
+
     def execute(self, ns, target):
         """
         Implementation of 'mount delete' command.
