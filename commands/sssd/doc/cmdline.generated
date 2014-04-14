@@ -1,0 +1,74 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
+    !!!!!!!!!
+
+sssd
+----
+
+SSSD system service management.
+
+
+**Usage:**
+
+    **lmi** **sssd** status
+
+    **lmi** **sssd** **restart** [\ **--try**\ ]
+
+    **lmi** **sssd** **set-debug-level** \ *<level>*\  [\ **--until-restart**\ ] [options]
+
+    **lmi** **sssd** service
+
+    **lmi** **sssd** domain
+
+
+
+
+
+**Commands:**
+
+
+    **status**
+        Prints SSSD service's status.
+
+    **restart**
+        Restarts the SSSD service.
+
+    **set-debug-level**
+        Set debug level of selected (all by default) components.
+
+    **service**
+        Manage supported services.
+
+    **domain**
+        Manage SSSD domains.
+
+**Restart options:**
+
+
+    **--try**
+        Whether to abandon the operation if the service
+        is not running.
+
+**Set-debug-level options:**
+
+
+    **--until-restart**
+        
+        Set the debug level but switch it to original
+        value when SSSD is restarted.
+
+    **--all**
+        Select all components (default)
+
+    **--monitor**
+        Select the SSSD monitor.
+
+    **--services=svc,...**
+        
+        Comma separated list of SSSD services.
+
+    **--domains=dom,...**
+        
+        Comma separated list of SSSD domains.
+
