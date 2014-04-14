@@ -375,15 +375,15 @@ One requirement is evaluated in these steps:
         3. Return ``True``.
 
 Now let's take a look, where these requirements can be specified.
-There is special select command used to specify which command to load
-for particular version on remote broker. It's defined like this: ::
+There is a special select command used to specify which command to load
+for particular version on remote broker. It can be written like this: ::
 
     from lmi.scripts.common.command import LmiSelectCommand
 
     class SoftwareCMD(LmiSelectCommand):
 
         SELECT = [
-              ( 'OpenLMI-Software >= 0.4.2' & 'OpenLMI-LogicalFile'
+              ( 'OpenLMI-Software >= 0.4.2 & OpenLMI-LogicalFile'
               , 'lmi.scripts.software.current.SwLFCmd')
             , ( 'OpenLMI-Software >= 0.4.2'
               , 'lmi.scripts.software.current.SwCmd')
@@ -403,7 +403,7 @@ better: ::
     from lmi.scripts.common.command import select_command
 
     SoftwareCMD = select_command('SoftwareCMD',
-          ( 'OpenLMI-Software >= 0.4.2' & 'OpenLMI-LogicalFile'
+          ( 'OpenLMI-Software >= 0.4.2 & OpenLMI-LogicalFile'
           , 'lmi.scripts.software.current.SwLFCmd'),
           ( 'OpenLMI-Software >= 0.4.2', 'lmi.scripts.software.current.SwCmd'),
           ('OpenLMI-Software', 'lmi.scripts.software.pre042.SwCmd')
