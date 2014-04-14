@@ -229,9 +229,11 @@ class Install(command.LmiCheckResult):
 
     def check_result(self, options, result):
         """
-        :param result: (``list``) List of packages installed. For ``--uri``
-            option, this should contain 1 argument equal to --uri. Otherwise we
-            expect the same list as ``<package_array>``.
+        :param tuple result: A pair of (done, failed) where the former is a
+            subset of packages given on command line and the latter a list of
+            errors for the rest. For ``--uri`` option, the first item should
+            contain 1 argument equal to uri. Otherwise we expect the same list
+            as ``<package_array>``.
         """
         done_on, failed = result
         if options['--uri']:
@@ -240,7 +242,7 @@ class Install(command.LmiCheckResult):
             if len(options['<package_array>']) == 1:
                 return (False, failed[0])
             return (False, ('Failed to install packages: %s' %
-                    ", ".join(set(options['<package_array>']) - set(result))))
+                    ", ".join(set(options['<package_array>']) - set(done_on))))
         return True
 
     def execute(self, ns,
@@ -263,23 +265,23 @@ class Install(command.LmiCheckResult):
                     repoid=_repoid,
                     just_on_installed=False)
 
-        return []
-
 class Update(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
 
     def check_result(self, options, result):
         """
-        :param result: (``list``) List of packages installed. For ``--uri``
-            option, this should contain 1 argument equal to --uri. Otherwise we
-            expect the same list as ``<package_array>``.
+        :param tuple result: A pair of (done, failed) where the former is a
+            subset of packages given on command line and the latter a list of
+            errors for the rest. For ``--uri`` option, the first item should
+            contain 1 argument equal to uri. Otherwise we expect the same list
+            as ``<package_array>``.
         """
         done_on, failed = result
         if options['<package_array>'] != done_on:
             if len(options['<package_array>']) == 1:
                 return (False, failed[0])
             return (False, ('Failed to update packages: %s' %
-                    ", ".join(set(options['<package_array>']) - set(result))))
+                    ", ".join(set(options['<package_array>']) - set(done_on))))
         return True
 
     def execute(self, ns,
@@ -297,12 +299,19 @@ class Remove(command.LmiCheckResult):
     ARG_ARRAY_SUFFIX = '_array'
 
     def check_result(self, options, result):
+        """
+        :param tuple result: A pair of (done, failed) where the former is a
+            subset of packages given on command line and the latter a list of
+            errors for the rest. For ``--uri`` option, the first item should
+            contain 1 argument equal to uri. Otherwise we expect the same list
+            as ``<package_array>``.
+        """
         done_on, failed = result
         if options['<package_array>'] != done_on:
             if len(options['<package_array>']) == 1:
                 return (False, failed[0])
             return (False, ('Failed to remove packages: %s' %
-                    ", ".join(set(options['<package_array>']) - set(result))))
+                    ", ".join(set(options['<package_array>']) - set(done_on))))
         return True
 
     def execute(self, ns, package_array):
