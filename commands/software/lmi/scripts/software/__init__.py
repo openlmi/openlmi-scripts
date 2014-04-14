@@ -91,6 +91,11 @@ from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
 
+MAX_CONNECTION_PROBLEM_COUNT = 3
+INITIAL_SLEEP_TIME = 0.5
+SLEEP_TIME_MULTIPLIER = 1.5
+CONNECTION_PROBLEM_SLEEP_TIME = 4
+
 # matches <name>.<arch>
 RE_NA  = re.compile(r'^(?P<name>.+)\.(?P<arch>[^.]+)$')
 # matches both nevra and nvra
@@ -124,13 +129,28 @@ def _wait_for_job_finished(job):
     if not isinstance(job, LMIInstance):
         raise TypeError("job must be an LMIInstance")
     LOG().debug('Waiting for a job "%s" to finish.', job.InstanceID)
-    sleep_time = 0.5
+    sleep_time = INITIAL_SLEEP_TIME
+    connection_problem_count = 0
     while not LMIJob.lmi_is_job_finished(job):
         # Sleep, a bit longer in every iteration
         time.sleep(sleep_time)
         if sleep_time < LMIMethod._POLLING_ADAPT_MAX_WAITING_TIME:
-            sleep_time *= 1.5
-        (refreshed, _, errorstr) = job.refresh()
+            sleep_time = min(sleep_time * SLEEP_TIME_MULTIPLIER,
+                    LMIMethod._POLLING_ADAPT_MAX_WAITING_TIME)
+        try:
+            (refreshed, _, errorstr) = job.refresh()
+        except pywbem.CIMError as err:
+            if      (   err.args[0] == 0
+                    and err.args[1].lower().startswith('socket error')):
+                if connection_problem_count >= MAX_CONNECTION_PROBLEM_COUNT:
+                    raise
+                LOG().warn("Connection problem: %s", err.args[1])
+                if connection_problem_count == 0:
+                    sleep_time = CONNECTION_PROBLEM_SLEEP_TIME
+                connection_problem_count += 1
+            else:
+                raise
+
         if not refreshed:
             raise LMIExceptions.LMISynchroMethodCallError(errorstr)
 
