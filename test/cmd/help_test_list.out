@@ -1,5 +1,0 @@
-List various types of software data.
-
-Usage:
-    lmi test list pkgs [(--installed | --available)]
-    lmi test list repos [(--enabled | --disabled)]

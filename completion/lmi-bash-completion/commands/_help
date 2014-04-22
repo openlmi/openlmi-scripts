@@ -1,9 +1,0 @@
-#!/bin/bash
-if (( $# > 1 )); then
-    exit
-fi
-helpers_path=lmi-bash-completion
-if ! [[ -e $helpers_path ]]; then
-    helpers_path="/usr/libexec/$helpers_path"
-fi
-compgen "-W $($helpers_path/print_possible_commands.sh)" -- "$1"

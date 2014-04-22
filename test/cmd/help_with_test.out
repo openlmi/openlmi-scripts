@@ -1,6 +1,0 @@
-Commands:
-  help - Print the list of supported commands with short description.
-  test - Test command for lmi-metacommand.
-
-For more informations about particular command type:
-    help <command>

@@ -1,4 +1,0 @@
-Print the list of supported commands with short description.
-If a subcommand is given, its detailed help will be printed.
-
-Usage: lmi help [<subcommand>...]

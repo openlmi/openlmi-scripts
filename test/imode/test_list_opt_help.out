@@ -1,5 +1,0 @@
-List various types of software data.
-
-Usage:
-    test list pkgs [(--installed | --available)]
-    test list repos [(--enabled | --disabled)]
