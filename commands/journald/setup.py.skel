@@ -38,7 +38,7 @@ setup(
 
     entry_points={
         'lmi.scripts.cmd': [
-            'journald = lmi.scripts.journald.cmd:Journald',
+            'journald = lmi.scripts.journald.cmd:JournaldCMD',
             ],
         },
     )

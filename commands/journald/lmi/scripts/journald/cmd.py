@@ -48,6 +48,7 @@ import functools
 
 from lmi.scripts import journald as journ
 from lmi.scripts.common import command
+from lmi.scripts.common.command import LmiSelectCommand
 
 class Lister(command.LmiCheckResult):
     CALLABLE = journ.list_messages
@@ -73,3 +74,13 @@ Journald = command.register_subcommands(
         , 'watch'  : Watcher
         },
     )
+
+class JournaldCMD(LmiSelectCommand):
+        """
+        Test for provider version requirements
+        """
+        SELECT = [
+                ( 'OpenLMI-Journald >= 0.4.2',
+                  # command already defined with register_subcommands()
+                  Journald )
+                 ]
