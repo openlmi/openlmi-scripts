@@ -35,7 +35,7 @@ doc: setup
 upload: setup .$(VERSION).upload
 
 .$(VERSION).upload:
-	python setup.py upload
+	python setup.py sdist upload
 	touch $@
 
 upload_docs: setup .$(VERSION).upload_docs
@@ -46,7 +46,7 @@ upload_docs: setup .$(VERSION).upload_docs
 	touch $@
 
 clean:
-	-rm README.txt setup.py .$(VERSION).*
+	-rm README.txt setup.py doc/conf.py .$(VERSION).*
 	-rm -rf dist/
 	make -C doc clean
 
