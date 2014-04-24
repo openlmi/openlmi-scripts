@@ -70,7 +70,7 @@ this:
     setup(
         name="<PROJECT>",
         version="@@VERSION@@",
-        install_requires=['openlmi-scripts'],
+        install_requires=['openlmi-tools'],
         namespace_packages=['lmi', 'lmi.scripts'],
         packages=['lmi', 'lmi.scripts', 'lmi.scripts.<provider_prefix>'],
         entry_points={
