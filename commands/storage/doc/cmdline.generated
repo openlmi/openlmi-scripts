@@ -349,13 +349,13 @@ Mount management.
 
 **Usage:**
 
-    **lmi** **storage** **mount** **list** [ \ **--all**\  ] [ \ *<device>*\  ... ]
+    **lmi** **storage** **mount** **list** [ \ **--all**\  ] [ \ *<target>*\  ... ]
 
     **lmi** **storage** **mount** **create** \ *<device>*\  \ *<mountpoint>*\  [ (\ **-t**\  \ *<fs_type>*\ ) (\ **-o**\  \ *<options>*\ ) ]
 
     **lmi** **storage** **mount** **delete** \ *<target>*\ 
 
-    **lmi** **storage** **mount** **show** [ \ **--all**\  ] [ \ *<device>*\  ... ]
+    **lmi** **storage** **mount** **show** [ \ **--all**\  ] [ \ *<target>*\  ... ]
 
 
 
@@ -364,7 +364,8 @@ Mount management.
 
     **list**
         List mounted filesystems with a device attached to them.
-        Optionally, show all mounted filesystems.
+        <target> can be specified either as device names
+        or mountpoints.
 
 
     **create**
@@ -408,7 +409,9 @@ Mount management.
 
     **show**
         Show detailed information about mounted filesystems with a device
-        attached to them. Optionally, show all mounted filesystems.
+        attached to them. <target> can be specified either as device names
+        or mountpoints.
+        <spec>. Optionally, show all mounted filesystems.
 
 storage partition
 -----------------
