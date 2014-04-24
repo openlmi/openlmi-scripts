@@ -204,31 +204,8 @@ def write_makefile(config, output_path):
         cmdline_file.write('include ../../Makefile.inc')
 
 def modify_doc_makefile(config, path):
-    s_add_cmd, s_add_phony, s_add_cmdregen, s_wait_help_end, s_done = range(5)
-    state = s_add_cmd
-    new_path = path + '_new'
-    with open(path, 'r') as orig:
-        with open(new_path, 'w') as new:
-            for line in orig.readlines():
-                if state == s_add_cmd and line.startswith('BUILDDIR'):
-                    new.write(line)
-                    new.write(u'COMMAND_NAME := {}\n'.format(
-                        config['command']).encode('utf-8'))
-                    state = s_add_phony
-                elif state == s_add_phony and line.startswith('.PHONY:'):
-                    new.write(line[:-1] + ' cmdregen cmdline.generated\n')
-                    state = s_add_cmdregen
-                elif state == s_add_cmdregen and line.startswith('help:'):
-                    new.write(line)
-                    state = s_wait_help_end
-                elif state == s_wait_help_end and line == '\n':
-                    text = CMDREGEN_RULE.format(command=config['command'])+"\n"
-                    new.write(text.encode('utf-8'))
-                    state = s_done
-                else:
-                    new.write(line)
-    os.remove(path)
-    shutil.move(new_path, path)
+    with open(path, 'w') as new:
+        new.write('include ../../../Makefile.doc.inc\n')
 
 def modify_doc_index(config, path):
     s_wait_toc, s_wait_empty_line, s_done = range(3)
