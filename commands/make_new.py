@@ -24,6 +24,7 @@ from sphinx import quickstart
 
 RE_COMMAND_NAME = re.compile(r'^([a-z]+(_[a-z]+)*)$')
 RE_RST_STATEMENT = re.compile(r'^\s*(:[^:]+:.*)')
+RE_HTML_THEME = re.compile(r"^html_theme\s*=\s*.*")
 
 SETUP_TEMPLATE = \
 u"""#!/usr/bin/env python
@@ -275,7 +276,14 @@ def make_doc_directory(config, path):
             'makefile'       : True,
             'batchfile'      : True}
     quickstart.generate(sphinx_conf)
-    os.rename(os.path.join(path, 'conf.py'), os.path.join(path, 'conf.py.skel'))
+    src_path = os.path.join(path, 'conf.py')
+    with open(src_path, 'r') as src:
+        with open(os.path.join(path, 'conf.py.skel'), 'w') as dst:
+            for line in src.readlines():
+                if RE_HTML_THEME.match(line):
+                    line = 'html_theme = "openlmitheme"\n'
+                dst.write(line)
+    os.unlink(src_path)
     write_cmdline(config, os.path.join(path, 'cmdline.rst'))
     modify_doc_makefile(config, os.path.join(path, 'Makefile'))
     modify_doc_index(config, os.path.join(path, 'index.rst'))
