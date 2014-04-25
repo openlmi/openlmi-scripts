@@ -101,7 +101,10 @@ def create_lv(ns, vg, name, size):
         values = service.CreateOrModifyLV.CreateOrModifyLVValues
         raise LmiFailed("Cannot create the logical volume: %s."
                 % (values.value_name(ret),))
-    return outparams['TheElement']
+
+    lv = outparams['TheElement'].to_instance()
+    LOG().info("Created logical volume %s", lv.Name)
+    return lv
 
 def create_tlv(ns, tp, name, size):
     tp = common.str2vg(ns, tp)
@@ -112,7 +115,10 @@ def create_tlv(ns, tp, name, size):
     (ret, outparams, err) = service.SyncCreateOrModifyThinLV(**args)
     if ret != 0:
         raise LmiFailed("Cannot create thin LV: %s." % (err if err else ret))
-    return outparams['TheElement']
+
+    tlv = outparams['TheElement'].to_instance()
+    LOG().info("Created thin logical volume %s", tlv.Name)
+    return tlv
 
 def delete_lv(ns, lv):
     """
@@ -129,6 +135,8 @@ def delete_lv(ns, lv):
             raise LmiFailed("Cannot delete the LV: %s." % err)
         raise LmiFailed("Cannot delete the LV: %s."
                 % (service.DeleteLV.DeleteLVValues.value_name(ret),))
+
+    LOG().info("Deleted logical volume %s", lv.Name)
 
 def get_vgs(ns):
     """
@@ -195,7 +203,9 @@ def create_vg(ns, devices, name, extent_size=None):
         if goal:
             goal.delete()
 
-    return outparams['Pool']
+    pool = outparams['Pool'].to_instance()
+    LOG().info("Created volume group %s", pool.Name)
+    return pool
 
 def create_tp(ns, name, vg, size):
     vg = common.str2vg(ns, vg)
@@ -206,7 +216,10 @@ def create_tp(ns, name, vg, size):
     (ret, outparams, err) = service.SyncCreateOrModifyThinPool(**args)
     if ret != 0:
         raise LmiFailed("Cannot create thin pool: %s." % (err if err else ret))
-    return outparams['Pool']
+
+    pool = outparams['Pool'].to_instance()
+    LOG().info("Created thin volume group %s", pool.Name)
+    return pool
 
 def delete_vg(ns, vg):
     """
@@ -223,6 +236,7 @@ def delete_vg(ns, vg):
             raise LmiFailed("Cannot delete the VG: %s." % err)
         raise LmiFailed("Cannot delete the VG: %s."
                 % (service.DeleteVG.DeleteVGValues.value_name(ret),))
+    LOG().info("Deleted volume group %s", vg.Name)
 
 def get_vg_lvs(ns, vg):
     """

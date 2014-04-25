@@ -172,7 +172,10 @@ def create_partition(ns, device, size=None, partition_type=None):
     finally:
         if setting:
             setting.delete()
-    return outparams['Partition']
+
+    part = outparams['Partition'].to_instance()
+    LOG().info("Created partition %s", part.Name)
+    return part
 
 
 def delete_partition(ns, partition):
@@ -192,6 +195,8 @@ def delete_partition(ns, partition):
         values = service.LMI_DeletePartition.LMI_DeletePartitionValues
         raise LmiFailed("Cannot delete the partition: %s."
                 % (values.value_name(ret)))
+
+    LOG().info("Deleted partition %s", partition.Name)
 
 def create_partition_table(ns, device, table_type):
     """
@@ -222,6 +227,8 @@ def create_partition_table(ns, device, table_type):
         values = service.SetPartitionStyle.SetPartitionStyleValues
         raise LmiFailed("Cannot create partition table: %s."
                 % (values.value_name(ret)))
+
+    LOG().info("Created partition table on %s", device.Name)
 
 
 def get_partition_tables(ns, devices=None):
