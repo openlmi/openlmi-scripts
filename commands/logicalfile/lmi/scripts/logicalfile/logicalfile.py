@@ -159,6 +159,8 @@ def lf_createdir(ns, directory):
         directory = directory.rstrip('/')
     ns.LMI_UnixDirectory.create_instance(get_directory_name_properties(ns, directory))
 
+    LOG().info("Successfully created directory: %s", directory)
+
 def lf_deletedir(ns, directory):
     """
     Delete a directory.
@@ -171,6 +173,8 @@ def lf_deletedir(ns, directory):
     if directory != '/':
         directory = directory.rstrip('/')
     get_directory_instance(ns, directory).delete()
+
+    LOG().info("Successfully deleted directory: %s", directory)
 
 def lf_show(ns, target):
     """
