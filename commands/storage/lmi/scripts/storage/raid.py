@@ -73,7 +73,10 @@ def create_raid(ns, devices, level, name=None):
         values = service.CreateOrModifyMDRAID.CreateOrModifyMDRAIDValues
         raise LmiFailed("Cannot create the MD RAID: %s."
                 % (values.value_name(ret),))
-    return outparams['TheElement']
+
+    raid = outparams['TheElement'].to_instance()
+    LOG().info("Created MD RAID %s", raid.Name)
+    return raid
 
 
 def delete_raid(ns, raid):
@@ -91,6 +94,7 @@ def delete_raid(ns, raid):
             raise LmiFailed("Cannot delete the MD RAID: %s." % err)
         raise LmiFailed("Cannot delete the raid: %s."
                 % (service.DeleteMDRAID.DeleteMDRAIDValues.value_name(ret),))
+    LOG().info("Deleted MD RAID %s", raid.Name)
 
 def get_raid_members(ns, raid):
     """

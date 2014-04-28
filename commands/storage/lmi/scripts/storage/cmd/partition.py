@@ -160,9 +160,7 @@ class PartitionCreate(command.LmiCheckResult):
             ptype = partition.PARTITION_TYPE_EXTENDED
         elif _logical:
             ptype = partition.PARTITION_TYPE_LOGICAL
-        p = partition.create_partition(ns, device, size, ptype)
-        p = p.to_instance()
-        print "Partition %s, with DeviceID %s created." % (p.Name, p.DeviceID)
+        partition.create_partition(ns, device, size, ptype)
 
 
 class PartitionDelete(command.LmiCheckResult):

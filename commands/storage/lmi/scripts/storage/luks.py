@@ -74,6 +74,8 @@ def create_luks(ns, device, passphrase):
         values = service.CreateEncryptionFormat.CreateEncryptionFormatValues
         raise LmiFailed("Cannot create LUKS format: %s."
                 % (values.value_name(ret),))
+
+    LOG().info("Created LUKS on %s", device.Name)
     return outparams['Format']
 
 
@@ -103,7 +105,10 @@ def open_luks(ns, fmt, name, passphrase):
         values = service.OpenEncryptionFormat.OpenEncryptionFormatValues
         raise LmiFailed("Cannot open LUKS format: %s."
                 % (values.value_name(ret),))
-    return outparams['Extent']
+
+    opened = outparams['Extent'].to_instance()
+    LOG().info("Opened LUKS on %s as %s", fmt.ElementName, opened.Name)
+    return opened
 
 def close_luks(ns, fmt):
     """
@@ -121,6 +126,7 @@ def close_luks(ns, fmt):
         values = service.CloseEncryptionFormat.CloseEncryptionFormatValues
         raise LmiFailed("Cannot close LUKS format: %s."
                 % (values.value_name(ret),))
+    LOG().info("Closed LUKS on %s", fmt.ElementName)
 
 def add_luks_passphrase(ns, fmt, passphrase, new_passphrase):
     """
@@ -152,6 +158,7 @@ def add_luks_passphrase(ns, fmt, passphrase, new_passphrase):
         values = service.AddPassphrase.AddPassphraseValues
         raise LmiFailed("Cannot add new passphrase: %s."
                 % (values.value_name(ret),))
+    LOG().info("Added passphrase to %s", fmt.ElementName)
 
 def delete_luks_passphrase(ns, fmt, passphrase):
     """
@@ -173,6 +180,7 @@ def delete_luks_passphrase(ns, fmt, passphrase):
         values = service.DeletePassphrase.DeletePassphraseValues
         raise LmiFailed("Cannot delete passphrase: %s."
                 % (values.value_name(ret),))
+    LOG().info("Deleted passphrase from %s", fmt.ElementName)
 
 def get_luks_device(ns, fmt):
     """
