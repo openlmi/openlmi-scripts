@@ -43,6 +43,9 @@ Usage:
     %(cmd)s disable <repository> ...
 
 Commands:
+    search      Search packages. Produces a list of packages matching given
+                package specifications (see below). Allows filtering by
+                repository. By default only newest packages will be printed.
     list        List various information about packages, repositories or
                 files.
     show        Show detailed informations about package or repository.
