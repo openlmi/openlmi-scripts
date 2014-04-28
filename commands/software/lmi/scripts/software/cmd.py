@@ -330,20 +330,23 @@ class Verify(command.LmiLister):
     COLUMNS = []
 
     def execute(self, ns, package_array):
-        failed_identity_checks = []
+        identity_checks = []
         def _verify_identity(identity):
             failed_checks = list(software.verify_package(ns, identity))
-            if len(failed_checks):
-                failed_identity_checks.append((identity, failed_checks))
-            else:
-                LOG().debug('Package "%s" passed.', identity.ElementName)
+            identity_checks.append((identity, failed_checks))
 
         for_each_package_specs(ns, package_array, 'verify', _verify_identity)
-        for identity, checks in failed_identity_checks:
-            yield fcmd.NewTableCommand(title=identity.ElementName)
-            for file_check in checks:
-                yield ( software.render_failed_flags(file_check.FailedFlags)
-                      , file_check.Name)
+        for identity, failed_checks in identity_checks:
+            if len(failed_checks):
+                yield fcmd.NewTableCommand(title=identity.ElementName)
+                for file_check in failed_checks:
+                    yield ( software.render_failed_flags(file_check.FailedFlags)
+                          , file_check.Name)
+            elif self.app.config.verbose:
+                yield fcmd.NewTableCommand(title=identity.ElementName)
+                yield ('', 'passed')
+            else:
+                LOG().debug('Package "%s" passed.', identity.ElementName)
 
 class ChangeEnabledState(command.LmiCheckResult):
     """

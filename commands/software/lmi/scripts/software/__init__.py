@@ -447,6 +447,11 @@ def set_repository_enabled(ns, repository, enable=True):
             if results.errorstr:
                 msg += ': ' + results.errorstr
             raise LmiFailed(msg)
+        LOG().info('Repository "%s" %s.', repository.Name,
+                "enabled" if enable else "disabled")
+    else:
+        LOG().info('Repository "%s" is already %s.', repository.Name,
+                "enabled" if enable else "disabled")
     return repository.EnabledState
 
 def install_package(ns, package, force=False, update=False):
@@ -497,14 +502,15 @@ def install_package(ns, package, force=False, update=False):
                 except pywbem.CIMError:
                     pass
             if getattr(package, 'InstallDate', None) is not None:
-                raise LmiFailed('Package "%s" is already installed!' % nevra)
+                LOG().info('Package "%s" is already installed.' % nevra)
+                return
         msg = 'Failed to %s package "%s".' % (
                 'update' if update else 'install', nevra)
         if job.ErrorDescription:
             msg += ': ' + job.ErrorDescription
         raise LmiFailed(msg)
     else:
-        LOG().info('Installed package "%s" on remote host "%s".',
+        LOG().info('Installed package "%s".',
                 nevra, ns.connection.uri)
 
     installed = job.associators(
@@ -549,7 +555,7 @@ def install_from_uri(ns, uri, force=False, update=False):
             msg += ': ' + results.errorstr
         raise LmiFailed(msg)
     else:
-        LOG().info('Installed package from uri.')
+        LOG().info('Installed package from uri %s.', uri)
 
 def remove_package(ns, package):
     """
@@ -578,7 +584,9 @@ def remove_package(ns, package):
                 get_package_nevra(package))
 
     for assoc in installed_assocs:
+        nevra = get_package_nevra(assoc.InstalledSoftware)
         assoc.to_instance().delete()
+        LOG().info('Removed package %s.', nevra)
 
 def render_failed_flags(failed_flags):
     """
@@ -647,15 +655,12 @@ def verify_package(ns, package):
         if job.ErrorDescription:
             msg += ': ' + job.ErrorDescription
         raise LmiFailed(msg)
-    LOG().debug('Verified package "%s" on remote host "%s".',
-            nevra, ns.connection.uri)
 
     failed = job.associators(
             Role='AffectingElement',
             ResultRole='AffectedElement',
             AssocClass="LMI_AffectedSoftwareJobElement",
             ResultClass='LMI_SoftwareIdentityFileCheck')
-    LOG().debug('Verified package "%s" on remote host "%s" with %d failures.',
-            nevra, ns.connection.uri, len(failed))
+    LOG().debug('Verified package "%s" with %d failures.', nevra, len(failed))
 
     return failed
