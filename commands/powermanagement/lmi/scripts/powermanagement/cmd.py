@@ -39,6 +39,8 @@ Options:
     --force          Skip shutting down services first
 """
 
+import abc
+
 from lmi.scripts.common import command
 from lmi.scripts.common import errors
 from lmi.scripts.common.formatter import command as fcmd
@@ -64,59 +66,54 @@ def cmd_list(ns):
         else:
             yield (name, "no")
 
-def cmd_suspend(ns):
+def _do_switch_power_state(ns, cmd):
     """
-    Implementation of 'power suspend' command.
+    Executes given command on particular host and logs it.
     """
-    return switch_power_state(ns, POWER_STATE_SUSPEND)
-
-def cmd_hibernate(ns):
-    """
-    Implementation of 'power hibernate' command.
-    """
-    return switch_power_state(ns, POWER_STATE_HIBERNATE)
-
-def cmd_poweroff(ns, force=False):
-    """
-    Implementation of 'power poweroff' command.
-    """
-    if force:
-        return switch_power_state(ns, POWER_STATE_POWEROFF_FORCE)
-    else:
-        return switch_power_state(ns, POWER_STATE_POWEROFF)
-
-def cmd_reboot(ns, force=False):
-    """
-    Implementation of 'power reboot' command.
-    """
-    if force:
-        return switch_power_state(ns, POWER_STATE_REBOOT_FORCE)
-    else:
-        return switch_power_state(ns, POWER_STATE_REBOOT)
+    res = switch_power_state(ns, cmd)
+    LOG().info('Machine %s has been %s.', ns.connection.uri,
+            { POWER_STATE_POWEROFF       : "shut down"
+            , POWER_STATE_POWEROFF_FORCE : "forcefully shut down"
+            , POWER_STATE_REBOOT         : "rebooted"
+            , POWER_STATE_REBOOT_FORCE   : "forcefully rebooted"
+            , POWER_STATE_SUSPEND        : "suspended"
+            , POWER_STATE_HIBERNATE      : "hibernated"}[cmd])
+    return res
 
 class Lister(command.LmiLister):
     CALLABLE = 'lmi.scripts.powermanagement.cmd:cmd_list'
     COLUMNS = ('PowerState','Available')
 
-class Suspend(command.LmiCheckResult):
+class PowerCmd(command.LmiCheckResult):
     EXPECT = 0
-    def execute(self, ns):
-        return cmd_suspend(ns)
+    OPT_NO_UNDERSCORES = True
 
-class Hibernate(command.LmiCheckResult):
-    EXPECT = 0
-    def execute(self, ns):
-        return cmd_hibernate(ns)
+    @abc.abstractmethod
+    def get_cmd_code(self, force=False):
+        pass
+    
+    def execute(self, ns, **kwargs):
+        return _do_switch_power_state(ns, self.get_cmd_code(**kwargs))
 
-class Poweroff(command.LmiCheckResult):
-    EXPECT = 0
-    def execute(self, ns, _force):
-        return cmd_poweroff(ns, _force)
+class Suspend(PowerCmd):
+    
+    def get_cmd_code(self, force=False):
+        return POWER_STATE_SUSPEND
 
-class Reboot(command.LmiCheckResult):
-    EXPECT = 0
-    def execute(self, ns, _force):
-        return cmd_reboot(ns, _force)
+class Hibernate(PowerCmd):
+
+    def get_cmd_code(self, force=False):
+        return POWER_STATE_HIBERNATE
+
+class Poweroff(PowerCmd):
+
+    def get_cmd_code(self, force=False):
+        return POWER_STATE_POWEROFF_FORCE if force else POWER_STATE_POWEROFF
+
+class Reboot(PowerCmd):
+
+    def get_cmd_code(self, force=False):
+        return POWER_STATE_REBOOT_FORCE if force else POWER_STATE_REBOOT
 
 PowerManagement = command.register_subcommands(
     'PowerManagement', __doc__,
