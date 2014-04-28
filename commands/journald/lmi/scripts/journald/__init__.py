@@ -30,11 +30,13 @@
 
 from lmi.scripts.common.errors import LmiFailed
 from lmi.shell import LMIIndicationListener
+from lmi.scripts.common import get_logger
 import socket
 import time
 import random
 
 NUM_TAIL = 50
+LOG = get_logger(__name__)
 
 def list_messages(ns, reverse=False, tail=False):
     """
@@ -92,6 +94,8 @@ def log_message(ns, message):
                                              "LogName": "Journal",
                                              "DataFormat": message})
 
+    LOG().info("Message has been logged.")
+
     return 0;
 
 
@@ -121,8 +125,7 @@ def watch(ns):
         raise LmiFailed("Failed to register indication: %s\n" % retval.errorstr)
 
     try:
-        print "Watching journal, press Ctrl+C to abort"
-        print ""
+        LOG().info("Watching journal, press Ctrl+C to abort\n")
         while True:
             time.sleep(1)
             pass
