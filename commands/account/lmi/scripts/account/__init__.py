@@ -137,8 +137,11 @@ def delete_user(ns, user,
     for key in params.keys():
         if params[key] is None:
             del params[key]
-    LOG().debug("Removing user %s with arguments %s", user.Name, str(params))
+    name = user.Name
+    uid = user.UserID
+    LOG().debug("Removing user %s with arguments %s", name, str(params))
     user.DeleteUser(**params)
+    LOG().info("Removed user %s (id=%s).", name, uid)
 
 def create_user(ns, name,
         gecos=None,
@@ -210,8 +213,12 @@ def create_user(ns, name,
         values = lams.CreateAccount.CreateAccountValues
         raise LmiFailed("Cannot create the user: %s."
                 % (values.value_name(ret),))
-    return outparams['Account']
 
+    account = outparams["Account"]
+    LOG().info(u"Created %suser \"%s\" with id %s.",
+            "system " if reserved else "", name,
+            account.to_instance().UserID)
+    return account
 
 def get_users_in_group(ns, group):
     """
@@ -261,8 +268,12 @@ def create_group(ns, group, reserved=False, gid=None):
         values = lams.CreateGroup.CreateGroupValues
         raise LmiFailed("Cannot create the group: %s."
                 % (values.value_name(ret),))
-    return outparams['Group']
 
+    group = outparams["Group"]
+    LOG().info(u"Created %sgroup \"%s\" with id %s.",
+            "system " if reserved else "", group.Name,
+            group.to_instance().InstanceID)
+    return group
 
 def delete_group(ns, group):
     """
@@ -271,8 +282,13 @@ def delete_group(ns, group):
     :type group: LMIInstance or LMIInstanceName of LMI_Group.
     :param group: The group to delete.
     """
-    LOG().debug("Removing group %s", group.Name)
+    if not isinstance(group, LMIInstance):
+        group = group.to_instnace()
+    name = group.Name
+    gid = group.InstanceID
+    LOG().debug("Removing group %s (id=%s)", name, gid)
     group.delete()
+    LOG().info("Removed group %s (id=%d)", name, gid)
 
 def is_in_group(group, user):
     """
@@ -316,9 +332,10 @@ def add_to_group(ns, group, users):
                     AssocClass="LMI_AssignedAccountIdentity",
                     ResultClass="LMI_Identity")
             # add the user; create instance of LMI_MemberOfGroup
-            LOG().info('Adding user %s to group %s', user.Name, group.Name)
+            LOG().debug('Adding user %s to group %s.', user.Name, group.Name)
             ns.LMI_MemberOfGroup.create_instance(
                 {"Member":identity.path, "Collection":group.path})
+            LOG().info('User %s now belongs to group %s.', user.Name, group.Name)
 
 def remove_from_group(ns, group, users):
     """
@@ -331,7 +348,7 @@ def remove_from_group(ns, group, users):
     :param users: Users to remove.
     """
     for user in users:
-        LOG().debug("Removing user %s from group %s", user.Name, group.Name)
+        removed = False
         # get identity
         identity = user.first_associator(
                 AssocClass="LMI_AssignedAccountIdentity",
@@ -339,4 +356,9 @@ def remove_from_group(ns, group, users):
         # get MemberOfGroup
         for mog in identity.references(ResultClass="LMI_MemberOfGroup"):
             if mog.Collection.Name == group.Name:
+                LOG().debug('Removing user %s from group %s.', user.Name, group.Name)
                 mog.delete()
+                LOG().info('User %s removed from group %s.', user.Name, group.Name)
+                removed = True
+        if not removed:
+            LOG().error('User %s does not belong to group %s!', user.Name, group.Name)
