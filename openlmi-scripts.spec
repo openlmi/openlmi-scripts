@@ -3,6 +3,7 @@
 %global         commands account hardware journald logicalfile networking
 %global         commands %{commands} powermanagement service software storage
 %global         commands %{commands} system
+%global         tools_version 0.9.1
 
 Name:           openlmi-scripts
 Version:        0.2.8
@@ -19,7 +20,7 @@ BuildRequires:  python2-devel
 BuildRequires:  python-docopt
 BuildRequires:  python-sphinx
 BuildRequires:  python-sphinx-theme-openlmi
-BuildRequires:  openlmi-tools >= 0.9.1
+BuildRequires:  openlmi-tools >= %{tools_version}
 BuildRequires:  python-IPy
 
 Requires:       %{name}-account         = %{version}-%{release}
@@ -38,7 +39,7 @@ Client-side python modules and command line utilities for OpenLMI providers.
 
 %package        account
 Summary:        Client scripts for OpenLMI Account provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    account
 This packages contains client side python library for OpenLMI Account
@@ -46,7 +47,7 @@ provider and command line wrapper.
 
 %package        hardware
 Summary:        Client scripts for OpenLMI Hardware provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    hardware
 This packages contains client side python library for OpenLMI Hardware
@@ -54,7 +55,7 @@ provider and command line wrapper.
 
 %package        journald
 Summary:        Client scripts for OpenLMI Journald provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    journald
 This packages contains client side python library for OpenLMI Journald
@@ -62,7 +63,7 @@ provider and command line wrapper.
 
 %package        logicalfile
 Summary:        Client scripts for OpenLMI Logical File provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    logicalfile
 This packages contains client side python library for OpenLMI Logical File
@@ -70,7 +71,7 @@ provider and command line wrapper.
 
 %package        networking
 Summary:        Client scripts for OpenLMI Networking provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 Requires:       python-IPy
 
 %description    networking
@@ -79,7 +80,7 @@ provider and command line wrapper.
 
 %package        powermanagement
 Summary:        Client scripts for OpenLMI Power provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    powermanagement
 This packages contains client side python library for OpenLMI PowerManagement
@@ -87,7 +88,7 @@ provider and command line wrapper.
 
 %package        service
 Summary:        Client scripts for OpenLMI Service provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    service
 This packages contains client side python library for OpenLMI Service
@@ -95,7 +96,7 @@ provider and command line wrapper.
 
 %package        software
 Summary:        Client scripts for OpenLMI Software provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    software
 This packages contains client side python library for OpenLMI Software
@@ -103,7 +104,7 @@ provider and command line wrapper.
 
 %package        storage
 Summary:        Client scripts for OpenLMI Storage provider
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
 
 %description    storage
 This packages contains client side python library for OpenLMI Storage
@@ -111,7 +112,8 @@ provider and command line wrapper.
 
 %package        system
 Summary:        Client scripts providing general system informations
-Requires:       openlmi-tools >= 0.9.1
+Requires:       openlmi-tools >= %{tools_version}
+Requires:       %{name}-service >= %{version}
 
 %description    system
 This package contains client side python library for few OpenLMI providers and
