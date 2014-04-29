@@ -493,7 +493,7 @@ def enslave(ns, master_setting, device):
     result = capability.LMI_CreateSlaveSetting(MasterSettingData=master_setting)
     if result.rval != 0:
         raise LmiFailed("Unable to create setting: %s" % result.errorstr)
-    LOG().info("Device %s enslaved to setting %s", (device.ElementName, master_setting.Caption))
+    LOG().info("Device %s enslaved to setting %s", device.ElementName, master_setting.Caption)
     return 0
 
 def create_setting(ns, caption, device, type, ipv4method, ipv6method):
@@ -565,7 +565,7 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
             settingData.push()
     if not found:
         raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type.")
-    LOG().info("IP address %s/%d added to setting %s", (address, prefix, setting.Caption))
+    LOG().info("IP address %s/%d added to setting %s", address, prefix, setting.Caption)
     return 0
 
 def remove_ip_address(ns, setting, address):
@@ -598,7 +598,7 @@ def remove_ip_address(ns, setting, address):
             settingData.push()
     if not found:
         raise LmiInvalidOptions("Can't remove IP address from setting: invalid setting type or address doesn't exist.")
-    LOG().info("IP address %s removed from setting %s", (address, setting.Caption))
+    LOG().info("IP address %s removed from setting %s", address, setting.Caption)
     return 0
 
 def replace_ip_address(ns, setting, address, prefix, gateway=None):
@@ -635,7 +635,7 @@ def replace_ip_address(ns, setting, address, prefix, gateway=None):
             settingData.push()
     if not found:
         raise LmiInvalidOptions("Can't add IP address to setting: invalid setting type.")
-    LOG().info("Existing addresses replaced with IP address %s/%d in setting %s", (address, prefix, setting.Caption))
+    LOG().info("Existing addresses replaced with IP address %s/%d in setting %s", address, prefix, setting.Caption)
     return 0
 
 
@@ -676,7 +676,7 @@ def add_static_route(ns, setting, address, prefix, metric=None, next_hop=None):
         if next_hop is not None:
             route.NextHop = next_hop
         route.push()
-    LOG().info("Static route to %s/%d added to setting %s", (address, prefix, setting.Caption))
+    LOG().info("Static route to %s/%d added to setting %s", address, prefix, setting.Caption)
     return 0
 
 def remove_static_route(ns, setting, address):
@@ -696,7 +696,7 @@ def remove_static_route(ns, setting, address):
             settingData.delete()
     if not found:
         raise LmiInvalidOptions("No such route: %s" % address)
-    LOG().info("Static route to %s removed from setting %s", (address, setting.Caption))
+    LOG().info("Static route to %s removed from setting %s", address, setting.Caption)
     return 0
 
 def replace_static_route(ns, setting, address, prefix, metric=None, next_hop=None):
@@ -721,7 +721,7 @@ def replace_static_route(ns, setting, address, prefix, metric=None, next_hop=Non
         if settingData is None:
             break
         settingData.delete()
-    LOG().info("Static routes replaced with route to %s/%d in setting %s", (address, prefix, setting.Caption))
+    LOG().info("Static routes replaced with route to %s/%d in setting %s", address, prefix, setting.Caption)
     return add_static_route(ns, setting, address, prefix, metric, next_hop)
 
 def add_dns_server(ns, setting, address):
@@ -742,7 +742,7 @@ def add_dns_server(ns, setting, address):
             break
     else:
         raise LmiInvalidOptions("Can't assign DNS address to setting %s, invalid setting type" % setting.Caption)
-    LOG().info("DNS server %s/%d added to setting %s", (address, setting.Caption))
+    LOG().info("DNS server %s/%d added to setting %s", address, setting.Caption)
     return 0
 
 def remove_dns_server(ns, setting, address):
@@ -767,7 +767,7 @@ def remove_dns_server(ns, setting, address):
                 raise LmiInvalidOptions("No DNS with address %s found for setting %s" % (address, setting.Caption))
     else:
         raise LmiInvalidOptions("Can't remove DNS address to setting %s, invalid setting type" % setting.Caption)
-    LOG().info("DNS server %s removed from setting %s", (address, setting.Caption))
+    LOG().info("DNS server %s removed from setting %s", address, setting.Caption)
     return 0
 
 def replace_dns_server(ns, setting, address):
@@ -788,5 +788,5 @@ def replace_dns_server(ns, setting, address):
             return 0
     else:
         raise LmiInvalidOptions("Can't remove DNS address to setting %s, invalid setting type" % setting.Caption)
-    LOG().info("Existing DNS servers replaced with %s in setting %s", (address, setting.Caption))
+    LOG().info("Existing DNS servers replaced with %s in setting %s", address, setting.Caption)
     return 0
