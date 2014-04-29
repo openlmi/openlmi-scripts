@@ -33,7 +33,7 @@ LMI networking provider client library.
 import time
 
 from lmi.scripts.common.errors import LmiFailed, LmiInvalidOptions
-from lmi.scripts.common import get_logger
+from lmi.scripts.common import get_logger, versioncheck
 
 import util
 
@@ -356,6 +356,16 @@ def get_static_routes(ns, setting):
     '''
     return setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent", ResultClass="LMI_IPRouteSettingData")
 
+def _provider_check_required_device(ns):
+    '''
+    Check if provider requires device to be used in ApplySettingToIPNetworkConnection
+    '''
+    # Do a full fetch to obtain qualifiers
+    if not ns.LMI_IPConfigurationService.is_fetched(True):
+        ns.LMI_IPConfigurationService.fetch(True)
+    version = versioncheck.get_class_version(ns.connection, 'LMI_IPConfigurationService', ns.name)
+    return versioncheck.parser.cmp_version(version, '0.2.3')
+
 def activate(ns, setting, device=None):
     '''
     Activate network setting on given device
@@ -419,6 +429,40 @@ def deactivate(ns, setting, device=None):
     :type device: LMI_IPNetworkConnection or None
     '''
     service = ns.LMI_IPConfigurationService.first_instance()
+
+    if _provider_check_required_device(ns):
+        # old version of provider that doesn't support activation of setting without device
+        if device is None:
+            if setting.classname == 'LMI_BridgingMasterSettingData':
+                slave_class = 'LMI_BridgingSlaveSettingData'
+            elif setting.classname == 'LMI_BondingMasterSettingData':
+                slave_class = 'LMI_BondingSlaveSettingData'
+            else:
+                slave_class = None
+
+            # Autodetect and deactivate slaves
+            if slave_class:
+                affected_settings = setting.associators(AssocClass='LMI_OrderedIPAssignmentComponent', ResultClass=slave_class)
+            else:
+                affected_settings = [setting]
+
+            for slave_setting in affected_settings:
+                device = slave_setting.first_associator(AssocClass="LMI_IPElementSettingData", ResultClass="LMI_IPNetworkConnection")
+                result = service.SyncApplySettingToIPNetworkConnection(SettingData=slave_setting,
+                        IPNetworkConnection=device,
+                        Mode=service.ApplySettingToIPNetworkConnection.ModeValues.Mode32769)
+                if result.errorstr:
+                    raise LmiFailed("Unable to deactivate setting: %s" % result.errorstr)
+                # TODO: rework using indications
+                isCurrent = True
+                while isCurrent:
+                    for esd in slave_setting.references(ResultClass="LMI_IPElementSettingData"):
+                        if esd.IsCurrent == ns.LMI_IPElementSettingData.IsCurrentValues.IsNotCurrent:
+                            isCurrent = False
+                            break
+                    time.sleep(1)
+            return 0
+
     if device is not None:
         LOG().debug('Deactivating setting %s on device %s', setting.Caption, device.ElementName)
         result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting,
