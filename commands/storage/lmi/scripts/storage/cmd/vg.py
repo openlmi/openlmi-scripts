@@ -38,6 +38,7 @@ Usage:
     %(cmd)s create [ --extent-size=<size> ] <name> <device> ...
     %(cmd)s delete <vg> ...
     %(cmd)s show [ <vg> ...]
+    %(cmd)s modify <vg> [ --add=<device> ] ... [ --remove=<device> ] ...
 
 Commands:
     list        List all volume groups on the system.
@@ -48,6 +49,8 @@ Commands:
 
     show        Show detailed information about given Volume Groups. If no
                 Volume Groups are provided, all of them are displayed.
+
+    modify      Add or remove Physical Volumes to/from given Volume Group.
 
 Options:
 
@@ -74,6 +77,11 @@ Options:
                 other units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
                 (=1024 bytes).
                 The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+    -a <device> , --add=<device>        Device to add to a Volume Group.
+
+    -r <device> , --remove=<device>     Device to remove from a Volume Group.
+
 """
 
 from lmi.shell.LMIUtil import lmi_isinstance
@@ -124,6 +132,23 @@ class VGCreate(command.LmiCheckResult):
             _extent_size = str2size(_extent_size)
         lvm.create_vg(ns, devices, name, _extent_size)
 
+class VGModify(command.LmiCheckResult):
+    EXPECT = None
+
+    def transform_options(self, options):
+        """
+        Rename 'vg' option to 'vgs' parameter name for better
+        readability.
+        """
+        options['<vgs>'] = options.pop('<vg>')
+
+    def execute(self, ns, vgs, _add, _remove):
+        """
+        Implementation of 'vg modify' command.
+        """
+        if len(vgs) != 1:
+            raise LmiFailed("One vgolume group must be specified.")
+        lvm.modify_vg(ns, vgs[0], add_pvs=_add, remove_pvs=_remove)
 
 class VGDelete(command.LmiCheckResult):
     EXPECT = None
@@ -173,6 +198,7 @@ class VG(command.LmiCommandMultiplexer):
             'create'  : VGCreate,
             'delete'  : VGDelete,
             'show'    : VGShow,
+            'modify'  : VGModify,
     }
 
 

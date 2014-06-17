@@ -127,9 +127,24 @@ rlPhaseStartTest "CreateLV"
     rlRun -s "$LMI -N -H -L csv storage vg show"
     rlAssertGrep "Logical Volumes.*$LVNAME1" $rlRun_LOG
     rlAssertGrep "Logical Volumes.*$LVNAME2" $rlRun_LOG
-
 rlPhaseEnd
 
+rlPhaseStartTest "ModifyVG"
+    rlLogInfo "Check the partition is PV"
+    rlRun "pvs ${PARTITIONS[0]}"
+
+    rlLogInfo "Remove PV"
+    rlRun "$LMI storage vg modify $VGNAME -r ${PARTITIONS[0]}"
+
+    rlLogInfo "Check the partition is no longer PV"
+    rlRun "pvs ${PARTITIONS[0]}" 5
+
+    rlLogInfo "Add the partition back"
+    rlRun "$LMI storage vg modify $VGNAME -a ${PARTITIONS[0]}"
+
+    rlLogInfo "Check the partition is PV"
+    rlRun "pvs ${PARTITIONS[0]}"
+rlPhaseEnd
 
 rlPhaseStartTest "DeleteLV"
     rlLogInfo "Deleting LVs"

@@ -221,6 +221,46 @@ def create_tp(ns, name, vg, size):
     LOG().info("Created thin volume group %s", pool.Name)
     return pool
 
+def modify_vg(ns, vg, add_pvs=None, remove_pvs=None):
+    """
+    Modify given Volume Group.
+
+    Add 'add_pvs' devices as Physical Volumes of the group.
+    Remove 'remove_pvs' devices from the Volume Group.
+
+    :type vg: LMIInstance/LMI_VGStoragePool or string
+    :param vg: Volume Group to delete.
+    :type add_pvs: List of LMIInstances/LMI_VGStoragePools or strings
+    :param add_pvs: List of new devices to be added as Physical Volumes of the
+                    VG.
+    :type remove_pvs: List of LMIInstances/LMI_VGStoragePools or strings
+    :param remove_pvs: List of Physical Volume to be removed from the VG.
+    """
+    vg = common.str2vg(ns, vg)
+    service = ns.LMI_StorageConfigurationService.first_instance()
+
+    # get list of current PVs
+    pvs = get_vg_pvs(ns, vg)
+
+    for device in add_pvs:
+        device = common.str2device(ns, device)
+        if device not in pvs:
+            pvs.append(device)
+
+    for device in remove_pvs:
+        device = common.str2device(ns, device)
+        # don't report error when removing device that is not a PV
+        if device in pvs:
+            pvs.remove(device)
+
+    (ret, _outparams, err) = service.SyncCreateOrModifyVG(Pool=vg, InExtents = list(pvs))
+    if ret != 0:
+        if err:
+            raise LmiFailed("Cannot modify the VG: %s." % err)
+        raise LmiFailed("Cannot modify the VG: %s."
+                % (service.CreateOrModifyVG.CreateOrModifyVG.value_name(ret),))
+    LOG().info("Modified volume group %s", vg.Name)
+
 def delete_vg(ns, vg):
     """
     Destroy given Volume Group.

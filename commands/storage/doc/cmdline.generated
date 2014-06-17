@@ -646,6 +646,8 @@ Volume Group management.
 
     **lmi** **storage** **vg** **show** [ \ *<vg>*\  ...]
 
+    **lmi** **storage** **vg** **modify** \ *<vg>*\  [ \ **--add**\ =\ *<device>*\  ] ... [ \ **--remove**\ =\ *<device>*\  ] ...
+
 
 
 **Commands:**
@@ -666,6 +668,10 @@ Volume Group management.
     **show**
         Show detailed information about given Volume Groups. If no
         Volume Groups are provided, all of them are displayed.
+
+
+    **modify**
+        Add or remove Physical Volumes to/from given Volume Group.
 
 **Options:**
 
@@ -699,6 +705,14 @@ Volume Group management.
         other units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
         (=1024 bytes).
         The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+
+    **-a <device> , --add=<device>**
+        Device to add to a Volume Group.
+
+
+    **-r <device> , --remove=<device>**
+        Device to remove from a Volume Group.
 
 storage thinpool
 ----------------
