@@ -114,8 +114,6 @@ def set_x11_keymap(ns, layouts, model, variant, options, convert):
     """
 
     inst = get_locale(ns)
-    args = {
-    }
 
     (rval, _, errorstr) = inst.SetX11Keyboard(
         Layouts=layouts,
