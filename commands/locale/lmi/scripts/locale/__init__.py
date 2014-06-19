@@ -56,17 +56,14 @@ def set_locale(ns, locales, values):
     """
     Set given locale variables with new values.
 
-    :type locales: list of strings
-    :param locales: Locale variables to be set.
-    :type values: list of strings
-    :param values: New values for locale variables.
+    :param list locales: List of locale variable names to be set.
+    :param list values: List of new values for locale variables.
     """
 
     inst = get_locale(ns)
-    method = 'SetLocale'
     args = {l: v for l, v in zip(locales, values)}
 
-    (rval, _, errorstr) = getattr(inst, method)(**args)
+    (rval, _, errorstr) = inst.SetLocale(**args)
     if rval != 0:
         if errorstr:
             raise LmiFailed("Cannot set locale: %s.", errorstr)
@@ -79,27 +76,22 @@ def set_vc_keyboard(ns, keymap, keymap_toggle, convert):
     """
     Set the key mapping on the virtual console.
 
-    :type keymap: string
-    :param keymap: Requested keyboard mapping for the
+    :param string keymap: Requested keyboard mapping for the
         virtual console.
-    :type keymap_toggle: string
-    :param keymap_toggle: Requested toggle keyboard
+    :param string keymap_toggle: Requested toggle keyboard
         mapping for the virtual console.
-    :type convert: bool
-    :param convert: Whether also X11 keyboard should be set
+    :param bool convert: Whether also X11 keyboard should be set
         to the nearest X11 keyboard setting for the chosen
         console keyboard setting.
     """
 
     inst = get_locale(ns)
-    method = 'SetVConsoleKeyboard'
-    args = {
-        'Keymap': keymap,
-        'KeymapToggle': keymap_toggle,
-        'Convert': convert,
-    }
 
-    (rval, _, errorstr) = getattr(inst, method)(**args)
+    (rval, _, errorstr) = inst.SetVConsoleKeyboard(
+        Keymap=keymap,
+        KeymapToggle=keymap_toggle,
+        Convert=convert
+    )
 
     LOG().info("Virtual console keyboard set to '%s'.", keymap)
     if keymap_toggle:
@@ -112,31 +104,26 @@ def set_x11_keymap(ns, layouts, model, variant, options, convert):
     """
     Set the default key mapping of the X11 server.
 
-    :type layouts: string
-    :param layouts: Requested X11 keyboard mappings.
-    :type model: string
-    :param model: Requested X11 keyboard model.
-    :type variant: string
-    :param model: Requested X11 keyboard variant.
-    :type options: string
-    :param model: Requested X11 keyboard options.
-    :type convert: bool
-    :param convert: Whether also console keyboard should be set
+    :param string layouts: Requested X11 keyboard mappings.
+    :param string model: Requested X11 keyboard model.
+    :param string variant: Requested X11 keyboard variant.
+    :param string options: Requested X11 keyboard options.
+    :param bool convert: Whether also console keyboard should be set
         to the nearest console keyboard setting for the chosen
         X11 keyboard setting.
     """
 
     inst = get_locale(ns)
-    method = 'SetX11Keyboard'
     args = {
-        'Layouts': layouts,
-        'Model': model,
-        'Variant': variant,
-        'Options': options,
-        'Convert': convert,
     }
 
-    (rval, _, errorstr) = getattr(inst, method)(**args)
+    (rval, _, errorstr) = inst.SetX11Keyboard(
+        Layouts=layouts,
+        Model=model,
+        Variant=variant,
+        Options=options,
+        Convert=convert,
+    )
 
     LOG().info("Default X11 keyboard mapping set to '%s'.", layouts)
     if model:

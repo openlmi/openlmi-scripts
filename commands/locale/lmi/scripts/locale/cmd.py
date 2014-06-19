@@ -108,28 +108,22 @@ class SetLocale(command.LmiCheckResult):
 class SetX11Keymap(command.LmiCheckResult):
     EXPECT = None
 
-    def execute(self, ns, layouts, model, variant, options, _convert):
-        convert = False
-        if _convert:
-            convert = True
+    def execute(self, ns, layouts, model, variant, options, _convert=False):
         if not model:
             model = ''
         if not variant:
             variant = ''
         if not options:
             options = ''
-        loc.set_x11_keymap(ns, layouts, model, variant, options, convert)
+        loc.set_x11_keymap(ns, layouts, model, variant, options, _convert)
 
 class SetVCKeyboard(command.LmiCheckResult):
     EXPECT = None
 
-    def execute(self, ns, keymap, keymap_toggle, _convert):
-        convert =  False
-        if _convert:
-            convert = True
+    def execute(self, ns, keymap, keymap_toggle, _convert=False):
         if not keymap_toggle:
             keymap_toggle = ''
-        loc.set_vc_keyboard(ns, keymap, keymap_toggle, convert)
+        loc.set_vc_keyboard(ns, keymap, keymap_toggle, _convert)
 
 Locale = command.register_subcommands(
         'Locale', __doc__,
