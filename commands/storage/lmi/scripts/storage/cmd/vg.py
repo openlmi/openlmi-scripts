@@ -51,6 +51,7 @@ Commands:
                 Volume Groups are provided, all of them are displayed.
 
     modify      Add or remove Physical Volumes to/from given Volume Group.
+                This command requires OpenLMI-Storage 0.8 or newer.
 
 Options:
 
@@ -87,6 +88,7 @@ Options:
 from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
 from lmi.scripts.common import get_logger
+from lmi.scripts.common import errors
 from lmi.scripts.common.formatter import command as fcmd
 from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
 from lmi.scripts.storage.common import (size2str, get_devices, get_children,
@@ -150,6 +152,10 @@ class VGModify(command.LmiCheckResult):
             raise LmiFailed("One vgolume group must be specified.")
         lvm.modify_vg(ns, vgs[0], add_pvs=_add, remove_pvs=_remove)
 
+class VGModifyNotSupported(VGModify):
+    def execute(self, ns, vgs, _add, _remove):
+        raise errors.LmiFailed("OpenLMI-Storage 0.8 is required on the remote machine")
+
 class VGDelete(command.LmiCheckResult):
     EXPECT = None
 
@@ -191,7 +197,19 @@ class VGShow(command.LmiLister):
             for line in show.vg_show(ns, vg, self.app.config.human_friendly):
                 yield line
 
-class VG(command.LmiCommandMultiplexer):
+class VG07(command.LmiCommandMultiplexer):
+    # VG subscommand for OpenLMI-Storage 0.7.x and older
+    OWN_USAGE = __doc__
+    COMMANDS = {
+            'list'    : VGList,
+            'create'  : VGCreate,
+            'delete'  : VGDelete,
+            'show'    : VGShow,
+            'modify'  : VGModifyNotSupported,
+    }
+
+class VG08(command.LmiCommandMultiplexer):
+    # VG subscommand for OpenLMI-Storage 0.8.0 and newer
     OWN_USAGE = __doc__
     COMMANDS = {
             'list'    : VGList,
@@ -201,4 +219,9 @@ class VG(command.LmiCommandMultiplexer):
             'modify'  : VGModify,
     }
 
-
+class VG(command.LmiSelectCommand):
+    """ blabla """
+    SELECT = [
+            ( 'OpenLMI-Storage >= 0.8.0', VG08),
+            ( 'OpenLMI-Storage', VG07)
+    ]
