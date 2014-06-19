@@ -68,7 +68,7 @@ setup(
     entry_points={{
         'lmi.scripts.cmd': [
             # All subcommands of lmi command should go here.
-            # See http://pythonhosted.org/openlmi-scripts/script-development.html#writing-setup-py
+            # See http://pythonhosted.org/openlmi-tools/scripts/script-development.html#writing-setup-py
             # '<cmd_name> = lmi.scripts.{name}.cmd:<CmdClassName>',
             ],
         }},
@@ -264,6 +264,8 @@ def make_doc_directory(config, path):
     write_cmdline(config, os.path.join(path, 'cmdline.rst'))
     modify_doc_makefile(config, os.path.join(path, 'Makefile'))
     modify_doc_index(config, os.path.join(path, 'index.rst'))
+    with open(os.path.join(path, 'python.rst'), 'w') as dst:
+        dst.write(DOC_PYTHON_REFERENCE.format(name=config['command']))
 
 STRUCTURE = {
         'doc' : make_doc_directory,
