@@ -220,7 +220,7 @@ class VG08(command.LmiCommandMultiplexer):
     }
 
 class VG(command.LmiSelectCommand):
-    """ blabla """
+    """ Select correct multiplexer for remote openlmi-storage version. """
     SELECT = [
             ( 'OpenLMI-Storage >= 0.8.0', VG08),
             ( 'OpenLMI-Storage', VG07)
