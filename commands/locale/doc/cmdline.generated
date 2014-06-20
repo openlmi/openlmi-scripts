@@ -1,0 +1,66 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
+    !!!!!!!!!
+
+locale
+------
+
+System locale management.
+
+
+**Usage:**
+
+    **lmi** **locale** **show** [(\ **--locale**\  | \ **--vc-keyboard**\  | \ **--x11-keymap**\ )]
+
+    **lmi** **locale** **set-locale** (\ *<locale>*\  \ *<value>*\ ) ...
+
+    **lmi** **locale** **set-vc-keyboard** [\ **--convert**\ ] \ *<keymap>*\  [\ *<keymap-toggle>*\ ]
+
+    **lmi** **locale** **set-x11-keymap** [\ **--convert**\ ] \ *<layouts>*\  [\ *<model>*\  \ *<variant>*\  \ *<options>*\ ]
+
+
+
+**Commands:**
+
+
+    **show**
+        Show detailed information about system locale
+        cathegory (locale variables, key mapping on the
+        virtual console, default key mapping of
+        the X11 server).
+        If no cathegory is provided via option, all
+        locale information is displayed.
+
+
+    **set-locale**
+        Set locale variables.
+
+
+    **set-vc-keyboard**
+        Set the key mapping on the virtual console.
+
+
+    **set-x11-keymap**
+        Set the default key mapping of the X11 server.
+
+**Show options:**
+
+
+    **--locale**
+        Display locale variables.
+
+    **--vc-keyboard**
+        Display key mapping on the virtual console.
+
+    **--x11-keymap**
+        Display default key mapping of the X11 server.
+
+**Set options:**
+
+
+    **--convert**
+        Try to set the nearest console keyboard/X11 keyboard
+        setting for the chosen X11 keyboard/console keyboard
+        setting.
+
