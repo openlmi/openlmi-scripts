@@ -39,6 +39,7 @@ a remote managed system.
 
 from lmi.scripts.common.errors import LmiFailed
 from lmi.shell.LMIInstanceName import LMIInstanceName
+from lmi.shell.LMIInstance import LMIInstance
 from lmi.scripts.common import get_logger
 import pywbem
 import lmi.scripts.common
