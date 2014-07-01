@@ -58,11 +58,13 @@ def debug_level(level):
 # SSSD
 #
 
-def set_debug_level(ns, level, until_restart, components):
+def set_debug_level(ns, level, all, until_restart, components):
     rval = 0
     for component in ns.LMI_SSSDComponent.instances():
         found = False
-        if components is not None and len(components) > 0:
+        if all or components is None or len(components) == 0:
+            found = True
+        else:
             for name in components:
                 if component.Name == name:
                     found = True

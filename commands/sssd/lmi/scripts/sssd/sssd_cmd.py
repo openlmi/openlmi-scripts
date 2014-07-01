@@ -99,7 +99,7 @@ class SetDebugLevel(command.LmiCheckResult):
     
     def execute(self, ns, level,
                 until_restart=False,
-                all=True,
+                all=False,
                 monitor=False,
                 services=None,
                 domains=None):
@@ -110,7 +110,7 @@ class SetDebugLevel(command.LmiCheckResult):
             components.extend(domains.split(','))
         if monitor:
             components.append('monitor')
-        return sssd.set_debug_level(ns, level, until_restart, components)
+        return sssd.set_debug_level(ns, level, all, until_restart, components)
     
 SSSD = command.register_subcommands(
         'SSSD', __doc__,
