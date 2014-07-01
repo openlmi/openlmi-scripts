@@ -41,8 +41,10 @@ Usage:
 Commands:
     list        Prints all domains managed by SSSD.
     show        Prints information about provided domain.
-    enable      Enable domain in SSSD.
-    disable     Disable domain in SSSD.
+    enable      Enable domain in SSSD. SSSD needs to be restarted in order for
+                this command to take effect.
+    disable     Disable domain in SSSD.  SSSD needs to be restarted in order for
+                this command to take effect.
     
 List options:
     --enabled   List only enabled domains.

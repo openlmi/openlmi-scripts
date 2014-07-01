@@ -43,6 +43,8 @@ Commands:
     status           Prints SSSD service's status.
     restart          Restarts the SSSD service.
     set-debug-level  Set debug level of selected (all by default) components.
+                     You can find a list of supported debug levels in SSSD
+                     documentation.
     service          Manage supported services.
     domain           Manage SSSD domains.
     

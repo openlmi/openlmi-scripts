@@ -41,8 +41,10 @@ Usage:
 Commands:
     list        Prints all services supported by SSSD.
     show        Prints information about provided service.
-    enable      Enable service in SSSD.
-    disable     Disable service in SSSD.
+    enable      Enable service in SSSD. SSSD needs to be restarted in order for
+                this command to take effect.
+    disable     Disable service in SSSD. SSSD needs to be restarted in order for
+                this command to take effect.
     
 List options:
     --enabled   List only enabled services.
