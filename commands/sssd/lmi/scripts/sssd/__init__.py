@@ -58,11 +58,13 @@ def debug_level(level):
 # SSSD
 #
 
-def set_debug_level(ns, level, until_restart, components):
+def set_debug_level(ns, level, all, until_restart, components):
     rval = 0
     for component in ns.LMI_SSSDComponent.instances():
         found = False
-        if components is not None and len(components) > 0:
+        if all or components is None or len(components) == 0:
+            found = True
+        else:
             for name in components:
                 if component.Name == name:
                     found = True
@@ -145,7 +147,7 @@ def get_domain(ns, domain):
         inst = ns.LMI_SSSDDomain.new_instance_name(keys).to_instance()
     except pywbem.CIMError, err:
         if err[0] == pywbem.CIM_ERR_NOT_FOUND:
-            raise LmiFailed("Cannot find the domain: %s" % service)
+            raise LmiFailed("Cannot find the domain: %s" % domain)
         raise
     return inst
 
@@ -155,7 +157,7 @@ def get_backend(ns, domain):
         inst = ns.LMI_SSSDBackend.new_instance_name(keys).to_instance()
     except pywbem.CIMError, err:
         if err[0] == pywbem.CIM_ERR_NOT_FOUND:
-            raise LmiFailed("Cannot find the backend: %s" % service)
+            raise LmiFailed("Cannot find the backend: %s" % domain)
         raise
     return inst
 
