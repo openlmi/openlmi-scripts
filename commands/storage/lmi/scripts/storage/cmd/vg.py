@@ -38,6 +38,7 @@ Usage:
     %(cmd)s create [ --extent-size=<size> ] <name> <device> ...
     %(cmd)s delete <vg> ...
     %(cmd)s show [ <vg> ...]
+    %(cmd)s modify <vg> [ --add=<device> ] ... [ --remove=<device> ] ...
 
 Commands:
     list        List all volume groups on the system.
@@ -48,6 +49,9 @@ Commands:
 
     show        Show detailed information about given Volume Groups. If no
                 Volume Groups are provided, all of them are displayed.
+
+    modify      Add or remove Physical Volumes to/from given Volume Group.
+                This command requires OpenLMI-Storage 0.8 or newer.
 
 Options:
 
@@ -74,11 +78,17 @@ Options:
                 other units (TiB, GiB, MiB and KiB) - '1K' specifies 1 KiB
                 (=1024 bytes).
                 The suffix is case insensitive, i.e. 1g = 1G = 1073741824 bytes.
+
+    -a <device> , --add=<device>        Device to add to a Volume Group.
+
+    -r <device> , --remove=<device>     Device to remove from a Volume Group.
+
 """
 
 from lmi.shell.LMIUtil import lmi_isinstance
 from lmi.scripts.common import command
 from lmi.scripts.common import get_logger
+from lmi.scripts.common import errors
 from lmi.scripts.common.formatter import command as fcmd
 from lmi.scripts.storage import show, fs, lvm, mount, raid, partition
 from lmi.scripts.storage.common import (size2str, get_devices, get_children,
@@ -124,6 +134,27 @@ class VGCreate(command.LmiCheckResult):
             _extent_size = str2size(_extent_size)
         lvm.create_vg(ns, devices, name, _extent_size)
 
+class VGModify(command.LmiCheckResult):
+    EXPECT = None
+
+    def transform_options(self, options):
+        """
+        Rename 'vg' option to 'vgs' parameter name for better
+        readability.
+        """
+        options['<vgs>'] = options.pop('<vg>')
+
+    def execute(self, ns, vgs, _add, _remove):
+        """
+        Implementation of 'vg modify' command.
+        """
+        if len(vgs) != 1:
+            raise LmiFailed("One vgolume group must be specified.")
+        lvm.modify_vg(ns, vgs[0], add_pvs=_add, remove_pvs=_remove)
+
+class VGModifyNotSupported(VGModify):
+    def execute(self, ns, vgs, _add, _remove):
+        raise errors.LmiFailed("OpenLMI-Storage 0.8 is required on the remote machine")
 
 class VGDelete(command.LmiCheckResult):
     EXPECT = None
@@ -166,13 +197,31 @@ class VGShow(command.LmiLister):
             for line in show.vg_show(ns, vg, self.app.config.human_friendly):
                 yield line
 
-class VG(command.LmiCommandMultiplexer):
+class VG07(command.LmiCommandMultiplexer):
+    # VG subscommand for OpenLMI-Storage 0.7.x and older
     OWN_USAGE = __doc__
     COMMANDS = {
             'list'    : VGList,
             'create'  : VGCreate,
             'delete'  : VGDelete,
             'show'    : VGShow,
+            'modify'  : VGModifyNotSupported,
     }
 
+class VG08(command.LmiCommandMultiplexer):
+    # VG subscommand for OpenLMI-Storage 0.8.0 and newer
+    OWN_USAGE = __doc__
+    COMMANDS = {
+            'list'    : VGList,
+            'create'  : VGCreate,
+            'delete'  : VGDelete,
+            'show'    : VGShow,
+            'modify'  : VGModify,
+    }
 
+class VG(command.LmiSelectCommand):
+    """ Select correct multiplexer for remote openlmi-storage version. """
+    SELECT = [
+            ( 'OpenLMI-Storage >= 0.8.0', VG08),
+            ( 'OpenLMI-Storage', VG07)
+    ]
