@@ -308,4 +308,17 @@ def fs_show(ns, fmt, human_friendly):
     yield("Persistence", cls.PersistenceTypeValues.value_name(
             fmt.PersistenceType))
 
+    size = "Unknown (not mounted)"
+    if fmt.FileSystemSize:
+        size = common.size2str(fmt.FileSystemSize, human_friendly)
+    else:
+        size = "Unknown (not mounted?)"
+    yield("Total space on filesystem", size)
+
+    if fmt.AvailableSpace:
+        free = common.size2str(fmt.AvailableSpace, human_friendly)
+    else:
+        free = "Unknown (not mounted?)"
+    yield("Free space on filesystem", free)
+
     # TODO: add mount points
