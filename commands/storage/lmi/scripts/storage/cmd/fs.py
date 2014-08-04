@@ -73,7 +73,7 @@ from lmi.scripts.storage.common import (size2str, get_devices, get_children,
 LOG = get_logger(__name__)
 
 class FSList(command.LmiLister):
-    COLUMNS = ("Name", "ElementName", "Type")
+    COLUMNS = ("Name", "ElementName", "Type", "Total", "Free space")
 
     def transform_options(self, options):
         """
@@ -96,8 +96,13 @@ class FSList(command.LmiLister):
             else:
                 # it must be LMI_DataFormat
                 fstype = fmt.FormatTypeDescription
-            # TODO: add free space when OpenLMI provides it
-            yield (name, label, fstype)
+            size = "N/A"
+            free = "N/A"
+            if "FileSystemSize" in fmt.properties() and fmt.FileSystemSize:
+                size = size2str(fmt.FileSystemSize, self.app.config.human_friendly)
+            if "AvailableSpace" in fmt.properties() and fmt.AvailableSpace:
+                free = size2str(fmt.AvailableSpace, self.app.config.human_friendly)
+            yield (name, label, fstype, size, free)
 
 
 class FSListSupported(command.LmiLister):
