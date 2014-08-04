@@ -289,7 +289,7 @@ def delete_group(ns, group):
     gid = group.InstanceID
     LOG().debug("Removing group %s (id=%s)", name, gid)
     group.delete()
-    LOG().info("Removed group %s (id=%d)", name, gid)
+    LOG().info("Removed group %s (id=%s)", name, gid)
 
 def is_in_group(group, user):
     """
