@@ -196,6 +196,8 @@ def create_vg(ns, devices, name, extent_size=None):
         service = ns.LMI_StorageConfigurationService.first_instance()
         (ret, outparams, err) = service.SyncCreateOrModifyVG(**args)
         if ret != 0:
+            if err:
+                raise LmiFailed("Cannot create the volume group: %s." % err)
             values = service.CreateOrModifyVG.CreateOrModifyVGValues
             raise LmiFailed("Cannot create the volume group: %s."
                     % (values.value_name(ret),))
