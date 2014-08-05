@@ -78,9 +78,12 @@ Functions
 
 from collections import defaultdict
 import heapq
-import pywbem
 import re
 import time
+try:
+    import lmiwbem as wbem
+except ImportError:
+    import pywbem as wbem
 
 from lmi.shell import LMIInstance, LMIInstanceName
 from lmi.shell import LMIJob
@@ -139,7 +142,7 @@ def _wait_for_job_finished(job):
                     LMIMethod._POLLING_ADAPT_MAX_WAITING_TIME)
         try:
             (refreshed, _, errorstr) = job.refresh()
-        except pywbem.CIMError as err:
+        except wbem.CIMError as err:
             if      (   err.args[0] == 0
                     and err.args[1].lower().startswith('socket error')):
                 if connection_problem_count >= MAX_CONNECTION_PROBLEM_COUNT:
@@ -499,7 +502,7 @@ def install_package(ns, package, force=False, update=False):
             if not isinstance(package, LMIInstance):
                 try:
                     package = package.to_instance()
-                except pywbem.CIMError:
+                except wbem.CIMError:
                     pass
             if getattr(package, 'InstallDate', None) is not None:
                 LOG().info('Package "%s" is already installed.' % nevra)

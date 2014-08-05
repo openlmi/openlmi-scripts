@@ -34,7 +34,10 @@
 Logicalfile management functions.
 """
 
-from pywbem import CIMError
+try:
+    from lmiwbem import CIMError
+except ImportError:
+    from pywbem import CIMError
 
 from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger

@@ -31,7 +31,10 @@
 LMI service provider client library.
 """
 
-import pywbem
+try:
+    import lmiwbem as wbem
+except ImportError:
+    import pywbem as wbem
 import re
 
 from lmi.shell import LMIInstance
@@ -99,8 +102,8 @@ def list_services(ns, kind='enabled'):
                 # list only enabled
                 continue
             yield service
-    except pywbem.CIMError as err:
-        if err.args[0] == pywbem.CIM_ERR_NOT_SUPPORTED:
+    except wbem.CIMError as err:
+        if err.args[0] == wbem.CIM_ERR_NOT_SUPPORTED:
             raise LmiFailed('Service provider is not installed or registered.')
         raise LmiFailed('Failed to list services: %s' % err.args[1])
 
@@ -208,8 +211,8 @@ def get_service(ns, service):
         else:
             raise TypeError("service must be either string or ``LMIInstanceName``")
 
-    except pywbem.CIMError as err:
-        if err.args[0] == pywbem.CIM_ERR_NOT_FOUND:
+    except wbem.CIMError as err:
+        if err.args[0] == wbem.CIM_ERR_NOT_FOUND:
             raise LmiFailed('No such service "%s".' % service)
         else:
             raise LmiFailed('Failed to get service "%s": %s'

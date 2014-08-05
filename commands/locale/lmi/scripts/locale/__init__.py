@@ -31,8 +31,6 @@
 LMI Locale Provider client library.
 """
 
-import pywbem
-
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 

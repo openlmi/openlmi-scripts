@@ -39,7 +39,10 @@ from lmi.scripts.common.errors import LmiFailed
 from lmi.shell.LMIInstanceName import LMIInstanceName
 from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
-import pywbem
+try:
+    import lmiwbem as wbem
+except ImportError
+    import pywbem as wbem
 import lmi.scripts.common
 
 LOG = get_logger(__name__)
@@ -99,8 +102,8 @@ def get_service(ns, service):
     keys = {'Name': service}
     try:
         inst = ns.LMI_SSSDResponder.new_instance_name(keys).to_instance()
-    except pywbem.CIMError, err:
-        if err[0] == pywbem.CIM_ERR_NOT_FOUND:
+    except wbem.CIMError, err:
+        if err[0] == wbem.CIM_ERR_NOT_FOUND:
             raise LmiFailed("Cannot find the service: %s" % service)
         raise
     return inst
@@ -145,8 +148,8 @@ def get_domain(ns, domain):
     keys = {'Name': domain}
     try:
         inst = ns.LMI_SSSDDomain.new_instance_name(keys).to_instance()
-    except pywbem.CIMError, err:
-        if err[0] == pywbem.CIM_ERR_NOT_FOUND:
+    except wbem.CIMError, err:
+        if err[0] == wbem.CIM_ERR_NOT_FOUND:
             raise LmiFailed("Cannot find the domain: %s" % domain)
         raise
     return inst
@@ -155,8 +158,8 @@ def get_backend(ns, domain):
     keys = {'Name': domain}
     try:
         inst = ns.LMI_SSSDBackend.new_instance_name(keys).to_instance()
-    except pywbem.CIMError, err:
-        if err[0] == pywbem.CIM_ERR_NOT_FOUND:
+    except wbem.CIMError, err:
+        if err[0] == wbem.CIM_ERR_NOT_FOUND:
             raise LmiFailed("Cannot find the backend: %s" % domain)
         raise
     return inst

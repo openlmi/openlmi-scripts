@@ -41,7 +41,10 @@ from lmi.scripts.common.errors import LmiFailed
 from lmi.shell.LMIInstanceName import LMIInstanceName
 from lmi.shell.LMIInstance import LMIInstance
 from lmi.scripts.common import get_logger
-import pywbem
+try:
+    import lmiwbem as wbem
+except ImportError:
+    import pywbem as wbem
 import lmi.scripts.common
 
 LOG = get_logger(__name__)
@@ -84,8 +87,8 @@ def get_user(ns, username):
     }
     try:
         user = ns.LMI_Account.new_instance_name(keys).to_instance()
-    except pywbem.CIMError, err:
-        if err[0] == pywbem.CIM_ERR_NOT_FOUND:
+    except wbem.CIMError, err:
+        if err[0] == wbem.CIM_ERR_NOT_FOUND:
             raise LmiFailed("Cannot find the user: %s" % username)
         raise
     return user
@@ -104,8 +107,8 @@ def get_group(ns, groupname):
     keys = {'Name' : groupname, 'CreationClassName': 'LMI_Group'}
     try:
         group = ns.LMI_Group.new_instance_name(keys).to_instance()
-    except pywbem.CIMError, err:
-        if err[0] == pywbem.CIM_ERR_NOT_FOUND:
+    except wbem.CIMError, err:
+        if err[0] == wbem.CIM_ERR_NOT_FOUND:
             raise LmiFailed("Cannot find the group: %s" % groupname)
         raise
     return group

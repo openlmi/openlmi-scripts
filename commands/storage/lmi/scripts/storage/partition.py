@@ -38,7 +38,10 @@ from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
 LOG = get_logger(__name__)
 from lmi.scripts.storage import common
-import pywbem
+try:
+    import lmiwbem as wbem
+except ImportError:
+    import pywbem as wbem
 
 PARTITION_TYPE_PRIMARY = 1
 PARTITION_TYPE_EXTENDED = 2
@@ -132,7 +135,7 @@ def create_partition(ns, device, size=None, partition_type=None):
     try:
         args = { 'extent': device}
         if size:
-            args['Size'] = pywbem.Uint64(size)
+            args['Size'] = wbem.Uint64(size)
 
         if partition_type:
             # create a setting and modify it
@@ -148,7 +151,7 @@ def create_partition(ns, device, size=None, partition_type=None):
                         "LMI_DiskPartitionConfigurationSetting for the " \
                         "partition: %d." % ret)
             setting = outparams['setting'].to_instance()
-            setting.PartitionType = pywbem.Uint16(partition_type)
+            setting.PartitionType = wbem.Uint16(partition_type)
             (ret, _outparams, err) = setting.push()
             if ret != 0:
                 if err:

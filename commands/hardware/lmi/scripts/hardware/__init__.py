@@ -32,7 +32,10 @@
 LMI hardware provider client library.
 """
 
-import pywbem
+try:
+    import lmiwbem as wbem
+except ImportError:
+    import pywbem as wbem
 
 from lmi.shell import LMIClassNotFound
 from lmi.scripts.common import get_logger
@@ -68,9 +71,9 @@ def _cache_replies(ns, class_name, method):
         if not (class_name, method) in cache:
             i = getattr(ns, class_name)
             cache[(class_name, method)] = getattr(i, method)()
-    except (LMIClassNotFound, pywbem.CIMError) as err:
-        if (   isinstance(err, pywbem.CIMError)
-           and err.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
+    except (LMIClassNotFound, wbem.CIMError) as err:
+        if (   isinstance(err, wbem.CIMError)
+           and err.args[0] != wbem.CIM_ERR_NOT_SUPPORTED):
             raise
         LOG().info('System has old openlmi-hardware package installed,'
             ' class "%s" is not available.', class_name)
