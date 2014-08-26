@@ -28,67 +28,43 @@
 # Author: Tomas Smetana <tsmetana@redhat.com>
 #
 """
-LMI realmd provider client library.
+Manage AD or Kerberos domain membership.
+
+Usage:
+    %(cmd)s show
+    %(cmd)s join -u <user> [-p <password>] domain
+    %(cmd)s leave -u <user> [-p <password>] domain
+
+Commands:
+    show         Show joined domain.
+    join         Join the given domain.
+    leave        Leave the given domain.
+
+Options:
+    -u --user     The username to be used when authenticating to the domain.
+    -p --password Optional password for the authentication. If omitted you will
+                  be prompted for one.
 """
 
-import pywbem
+from lmi.scripts.common import command
 
-from lmi.shell import LMIClassNotFound
-from lmi.scripts.common import get_logger
-from lmi.scripts.common import get_computer_system
+class RealmdBase(command.LmiLister):
+    COLUMNS = []
 
-LOG = get_logger(__name__)
+class Show(RealmdBase):
+    CALLABLE = 'lmi.scripts.realmd:show'
 
-def read_pasword():
-    pass
+class Join(RealmdBase):
+    CALLABLE = 'lmi.scripts.realmd:join'
 
+class Leave(RealmdBase):
+    CALLABLE = 'lmi.scripts.realmd:leave'
 
-def join(ns, domain, user, password = None):
-    """
-    Join the domain.
-
-    :param domain: The domain to be joined.
-    :type domain: string
-    :param string user: User name to authenticate with
-    :type user: string
-    :param string password: The authentication password
-    :type password: string
-    """
-    try:
-        r = ns.LMI_RealmdService.first_instance()
-        if (password == None):
-            password = read_password();
-        r.JoinDomain(domain, user, password)
-    except:
-        print "Exception goes here"
-
-def leave(ns, domain, user, password = None):
-    """
-    Leave the domain.
-
-    :param domain: The domain to be left.
-    :type domain: string
-    :param string user: User name to authenticate with
-    :type user: string
-    :param string password: The authentication password
-    :type password: string
-    """
-    try:
-        r = ns.LMI_RealmdService.first_instance()
-        if (password == None):
-            password = read_password();
-        r.LeaveDomain(domain, user, password)
-    except:
-        print "Exception goes here"
-
-def show(ns):
-    """
-    Show the joined domain.
-
-    """
-    try:
-        r = ns.LMI_RealmdService.first_instance()
-        print r.Domain
-    except:
-        print "Exception goes here"
-
+Realmd = command.register_subcommands(
+        'Realmd', __doc__,
+        { 'show'         : Show
+        , 'join'         : Join
+        , 'leave'        : Leave
+        },
+        fallback_command=Show
+    )
