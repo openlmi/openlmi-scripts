@@ -32,6 +32,7 @@ LMI realmd provider client library.
 """
 
 import pywbem
+from getpass import getpass
 
 from lmi.shell import LMIClassNotFound
 from lmi.scripts.common import get_logger
@@ -39,47 +40,46 @@ from lmi.scripts.common import get_computer_system
 
 LOG = get_logger(__name__)
 
-def read_pasword():
-    pass
+def read_password():
+    return getpass('Realm authentication password: ')
 
-
-def join(ns, domain, user, password = None):
+def join(ns, domain, user, _password = None):
     """
     Join the domain.
 
     :param domain: The domain to be joined.
     :type domain: string
-    :param string user: User name to authenticate with
+    :param user: User name to authenticate with
     :type user: string
-    :param string password: The authentication password
+    :param password: The authentication password
     :type password: string
     """
     try:
         r = ns.LMI_RealmdService.first_instance()
-        if (password == None):
-            password = read_password();
-        r.JoinDomain(domain, user, password)
-    except:
-        print "Exception goes here"
+        if (_password == None):
+            _password = read_password();
+        r.JoinDomain(Domain = domain, User = user, Password = _password)
+    except Exception as e:
+        print e
 
-def leave(ns, domain, user, password = None):
+def leave(ns, domain, user, _password = None):
     """
     Leave the domain.
 
     :param domain: The domain to be left.
     :type domain: string
-    :param string user: User name to authenticate with
+    :param user: User name to authenticate with
     :type user: string
-    :param string password: The authentication password
+    :param password: The authentication password
     :type password: string
     """
     try:
         r = ns.LMI_RealmdService.first_instance()
-        if (password == None):
-            password = read_password();
-        r.LeaveDomain(domain, user, password)
-    except:
-        print "Exception goes here"
+        if (_password == None):
+            _password = read_password();
+        r.LeaveDomain(Domain = domain, User = user, Password = _password)
+    except Exception as e:
+        print e
 
 def show(ns):
     """
@@ -89,6 +89,5 @@ def show(ns):
     try:
         r = ns.LMI_RealmdService.first_instance()
         print r.Domain
-    except:
-        print "Exception goes here"
-
+    except Exception as e:
+        print e

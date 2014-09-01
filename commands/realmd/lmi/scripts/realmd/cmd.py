@@ -31,9 +31,9 @@
 Manage AD or Kerberos domain membership.
 
 Usage:
-    %(cmd)s show
-    %(cmd)s join -u <user> [-p <password>] domain
-    %(cmd)s leave -u <user> [-p <password>] domain
+    %(cmd)s [show]
+    %(cmd)s join -u <user> [-p <password>] -d <domain>
+    %(cmd)s leave -u <user> [-p <password>] -d <domain>
 
 Commands:
     show         Show joined domain.
@@ -41,23 +41,24 @@ Commands:
     leave        Leave the given domain.
 
 Options:
-    -u --user     The username to be used when authenticating to the domain.
-    -p --password Optional password for the authentication. If omitted you will
-                  be prompted for one.
+    -u, --user     The username to be used when authenticating to the domain.
+    -p, --password Optional password for the authentication. If omitted you will
+                   be prompted for one.
+    -d, --domain   The domain to be joined/left.
 """
 
 from lmi.scripts.common import command
 
-class RealmdBase(command.LmiLister):
-    COLUMNS = []
-
-class Show(RealmdBase):
+class Show(command.LmiCheckResult):
+    EXPECT = None
     CALLABLE = 'lmi.scripts.realmd:show'
 
-class Join(RealmdBase):
+class Join(command.LmiCheckResult):
+    EXPECT = None
     CALLABLE = 'lmi.scripts.realmd:join'
 
-class Leave(RealmdBase):
+class Leave(command.LmiCheckResult):
+    EXPECT = None
     CALLABLE = 'lmi.scripts.realmd:leave'
 
 Realmd = command.register_subcommands(
