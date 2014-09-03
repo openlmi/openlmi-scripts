@@ -41,7 +41,7 @@ from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
 try:
     import lmiwbem as wbem
-except ImportError
+except ImportError:
     import pywbem as wbem
 import lmi.scripts.common
 
