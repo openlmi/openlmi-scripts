@@ -38,7 +38,7 @@ cmdregen: cmdline.generated
 
 cmdline.generated:
 	if ! python -c 'import lmi.scripts.$(COMMAND_NAME)' >/dev/null; then \
-		echo "Please install install the command library first." >&2; \
+		echo "Please install the command library first." >&2; \
 		exit 1; \
 	fi
 	( \
