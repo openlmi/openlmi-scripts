@@ -41,10 +41,10 @@ Commands:
     leave        Leave the given domain.
 
 Options:
-    -u, --user     The username to be used when authenticating to the domain.
-    -p, --password Optional password for the authentication. If omitted you will
-                   be prompted for one.
-    -d, --domain   The domain to be joined/left.
+    -u, --user      The username to be used when authenticating to the domain.
+    -p, --password  Optional password for the authentication. If omitted you
+                    will be prompted for one.
+    -d, --domain    The domain to be joined/left.
 """
 
 from lmi.scripts.common import command
