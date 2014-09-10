@@ -34,9 +34,8 @@ LMI realmd provider client library.
 import pywbem
 from getpass import getpass
 
-from lmi.shell import LMIClassNotFound
+from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
-from lmi.scripts.common import get_computer_system
 
 LOG = get_logger(__name__)
 
@@ -59,8 +58,9 @@ def join(ns, domain, user, _password = None):
         if (_password == None):
             _password = read_password();
         r.JoinDomain(Domain = domain, User = user, Password = _password)
+        LOG.info("Joined domain: " + domain)
     except Exception as e:
-        print e
+        raise LmiFailed(e)
 
 def leave(ns, domain, user, _password = None):
     """
@@ -78,8 +78,9 @@ def leave(ns, domain, user, _password = None):
         if (_password == None):
             _password = read_password();
         r.LeaveDomain(Domain = domain, User = user, Password = _password)
+        LOG.info("Left domain: " + domain)
     except Exception as e:
-        print e
+        raise LmiFailed(e)
 
 def show(ns):
     """
@@ -90,4 +91,4 @@ def show(ns):
         r = ns.LMI_RealmdService.first_instance()
         print r.Domain
     except Exception as e:
-        print e
+        raise LmiFailed(e)
