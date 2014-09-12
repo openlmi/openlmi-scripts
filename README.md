@@ -115,22 +115,23 @@ be applied to all commands/libraries at once. They are:
 
   * `clean` - remove temporary and generated files
   * `develop` - install library in developing mode
-  * `doc` - build documentation
+  * `doc` - build html documentation
   * `readme` - create `README.txt` file out of `README.md`
   * `sdist` - creates source tarball in `dist` directory
   * `setup` - writes a `setup.py` and `doc/conf.py` files from their skeletons
   * `upload` - upload to *PyPI*
-  * `upload_docs` - upload documentation to [pythonhosted]
+  * `upload-docs` - upload documentation to [pythonhosted]
 
 Each script's `Makefile` has the same interface. The root `Makefile` is an
 exception. It takes care of command libraries. It defines all the rules above
 with `-all` suffix. They operate on all subcommands at once. Such rules are:
 
   * `clean-all`
+  * `doc-all`
   * `develop-all`
   * `setup-all`
   * `upload-all`
-  * `upload\_docs-all`
+  * `upload-docs-all`
 
 To limit the set of commands that shall be processed, the `COMMANDS`
 environment variable may be used. For example following command:

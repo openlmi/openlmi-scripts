@@ -6,9 +6,19 @@ VERSION    ?= $(shell cat $(SELFDIR)/VERSION)
 EGGNAME     = $(shell python setup.py --name)
 SRCDIST     = $(EGGNAME)-$(VERSION).tar.gz
 
-.PHONY: readme sdist develop upload_docs clean all doc setup
+.PHONY: readme sdist develop upload-docs clean all doc setup help
 
-all: sdist
+help:
+	@echo "Please use \`make <target>' where target is one of:"
+	@echo "  setup           Write setup.py script from template."
+	@echo "  doc             Build html documentation."
+	@echo "  sdist           Create source tarball."
+	@echo "  upload          Upload command as a python eggs to PyPI."
+	@echo "  upload-docs     Upload commands' documentation to pythonhosted.org."
+	@echo "  clean           Remove all temporary files."
+	@echo "  develop         Install commands into DEVELOPDIR which defaults"
+	@echo "                  to PYTHONPATH. If PYTHONPATH is unset, defaults to"
+	@echo "                  '/workspace/python_sandbox'"
 
 setup: setup.py doc/conf.py
 
@@ -30,7 +40,7 @@ readme: README.txt
 	pandoc --from=markdown --to=rst -o $@ $?
 
 doc: setup
-	make -C doc
+	make -C doc html
 
 upload: setup .$(VERSION).upload
 
@@ -38,9 +48,9 @@ upload: setup .$(VERSION).upload
 	python setup.py sdist upload
 	touch $@
 
-upload_docs: setup .$(VERSION).upload_docs
+upload-docs: setup .$(VERSION).upload_docs
 
-.$(VERSION).upload_docs:
+.$(VERSION).upload-docs:
 	make -C doc html
 	python setup.py upload_docs
 	touch $@
