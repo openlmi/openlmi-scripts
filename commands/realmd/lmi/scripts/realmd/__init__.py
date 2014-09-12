@@ -96,7 +96,10 @@ def show(ns):
     """
     try:
         r = ns.LMI_RealmdService.first_instance()
-        print r.Domain
+        if (r.Domain != None):
+            print r.Domain
+        else:
+            print "No domain joined"
     except (LMIClassNotFound, pywbem.CIMError) as e:
         if (isinstance(e, pywbem.CIMError)
                 and e.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
