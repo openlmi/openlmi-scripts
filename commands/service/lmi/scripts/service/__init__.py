@@ -264,11 +264,10 @@ def get_enabled_string(ns, service):
     Return human friendly string for enabled state.
 
     :param service: Either a service instance of its name.
-    :returns: Status description. One of:
-        ``{ Yes, No, Static }``.
-    ``Static`` represents a service that can not be enabled or disabled,
-    and are run only if something depends on them. It lacks ``[Install]``
-    section.
+    :returns: Status description. One of: ``{ Yes, No, Static }``.
+        Where *Static* represents a service that can not be enabled or
+        disabled, and are run only if something depends on them. It lacks
+        ``[Install]`` section.
     :rtype: string
     """
     service = get_service(ns, service)
