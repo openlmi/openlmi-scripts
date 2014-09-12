@@ -1,5 +1,5 @@
-Python reference for OpenLMI client scripts
-===========================================
+Storage Script python reference
+===============================
 
 .. toctree::
    :maxdepth: 2

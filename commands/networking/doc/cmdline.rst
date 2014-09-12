@@ -1,6 +1,6 @@
-LMI command line reference
-==========================
+Networking command line reference
+=================================
 
-These commands allow to manage networking devices and their configuration.
+This command allows to manage networking devices and their configuration.
 
 .. include:: cmdline.generated

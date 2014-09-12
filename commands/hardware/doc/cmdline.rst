@@ -1,5 +1,5 @@
-LMI command line reference
-==========================
+Hardware command line reference
+===============================
 
 This command can display various hardware information.
 

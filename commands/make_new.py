@@ -25,6 +25,7 @@ from sphinx import quickstart
 RE_COMMAND_NAME = re.compile(r'^([a-z]+(_[a-z]+)*)$')
 RE_RST_STATEMENT = re.compile(r'^\s*(:[^:]+:.*)')
 RE_HTML_THEME = re.compile(r"^html_theme\s*=\s*.*")
+RE_PROJECT_NAME = re.compile(r'^OpenLMI (.*) Script$', re.I)
 
 SETUP_TEMPLATE = \
 u"""#!/usr/bin/env python
@@ -112,8 +113,7 @@ BSD_LICENSE_HEADER = \
 NAMESPACE_INIT = "__import__('pkg_resources').declare_namespace(__name__)"
 
 DOC_CMDLINE = \
-"""LMI command line reference
-==========================
+"""{heading}
 ..
     Write some description here.
 
@@ -121,8 +121,8 @@ DOC_CMDLINE = \
 """
 
 DOC_PYTHON_REFERENCE = \
-"""Python reference for OpenLMI client scripts
-===========================================
+"""{heading}
+
 .. automodule:: lmi.scripts.{name}
     :members:
 """
@@ -197,7 +197,13 @@ def write_empty(config, output_path):
 
 def write_cmdline(config, output_path):
     with open(output_path, 'w') as cmdline_file:
-        cmdline_file.write(DOC_CMDLINE)
+        name = str(config['command']).capitalize()
+        match = RE_PROJECT_NAME.match(config['project_name'])
+        if match:
+            name = match.group(1)
+        title = "%s command line reference" % name
+        heading = "%s\n%s" % (title, '='*len(title))
+        cmdline_file.write(DOC_CMDLINE.format(heading=heading))
 
 def write_makefile(config, output_path):
     with open(output_path, 'w') as cmdline_file:
@@ -265,7 +271,14 @@ def make_doc_directory(config, path):
     modify_doc_makefile(config, os.path.join(path, 'Makefile'))
     modify_doc_index(config, os.path.join(path, 'index.rst'))
     with open(os.path.join(path, 'python.rst'), 'w') as dst:
-        dst.write(DOC_PYTHON_REFERENCE.format(name=config['command']))
+        name = str(config['command']).capitalize()
+        match = RE_PROJECT_NAME.match(config['project_name'])
+        if match:
+            name = match.group(1)
+        title = "%s Script python reference" % name
+        heading = "%s\n%s" % (title, '='*len(title))
+        dst.write(DOC_PYTHON_REFERENCE.format(
+            name=config['command'], heading=heading))
 
 STRUCTURE = {
         'doc' : make_doc_directory,
@@ -336,7 +349,7 @@ def parse_command_line(args=None):
             else:
                 options[info] = default_value
     if options['project_name'] is None:
-        default = 'OpenLMI {command} scripts'.format(
+        default = 'OpenLMI {command} Script'.format(
                 command=options['command'].capitalize())
         try:
             options['project_name'] = ask(

@@ -1,5 +1,5 @@
-LMI command line reference
-==========================
+Storage command line reference
+==============================
 
 These commands allow listing and manipulation with block devices.
 

@@ -1,5 +1,5 @@
-LMI command line reference
-==========================
+System command line reference
+=============================
 
 This command can display general system information.
 

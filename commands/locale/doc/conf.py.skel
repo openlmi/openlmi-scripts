@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# openlmi-scripts-locale documentation build configuration file, created by
+# OpenLMI Locale Script documentation build configuration file, created by
 # sphinx-quickstart on Wed Jun 18 15:17:19 2014.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'openlmi-scripts-locale'
+project = u'OpenLMI Locale Script'
 copyright = u'2014, Vitezslav Crhonek'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'openlmi-scripts-localedoc'
+htmlhelp_basename = 'OpenLMILocaleScriptdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'openlmi-scripts-locale.tex', u'openlmi-scripts-locale Documentation',
+  ('index', 'OpenLMILocaleScript.tex', u'OpenLMI Locale Script Documentation',
    u'Vitezslav Crhonek', 'manual'),
 ]
 
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'openlmi-scripts-locale', u'openlmi-scripts-locale Documentation',
+    ('index', 'openlmilocalescript', u'OpenLMI Locale Script Documentation',
      [u'Vitezslav Crhonek'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'openlmi-scripts-locale', u'openlmi-scripts-locale Documentation',
-   u'Vitezslav Crhonek', 'openlmi-scripts-locale', 'One line description of project.',
+  ('index', 'OpenLMILocaleScript', u'OpenLMI Locale Script Documentation',
+   u'Vitezslav Crhonek', 'OpenLMILocaleScript', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -245,7 +245,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'openlmi-scripts-locale'
+epub_title = u'OpenLMI Locale Script'
 epub_author = u'Vitezslav Crhonek'
 epub_publisher = u'Vitezslav Crhonek'
 epub_copyright = u'2014, Vitezslav Crhonek'

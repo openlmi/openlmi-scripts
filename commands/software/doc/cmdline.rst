@@ -1,6 +1,6 @@
-LMI command line reference
-==========================
+Software command line reference
+===============================
 
-These commands allow to list and manage rpm packages and repositories.
+This command allows to list and manage rpm packages and repositories.
 
 .. include:: cmdline.generated

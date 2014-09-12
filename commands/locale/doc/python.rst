@@ -1,6 +1,5 @@
-Python reference for OpenLMI client scripts
-===========================================
-Locale Module API
------------------
+Locale Script python reference
+==============================
+
 .. automodule:: lmi.scripts.locale
     :members:

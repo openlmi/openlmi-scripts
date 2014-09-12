@@ -1,6 +1,6 @@
-LMI command line reference
-==========================
+Power Management command line reference
+=======================================
 
-These commands allow to manage networking devices and their configuration.
+This command allows to display and control system power states.
 
 .. include:: cmdline.generated

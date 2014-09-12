@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# OpenLMI Storage Scripts documentation build configuration file, created by
+# OpenLMI Storage Script documentation build configuration file, created by
 # sphinx-quickstart on Thu Aug  8 15:36:58 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'OpenLMI Storage Scripts'
+project = u'OpenLMI Storage Script'
 copyright = u'2013-2014, Red Hat, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_use_smartypants = False
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'OpenLMIStorageScriptsdoc'
+htmlhelp_basename = 'OpenLMIStorageScriptdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'OpenLMIStorageScripts.tex', u'OpenLMI Storage Scripts Documentation',
+  ('index', 'OpenLMIStorageScript.tex', u'OpenLMI Storage Script Documentation',
    u'Red Hat, Inc.', 'manual'),
 ]
 
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'openlmistoragescripts', u'OpenLMI Storage Scripts Documentation',
+    ('index', 'openlmistoragescript', u'OpenLMI Storage Script Documentation',
      [u'Red Hat, Inc.'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'OpenLMIStorageScripts', u'OpenLMI Storage Scripts Documentation',
-   u'Red Hat, Inc.', 'OpenLMIStorageScripts', 'One line description of project.',
+  ('index', 'OpenLMIStorageScript', u'OpenLMI Storage Script Documentation',
+   u'Red Hat, Inc.', 'OpenLMIStorageScript', 'One line description of project.',
    'Miscellaneous'),
 ]
 

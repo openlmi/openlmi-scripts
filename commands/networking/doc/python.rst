@@ -1,5 +1,5 @@
-Python reference for OpenLMI client scripts
-===========================================
+Networking Script python reference
+==================================
 
 Main interface functions wrapped with ``lmi`` commands are:
 

@@ -1,6 +1,6 @@
-LMI command line reference
-==========================
+SSSD command line reference
+===========================
 
-These commands allow to manage SSSD service.
+This command allows to manage SSSD service.
 
 .. include:: cmdline.generated

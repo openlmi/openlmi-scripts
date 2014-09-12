@@ -1,8 +1,6 @@
-Python reference for OpenLMI client scripts
-===========================================
+SSSD Script python reference
+============================
 
-Service Module API
--------------------
 .. automodule:: lmi.scripts.sssd
     :members:
 

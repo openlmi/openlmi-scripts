@@ -1,6 +1,6 @@
-LMI command line reference
-==========================
+Service command line reference
+==============================
 
-These commands allow to list and manage rpm packages and repositories.
+This command allows to list and manage system services.
 
 .. include:: cmdline.generated

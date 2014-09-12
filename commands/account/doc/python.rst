@@ -1,7 +1,5 @@
-Python reference for OpenLMI client scripts
-===========================================
+Account Script python reference
+===============================
 
-Account Module API
------------------------
 .. automodule:: lmi.scripts.account
     :members:

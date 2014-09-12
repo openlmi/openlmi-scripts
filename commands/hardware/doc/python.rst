@@ -1,5 +1,5 @@
-Python reference for OpenLMI client scripts
-===========================================
+Hardware Script python reference
+================================
 
 Main interface functions wrapped with ``lmi`` commands are:
 

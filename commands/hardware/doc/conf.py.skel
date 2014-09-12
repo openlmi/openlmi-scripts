@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# OpenLMI Hardware Scripts documentation build configuration file, created by
+# OpenLMI Hardware Script documentation build configuration file, created by
 # sphinx-quickstart on Wed Oct  2 14:25:56 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'OpenLMI Hardware Scripts'
+project = u'OpenLMI Hardware Script'
 copyright = u'2013-2014, Red Hat, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'OpenLMIHardwareScriptsdoc'
+htmlhelp_basename = 'OpenLMIHardwareScriptdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'OpenLMIHardwareScripts.tex', u'OpenLMI Hardware Scripts Documentation',
+  ('index', 'OpenLMIHardwareScript.tex', u'OpenLMI Hardware Script Documentation',
    u'Peter Schiffer', 'manual'),
 ]
 
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'openlmihardwarescripts', u'OpenLMI Hardware Scripts Documentation',
+    ('index', 'openlmihardwarescript', u'OpenLMI Hardware Script Documentation',
      [u'Peter Schiffer'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'OpenLMIHardwareScripts', u'OpenLMI Hardware Scripts Documentation',
-   u'Peter Schiffer', 'OpenLMIHardwareScripts', 'One line description of project.',
+  ('index', 'OpenLMIHardwareScript', u'OpenLMI Hardware Script Documentation',
+   u'Peter Schiffer', 'OpenLMIHardwareScript', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -245,7 +245,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'OpenLMI Hardware Scripts'
+epub_title = u'OpenLMI Hardware Script'
 epub_author = u'Peter Schiffer'
 epub_publisher = u'Peter Schiffer'
 epub_copyright = u'2013-2014, Red Hat, Inc.'
