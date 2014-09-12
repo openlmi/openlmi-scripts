@@ -47,12 +47,9 @@ def join(ns, domain, user, _password = None):
     """
     Join the domain.
 
-    :param domain: The domain to be joined.
-    :type domain: string
-    :param user: User name to authenticate with
-    :type user: string
-    :param password: The authentication password
-    :type password: string
+    :param string domain: The domain to be joined.
+    :param string user: User name to authenticate with
+    :param string password: The authentication password
     """
     try:
         r = ns.LMI_RealmdService.first_instance()
@@ -73,12 +70,9 @@ def leave(ns, domain, user, _password = None):
     """
     Leave the domain.
 
-    :param domain: The domain to be left.
-    :type domain: string
-    :param user: User name to authenticate with
-    :type user: string
-    :param password: The authentication password
-    :type password: string
+    :param string domain: The domain to be left.
+    :param string user: User name to authenticate with
+    :param string password: The authentication password
     """
     try:
         r = ns.LMI_RealmdService.first_instance()
