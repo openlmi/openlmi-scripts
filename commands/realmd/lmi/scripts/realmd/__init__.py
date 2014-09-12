@@ -36,6 +36,7 @@ from getpass import getpass
 
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
+from lmi.shell import LMIClassNotFound
 
 LOG = get_logger(__name__)
 
@@ -59,6 +60,12 @@ def join(ns, domain, user, _password = None):
             _password = read_password();
         r.JoinDomain(Domain = domain, User = user, Password = _password)
         LOG.info("Joined domain: " + domain)
+    except (LMIClassNotFound, pywbem.CIMError) as e:
+        if (isinstance(e, pywbem.CIMError)
+                and e.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
+            raise
+        LOG().error('The realmd provider not found or incorrect version installed,'
+                ' class LMI_RealmdService not available.')
     except Exception as e:
         raise LmiFailed(e)
 
@@ -79,6 +86,12 @@ def leave(ns, domain, user, _password = None):
             _password = read_password();
         r.LeaveDomain(Domain = domain, User = user, Password = _password)
         LOG.info("Left domain: " + domain)
+    except (LMIClassNotFound, pywbem.CIMError) as e:
+        if (isinstance(e, pywbem.CIMError)
+                and e.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
+            raise
+        LOG().error('The realmd provider not found or incorrect version installed,'
+                ' class LMI_RealmdService not available.')
     except Exception as e:
         raise LmiFailed(e)
 
@@ -90,5 +103,11 @@ def show(ns):
     try:
         r = ns.LMI_RealmdService.first_instance()
         print r.Domain
+    except (LMIClassNotFound, pywbem.CIMError) as e:
+        if (isinstance(e, pywbem.CIMError)
+                and e.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
+            raise
+        LOG().error('The realmd provider not found or incorrect version installed,'
+                ' class LMI_RealmdService not available.')
     except Exception as e:
         raise LmiFailed(e)
