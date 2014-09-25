@@ -1,3 +1,5 @@
+.. _openlmi-scripts-locale-cmd:
+
 Locale command line reference
 =============================
 

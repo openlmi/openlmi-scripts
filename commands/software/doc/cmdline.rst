@@ -1,3 +1,5 @@
+.. _openlmi-scripts-software-cmd:
+
 Software command line reference
 ===============================
 

@@ -1,3 +1,5 @@
+.. _openlmi-scripts-journald-cmd:
+
 Journald command line reference
 ===============================
 

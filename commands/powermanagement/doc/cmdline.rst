@@ -1,3 +1,5 @@
+.. _openlmi-scripts-powermanagement-cmd:
+
 Power Management command line reference
 =======================================
 

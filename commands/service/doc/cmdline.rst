@@ -1,3 +1,5 @@
+.. _openlmi-scripts-service-cmd:
+
 Service command line reference
 ==============================
 

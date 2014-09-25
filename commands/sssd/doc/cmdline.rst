@@ -1,3 +1,5 @@
+.. _openlmi-scripts-sssd-cmd:
+
 SSSD command line reference
 ===========================
 

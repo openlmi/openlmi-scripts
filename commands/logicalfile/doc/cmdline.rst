@@ -1,3 +1,5 @@
+.. _openlmi-scripts-logicalfile-cmd:
+
 Logical File command line reference
 ===================================
 

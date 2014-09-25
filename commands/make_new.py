@@ -113,7 +113,9 @@ BSD_LICENSE_HEADER = \
 NAMESPACE_INIT = "__import__('pkg_resources').declare_namespace(__name__)"
 
 DOC_CMDLINE = \
-"""{heading}
+""".. _openlmi-scripts-{command}-cmd:
+
+{heading}
 ..
     Write some description here.
 
@@ -203,7 +205,9 @@ def write_cmdline(config, output_path):
             name = match.group(1)
         title = "%s command line reference" % name
         heading = "%s\n%s" % (title, '='*len(title))
-        cmdline_file.write(DOC_CMDLINE.format(heading=heading))
+        cmdline_file.write(DOC_CMDLINE.format(
+            command=config['command'],
+            heading=heading))
 
 def write_makefile(config, output_path):
     with open(output_path, 'w') as cmdline_file:

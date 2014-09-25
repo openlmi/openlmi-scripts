@@ -1,3 +1,5 @@
+.. _openlmi-scripts-networking-cmd:
+
 Networking command line reference
 =================================
 

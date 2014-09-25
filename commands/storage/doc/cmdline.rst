@@ -1,3 +1,5 @@
+.. _openlmi-scripts-storage-cmd:
+
 Storage command line reference
 ==============================
 

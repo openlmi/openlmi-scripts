@@ -1,3 +1,5 @@
+.. _openlmi-scripts-account-cmd:
+
 Account command line reference
 ==============================
 

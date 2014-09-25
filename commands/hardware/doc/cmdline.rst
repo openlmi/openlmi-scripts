@@ -1,3 +1,5 @@
+.. _openlmi-scripts-hardware-cmd:
+
 Hardware command line reference
 ===============================
 
