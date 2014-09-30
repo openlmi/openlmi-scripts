@@ -1,0 +1,46 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
+    !!!!!!!!!
+
+realmd
+------
+
+Manage AD or Kerberos domain membership.
+
+
+**Usage:**
+
+    **lmi** **realmd** [show]
+
+    **lmi** **realmd** **join** \ **-u**\  \ *<user>*\  [\ **-p**\  \ *<password>*\ ] \ **-d**\  \ *<domain>*\ 
+
+    **lmi** **realmd** **leave** \ **-u**\  \ *<user>*\  [\ **-p**\  \ *<password>*\ ] \ **-d**\  \ *<domain>*\ 
+
+
+
+**Commands:**
+
+
+    **show**
+        Show joined domain.
+
+    **join**
+        Join the given domain.
+
+    **leave**
+        Leave the given domain.
+
+**Options:**
+
+
+    **-u, --user**
+        The username to be used when authenticating to the domain.
+
+    **-p, --password**
+        Optional password for the authentication. If omitted you
+        will be prompted for one.
+
+    **-d, --domain**
+        The domain to be joined/left.
+
