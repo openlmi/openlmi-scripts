@@ -1,3 +1,5 @@
+.. _openlmi-scripts-storage-python:
+
 Storage Script python reference
 ===============================
 

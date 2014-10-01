@@ -1,3 +1,5 @@
+.. _openlmi-scripts-hardware-python:
+
 Hardware Script python reference
 ================================
 

@@ -1,3 +1,5 @@
+.. _openlmi-scripts-networking-python:
+
 Networking Script python reference
 ==================================
 

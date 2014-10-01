@@ -1,3 +1,5 @@
+.. _openlmi-scripts-sssd-python:
+
 SSSD Script python reference
 ============================
 

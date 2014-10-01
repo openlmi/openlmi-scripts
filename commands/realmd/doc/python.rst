@@ -1,3 +1,5 @@
+.. _openlmi-scripts-realmd-python:
+
 Realmd Script python reference
 ==============================
 
