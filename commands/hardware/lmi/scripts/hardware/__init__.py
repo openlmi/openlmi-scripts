@@ -192,10 +192,14 @@ def get_system_info(ns):
     :rtype: List of tuples
     """
     result = init_result(ns)
-    i = get_single_instance(ns, 'LMI_Chassis')
-    if not i:
-        result.append(('System info:', 'N/A'))
+
+    try:
+        i = get_single_instance(ns, 'LMI_Chassis')
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_Chassis. Is openlmi-hardware package installed on the server?')]
         return result
+
     if i.Model and i.ProductName:
         model = '%s (%s)' % (i.Model, i.ProductName)
     elif i.Model:
@@ -204,9 +208,13 @@ def get_system_info(ns):
         model = i.ProductName
     else:
         model = 'N/A'
+
     virt = getattr(i, 'VirtualMachine', None)
-    if not virt:
+    if virt is None:
+        virt = 'N/A. You are probably using old openlmi-hardware package on the server.'
+    elif not virt:
         virt = 'N/A'
+
     result += [
           ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
                i.ChassisPackageType)),
@@ -223,16 +231,26 @@ def get_motherboard_info(ns):
     :rtype: List of tuples
     """
     result = init_result(ns)
-    i = get_single_instance(ns, 'LMI_Baseboard')
-    if not i:
-        result.append(('Motherboard info:', 'N/A'))
+
+    try:
+        i = get_single_instance(ns, 'LMI_Baseboard')
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_Baseboard. Is openlmi-hardware package installed on the server?')]
         return result
+
+    if not i:
+        result += [(get_colored_string('warning:', YELLOW_COLOR),
+                    'LMI_Baseboard instance is missing. This usually means that the server is virtual machine.')]
+        return result
+
     model = i.Model
     manufacturer = i.Manufacturer
     if not model:
         model = 'N/A'
     if not manufacturer:
         manufacturer = 'N/A'
+
     result += [
           ('Motherboard:', model),
           ('Manufacturer:', manufacturer)]
@@ -244,16 +262,21 @@ def get_cpu_info(ns):
     :rtype: List of tuples
     """
     result = init_result(ns)
-    cpus = get_all_instances(ns, 'LMI_Processor')
-    cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
-    if not cpus or not cpu_caps:
-        result.append(('Processor info:', 'N/A'))
+
+    try:
+        cpus = get_all_instances(ns, 'LMI_Processor')
+        cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing CPU related classes. Is openlmi-hardware package installed on the server?')]
         return result
+
     cores = 0
     threads = 0
     for i in cpu_caps:
         cores += i.NumberOfProcessorCores
         threads += i.NumberOfHardwareThreads
+
     result += [
           ('CPU:', cpus[0].Name),
           ('Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
@@ -268,11 +291,14 @@ def get_memory_info(ns):
     :rtype: List of tuples
     """
     result = init_result(ns)
-    memory = get_single_instance(ns, 'LMI_Memory')
-    phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
-    memory_slots = get_all_instances(ns, 'LMI_MemorySlot')
-    if not memory:
-        result.append(('Memory info:', 'N/A'))
+
+    try:
+        memory = get_single_instance(ns, 'LMI_Memory')
+        phys_memory = get_all_instances(ns, 'LMI_PhysicalMemory')
+        memory_slots = get_all_instances(ns, 'LMI_MemorySlot')
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing memory related classes. Is openlmi-hardware package installed on the server?')]
         return result
 
     size = format_memory_size(memory.NumberOfBlocks)
@@ -326,9 +352,15 @@ def get_disks_info(ns):
     result = init_result(ns)
     result.append(('Disks:', ''))
 
-    hdds = get_all_instances(ns, 'LMI_DiskDrive')
+    try:
+        hdds = get_all_instances(ns, 'LMI_DiskDrive')
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing LMI_DiskDrive class. Openlmi-hardware package is probably out-dated.')]
+        return result
+
     if not hdds:
-        result.append((' N/A', ''))
+        result.append((' N/A', 'No disk was detected on the system.'))
         return result
 
     first_disk = True
