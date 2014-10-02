@@ -3,6 +3,9 @@
 Storage Script python reference
 ===============================
 
+.. automodule:: lmi.scripts.storage
+    :members:
+
 .. toctree::
    :maxdepth: 2
 

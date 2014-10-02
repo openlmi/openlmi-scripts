@@ -3,7 +3,45 @@
 Storage command line reference
 ==============================
 
-These commands allow listing and manipulation with block devices.
+``lmi storage`` is a command for
+:ref:`LMI metacommand <lmi_metacommand>`,
+which allows listing and manipulation of storage on a remote host with installed
+:ref:OpenLMI storage provider <openlmi-storage-provider>`.
+
+Available commands:
+
+lmi `storage`_
+    Generic information about storage devices.
+
+lmi `storage fs`_
+    Filesystem and other data format management.
+
+lmi `storage luks`_
+    LUKS management.
+
+lmi `storage lv`_
+    Logical Volume management.
+
+lmi `storage mount`_
+    Mount management.
+
+lmi `storage partition`_
+    Partition management.
+
+lmi `storage partition-table`_
+    Partition table management.
+
+lmi `storage raid`_
+    MD RAID management.
+
+lmi `storage vg`_
+    Volume Group management.
+
+lmi `storage thinpool`_
+    Thin Pool management.
+
+lmi `storage thinlv`_
+    Thin Logical Volume management.
 
 Common options
 --------------
