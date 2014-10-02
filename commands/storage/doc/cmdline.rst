@@ -6,7 +6,7 @@ Storage command line reference
 ``lmi storage`` is a command for
 :ref:`LMI metacommand <lmi_metacommand>`,
 which allows listing and manipulation of storage on a remote host with installed
-:ref:OpenLMI storage provider <openlmi-storage-provider>`.
+:ref:`OpenLMI storage provider <openlmi-storage-provider>`.
 
 Available commands:
 
