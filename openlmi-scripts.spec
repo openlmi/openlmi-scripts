@@ -19,7 +19,7 @@ BuildRequires:  python2-devel
 # For documentation
 BuildRequires:  python-docopt
 BuildRequires:  python-sphinx
-BuildRequires:  python-sphinx-theme-openlmi
+BuildRequires:  python-sphinx_rtd_theme
 BuildRequires:  openlmi-tools >= %{tools_version}
 BuildRequires:  python-IPy
 
