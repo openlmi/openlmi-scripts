@@ -1,4 +1,4 @@
-.. _openlmi-scripts-powermanagement-python:
+.. _openlmi-scripts-locale-python:
 
 Locale Script python reference
 ==============================
