@@ -30,5 +30,64 @@
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
 """
-LMI storage provider client library.
+OpenLMI Storage Scripts module is a standard python module, which provides
+high-level functions to manage storage on remote hosts with installed
+|OpenLMI-Storage provider|.
+
+It is built on top of |LMIShell|, however only very little knowledge about the
+|LMIShell| and CIM model are required.
+
+All |LMI metacommands| are implemented using this python module. I.e. everything
+that LMI metacommand can do with storage you can do also in python using
+this module, which makes it a good start for LMI scripting.
+
+Example::
+
+    # Connect to a remote system using lmishell
+    import lmi.shell
+    conn = lmi.shell.connect("remote.host.org", "root", "opensesame")
+
+    # Find a namespace we want to operate on, root/cimv2 is the most used.
+    ns = conn.root.cimv2
+
+    # Now use lmi.scripts.storage functions.
+
+    # For example, let's partition /dev/vda disk
+    from lmi.scripts.storage import partition
+    partition.create_partition_table(ns, 'vda', partition.PARTITION_TABLE_TYPE_GPT)
+    # Create one large partition on it
+    new_partition = partition.create_partition(ns, 'vda')
+
+    # Create a volume group with the partition
+    from lmi.scripts.storage import lvm
+    new_vg = lvm.create_vg(ns, ['vda1'], 'my_vg')
+    print 'New VG name: ', new_vg.Name
+
+    # Create a 100 MB logical volume on the volume group
+    MEGABYTE = 1024*1024
+    new_lv = lvm.create_lv(ns, new_vg, 'my_lv', 100 * MEGABYTE)
+
+    # Format the LV
+    from lmi.scripts.storage import fs
+    fs.create_fs(ns, [new_lv], 'xfs')
+
+It is important to note that most of the module functions accept both ``string``
+or ``LMIInstance`` as parameters. For example, these two lines would have the
+same effect in the example above: ::
+
+    new_lv = lvm.create_lv(ns, 'my_vg', 100*MEGABYTE)
+
+    new_lv = lvm.create_lv(ns, new_vg,  100*MEGABYTE)
+
+The first one use plain ``string`` as a volume group name, while the other uses
+LMIShell's ``LMIInstance`` previously returned from ``lvm.create_vg()``.
+
+
+
+.. |OpenLMI-Storage provider| replace:: :ref:`OpenLMI-Storage provider <openlmi-storage-provider>`
+
+.. |LMIShell| replace:: :ref:`LMIShell <lmi_shell>`
+
+.. |LMI metacommands| replace:: :ref:`LMI metacommands <openlmi-scripts-storage-cmd>`
+
 """
