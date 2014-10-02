@@ -1,3 +1,5 @@
+.. _openlmi-scripts-system-python:
+
 System Script python reference
 ==============================
 

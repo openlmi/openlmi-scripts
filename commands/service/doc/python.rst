@@ -1,3 +1,5 @@
+.. _openlmi-scripts-service-python:
+
 Service Script python reference
 ===============================
 

@@ -1,3 +1,5 @@
+.. _openlmi-scripts-powermanagement-python:
+
 Power Management Script python reference
 ========================================
 
