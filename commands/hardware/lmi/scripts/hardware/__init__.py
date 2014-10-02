@@ -37,9 +37,11 @@ try:
 except ImportError:
     import pywbem as wbem
 
+from sys import stdout
 from lmi.shell import LMIClassNotFound
 from lmi.scripts.common import get_logger
 from lmi.scripts.common import get_computer_system
+from lmi.scripts.common.formatter import TableFormatter
 
 GREEN_COLOR = 1
 YELLOW_COLOR = 2
@@ -108,21 +110,7 @@ def get_hostname(ns):
     :rtype: List of tuples
     """
     i = get_computer_system(ns)
-    return [('Hostname:', i.Name)]
-
-def init_result(ns):
-    """
-    Returns initialized result list.
-
-    :returns: Initialized result list.
-    :rtype: List
-    """
-    if STANDALONE:
-        result = get_hostname(ns)
-        result.append(EMPTY_LINE)
-    else:
-        result = []
-    return result
+    return i.Name
 
 def format_memory_size(size):
     """
@@ -172,33 +160,41 @@ def get_all_info(ns):
     """
     global STANDALONE
     STANDALONE = False
-    result = get_hostname(ns)
-    result.append(EMPTY_LINE)
-    result += get_system_info(ns)
-    result.append(EMPTY_LINE)
-    result += get_motherboard_info(ns)
-    result.append(EMPTY_LINE)
-    result += get_cpu_info(ns)
-    result.append(EMPTY_LINE)
-    result += get_memory_info(ns)
-    result.append(EMPTY_LINE)
-    result += get_disks_info(ns)
+
+    tf = TableFormatter(stdout, 0, True)
+    tf.print_host(get_hostname(ns))
+
+    get_system_info(ns)
+    tf.produce_output([EMPTY_LINE])
+    get_motherboard_info(ns)
+    tf.produce_output([EMPTY_LINE])
+    get_cpu_info(ns)
+    tf.produce_output([EMPTY_LINE])
+    get_memory_info(ns)
+    tf.produce_output([EMPTY_LINE])
+    get_disks_info(ns)
+
     STANDALONE = True
-    return result
+    return []
 
 def get_system_info(ns):
     """
     :returns: Tabular data of system info, from the ``LMI_Chassis`` instance.
     :rtype: List of tuples
     """
-    result = init_result(ns)
+    result = []
+
+    tf = TableFormatter(stdout, 0, True)
+    if STANDALONE:
+        tf.print_host(get_hostname(ns))
 
     try:
         i = get_single_instance(ns, 'LMI_Chassis')
     except Exception:
         result += [(get_colored_string('error:', RED_COLOR),
                     'Missing class LMI_Chassis. Is openlmi-hardware package installed on the server?')]
-        return result
+        tf.produce_output(result)
+        return []
 
     if i.Model and i.ProductName:
         model = '%s (%s)' % (i.Model, i.ProductName)
@@ -223,26 +219,34 @@ def get_system_info(ns):
           ('Serial Number:', i.SerialNumber),
           ('Asset Tag:', i.Tag),
           ('Virtual Machine:', virt)]
-    return result
+
+    tf.produce_output(result)
+    return []
 
 def get_motherboard_info(ns):
     """
     :returns: Tabular data of motherboard info.
     :rtype: List of tuples
     """
-    result = init_result(ns)
+    result = []
+
+    tf = TableFormatter(stdout, 0, True)
+    if STANDALONE:
+        tf.print_host(get_hostname(ns))
 
     try:
         i = get_single_instance(ns, 'LMI_Baseboard')
     except Exception:
         result += [(get_colored_string('error:', RED_COLOR),
                     'Missing class LMI_Baseboard. Is openlmi-hardware package installed on the server?')]
-        return result
+        tf.produce_output(result)
+        return []
 
     if not i:
         result += [(get_colored_string('warning:', YELLOW_COLOR),
                     'LMI_Baseboard instance is missing. This usually means that the server is virtual machine.')]
-        return result
+        tf.produce_output(result)
+        return []
 
     model = i.Model
     manufacturer = i.Manufacturer
@@ -254,14 +258,20 @@ def get_motherboard_info(ns):
     result += [
           ('Motherboard:', model),
           ('Manufacturer:', manufacturer)]
-    return result
+
+    tf.produce_output(result)
+    return []
 
 def get_cpu_info(ns):
     """
     :returns: Tabular data of processor info.
     :rtype: List of tuples
     """
-    result = init_result(ns)
+    result = []
+
+    tf = TableFormatter(stdout, 0, True)
+    if STANDALONE:
+        tf.print_host(get_hostname(ns))
 
     try:
         cpus = get_all_instances(ns, 'LMI_Processor')
@@ -269,7 +279,8 @@ def get_cpu_info(ns):
     except Exception:
         result += [(get_colored_string('error:', RED_COLOR),
                     'Missing CPU related classes. Is openlmi-hardware package installed on the server?')]
-        return result
+        tf.produce_output(result)
+        return []
 
     cores = 0
     threads = 0
@@ -283,14 +294,20 @@ def get_cpu_info(ns):
                 (len(cpus), cores, threads)),
           ('Max Freq:', '%d MHz' % cpus[0].MaxClockSpeed),
           ('Arch:', cpus[0].Architecture)]
-    return result
+
+    tf.produce_output(result)
+    return []
 
 def get_memory_info(ns):
     """
     :returns: Tabular data of memory info.
     :rtype: List of tuples
     """
-    result = init_result(ns)
+    result = []
+
+    tf = TableFormatter(stdout, 0, True)
+    if STANDALONE:
+        tf.print_host(get_hostname(ns))
 
     try:
         memory = get_single_instance(ns, 'LMI_Memory')
@@ -299,7 +316,8 @@ def get_memory_info(ns):
     except Exception:
         result += [(get_colored_string('error:', RED_COLOR),
                     'Missing memory related classes. Is openlmi-hardware package installed on the server?')]
-        return result
+        tf.produce_output(result)
+        return []
 
     size = format_memory_size(memory.NumberOfBlocks)
 
@@ -342,28 +360,33 @@ def get_memory_info(ns):
     result.append(('Memory:', size))
     result += modules
     result.append(('Slots:', slots))
-    return result
+
+    tf.produce_output(result)
+    return []
 
 def get_disks_info(ns):
     """
     :returns: Tabular data of disk info.
     :rtype: List of tuples
     """
-    result = init_result(ns)
-    result.append(('Disks:', ''))
+    result = [('Disks:', '')]
+
+    tf = TableFormatter(stdout, 0, True)
+    if STANDALONE:
+        tf.print_host(get_hostname(ns))
 
     try:
         hdds = get_all_instances(ns, 'LMI_DiskDrive')
     except Exception:
         result += [(get_colored_string('error:', RED_COLOR),
                     'Missing LMI_DiskDrive class. Openlmi-hardware package is probably out-dated.')]
-        return result
+        tf.produce_output(result)
+        return []
 
     if not hdds:
         result.append((' N/A', 'No disk was detected on the system.'))
-        return result
-
-    first_disk = True
+        tf.produce_output(result)
+        return []
 
     for hdd in hdds:
         phys_hdds = hdd.associators(ResultClass='LMI_DiskPhysicalPackage')
@@ -442,15 +465,11 @@ def get_disks_info(ns):
             temp_str = 'N/A'
         temp_str += u' °C'
 
-        if not first_disk:
-            result.append(EMPTY_LINE)
-        else:
-            first_disk = False
-
         if hdd.Name != hdd.DeviceID and hdd.Name != model:
             result.append(('  %s' % hdd.DeviceID, hdd.Name))
         else:
             result.append(('  %s' % hdd.DeviceID, ''))
+
         result += [('    Manufacturer:', manufacturer),
             ('    Model:', model),
             ('    Capacity:', format_memory_size(hdd.Capacity)),
@@ -462,4 +481,8 @@ def get_disks_info(ns):
                 (port_speed_current, port_speed_max)),
             ('    SMART Status:', smart),
             ('    Temperature:', temp_str)]
-    return result
+
+        tf.produce_output(result)
+        result = [EMPTY_LINE]
+
+    return []
