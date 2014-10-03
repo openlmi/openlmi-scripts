@@ -31,9 +31,11 @@
 LMI system client library.
 """
 
+from sys import stdout
 from lmi.scripts.service import get_service
 from lmi.scripts.common import get_computer_system
 from lmi.shell.LMIExceptions import LMIClassNotFound
+from lmi.scripts.common.formatter import TableFormatter
 
 GREEN_COLOR = 1
 YELLOW_COLOR = 2
@@ -128,12 +130,15 @@ def get_system_info(ns):
     :returns: Tabular data of all general system information.
     :rtype: List of tuples
     """
-    result = get_hostname(ns)
-    result += get_hwinfo(ns)
-    result += get_osinfo(ns)
-    result += get_servicesinfo(ns)
-    result += get_networkinfo(ns)
-    return result
+    tf = TableFormatter(stdout, 0, True)
+    tf.print_host(get_hostname(ns))
+
+    get_hwinfo(ns)
+    get_osinfo(ns)
+    get_servicesinfo(ns)
+    get_networkinfo(ns)
+
+    return []
 
 def get_hostname(ns):
     """
@@ -141,20 +146,23 @@ def get_hostname(ns):
     :rtype: List of tuples
     """
     i = get_computer_system(ns)
-    return [('Computer Name:', i.Name)]
+    return i.Name
 
 def get_hwinfo(ns):
     """
     :returns: Tabular data of system hw info.
     :rtype: List of tuples
     """
+    tf = TableFormatter(stdout, 0, True)
+
     # Chassis
     try:
         chassis = get_single_instance(ns, 'LMI_Chassis')
     except Exception:
         result = [(get_colored_string('error:', RED_COLOR),
                     'Missing class LMI_Chassis. Is openlmi-hardware package installed on the server?')]
-        return result
+        tf.produce_output(result)
+        return []
 
     hwinfo = chassis.Manufacturer
     if chassis.Model and chassis.Model != 'Not Specified' \
@@ -166,6 +174,7 @@ def get_hwinfo(ns):
     virt = getattr(chassis, 'VirtualMachine', None)
     if virt and virt != 'No':
         hwinfo += ' (%s virtual machine)' % virt
+    tf.produce_output([('Hardware:', hwinfo)])
 
     # CPUs
     try:
@@ -176,6 +185,7 @@ def get_hwinfo(ns):
         cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
     else:
         cpus_str = 'N/A'
+    tf.produce_output([('Processors:', cpus_str)])
 
     # Memory
     try:
@@ -186,26 +196,25 @@ def get_hwinfo(ns):
         memory_size = format_memory_size(memory.NumberOfBlocks)
     else:
         memory_size = 'N/A GB'
+    tf.produce_output([('Memory:', memory_size)])
 
-    # Result
-    result = [
-        ('Hardware:', hwinfo),
-        ('Processors:', cpus_str),
-        ('Memory:', memory_size)]
-    return result
+    return []
 
 def get_osinfo(ns):
     """
     :returns: Tabular data of system OS info.
     :rtype: List of tuples
     """
+    tf = TableFormatter(stdout, 0, True)
+
     # OS
     try:
         os = get_single_instance(ns, 'PG_OperatingSystem')
     except Exception:
         result = [(get_colored_string('error:', RED_COLOR),
                     'Missing class PG_OperatingSystem on the server.')]
-        return result
+        tf.produce_output(result)
+        return []
 
     os_str = ''
     kernel_str = ''
@@ -221,13 +230,16 @@ def get_osinfo(ns):
     result = [
         ('OS:', os_str),
         ('Kernel:', kernel_str)]
-    return result
+    tf.produce_output(result)
+    return []
 
 def get_servicesinfo(ns):
     """
     :returns: Tabular data of some system services.
     :rtype: List of tuples
     """
+    tf = TableFormatter(stdout, 0, True)
+
     # Firewall
     try:
         fw = ''
@@ -242,6 +254,7 @@ def get_servicesinfo(ns):
             fw = 'off'
     except Exception:
         fw = 'N/A'
+    tf.produce_output([('Firewall:', fw)])
 
     # Logging
     try:
@@ -257,25 +270,25 @@ def get_servicesinfo(ns):
             logging = 'off'
     except Exception:
         logging = 'N/A'
+    tf.produce_output([('Logging:', logging)])
 
-    # Result
-    result = [
-        ('Firewall:', fw),
-        ('Logging:', logging)]
-    return result
+    return []
 
 def get_networkinfo(ns):
     """
     :returns: Tabular data of networking status.
     :rtype: List of tuples
     """
+    tf = TableFormatter(stdout, 0, True)
+
     result = [('', ''), ('Networking:', '')]
     try:
         lan_endpoints = get_all_instances(ns, 'LMI_LANEndpoint')
     except Exception:
         result += [(get_colored_string('error:', RED_COLOR),
                     'Missing class LMI_LANEndpoint. Is openlmi-networking package installed on the server?')]
-        return result
+        tf.produce_output(result)
+        return []
 
     nic = 1
     for lan_endpoint in lan_endpoints:
@@ -307,5 +320,8 @@ def get_networkinfo(ns):
             pass
         result += [
             ('    MAC Address:', lan_endpoint.MACAddress)]
+        tf.produce_output(result)
+        result = []
         nic += 1
-    return result
+
+    return []
