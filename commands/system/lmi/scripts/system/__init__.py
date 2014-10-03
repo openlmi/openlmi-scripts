@@ -31,9 +31,13 @@
 LMI system client library.
 """
 
-from lmi.scripts.common import get_computer_system
 from lmi.scripts.service import get_service
+from lmi.scripts.common import get_computer_system
 from lmi.shell.LMIExceptions import LMIClassNotFound
+
+GREEN_COLOR = 1
+YELLOW_COLOR = 2
+RED_COLOR = 3
 
 def _cache_replies(ns, class_name, method):
     """
@@ -101,6 +105,24 @@ def format_memory_size(size):
         sizestr = '%d B' % int(size)
     return sizestr
 
+def get_colored_string(msg, color):
+    """
+    Returns colored message with ANSI escape sequences for terminal.
+
+    :param msg: Message to be colored.
+    :type msg: String
+    :param color: Color of the message [GREEN_COLOR, YELLOW_COLOR, RED_COLOR].
+    :type color: Integer
+    :returns: Colored message.
+    :rtype: String
+    """
+    colors = {
+        GREEN_COLOR: '\033[92m',
+        YELLOW_COLOR: '\033[93m',
+        RED_COLOR: '\033[91m',}
+    ENDC = '\033[0m'
+    return '%s%s%s' % (colors[color], msg, ENDC)
+
 def get_system_info(ns):
     """
     :returns: Tabular data of all general system information.
@@ -129,39 +151,42 @@ def get_hwinfo(ns):
     # Chassis
     try:
         chassis = get_single_instance(ns, 'LMI_Chassis')
-    except LMIClassNotFound:
-        chassis = None
-    if chassis:
-        hwinfo = chassis.Manufacturer
-        if chassis.Model and chassis.Model != 'Not Specified' \
-                and chassis.Model != chassis.Manufacturer:
-            hwinfo += ' ' + chassis.Model
-        elif chassis.ProductName and chassis.ProductName != 'Not Specified' \
-                and chassis.ProductName != chassis.Manufacturer:
-            hwinfo += ' ' + chassis.ProductName
-        virt = getattr(chassis, 'VirtualMachine', None)
-        if virt and virt != 'No':
-            hwinfo += ' (%s virtual machine)' % virt
-    else:
-        hwinfo = 'N/A'
+    except Exception:
+        result = [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_Chassis. Is openlmi-hardware package installed on the server?')]
+        return result
+
+    hwinfo = chassis.Manufacturer
+    if chassis.Model and chassis.Model != 'Not Specified' \
+            and chassis.Model != chassis.Manufacturer:
+        hwinfo += ' ' + chassis.Model
+    elif chassis.ProductName and chassis.ProductName != 'Not Specified' \
+            and chassis.ProductName != chassis.Manufacturer:
+        hwinfo += ' ' + chassis.ProductName
+    virt = getattr(chassis, 'VirtualMachine', None)
+    if virt and virt != 'No':
+        hwinfo += ' (%s virtual machine)' % virt
+
     # CPUs
     try:
         cpus = get_all_instances(ns, 'LMI_Processor')
-    except LMIClassNotFound:
+    except Exception:
         cpus = None
     if cpus:
         cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
     else:
         cpus_str = 'N/A'
+
     # Memory
     try:
         memory = get_single_instance(ns, 'LMI_Memory')
-    except LMIClassNotFound:
+    except Exception:
         memory = None
     if memory:
         memory_size = format_memory_size(memory.NumberOfBlocks)
     else:
         memory_size = 'N/A GB'
+
     # Result
     result = [
         ('Hardware:', hwinfo),
@@ -177,8 +202,11 @@ def get_osinfo(ns):
     # OS
     try:
         os = get_single_instance(ns, 'PG_OperatingSystem')
-    except LMIClassNotFound:
-        os = None
+    except Exception:
+        result = [(get_colored_string('error:', RED_COLOR),
+                    'Missing class PG_OperatingSystem on the server.')]
+        return result
+
     os_str = ''
     kernel_str = ''
     if os:
@@ -188,6 +216,7 @@ def get_osinfo(ns):
         os_str = 'N/A'
     if not kernel_str:
         kernel_str = 'N/A'
+
     # Result
     result = [
         ('OS:', os_str),
@@ -202,31 +231,33 @@ def get_servicesinfo(ns):
     # Firewall
     try:
         fw = ''
-        firewalld = get_service(ns, 'firewalld.service')
+        firewalld = get_service(ns, 'firewalld')
         if firewalld and firewalld.Status == 'OK':
             fw = 'on (firewalld)'
         else:
-            iptables = get_service(ns, 'iptables.service')
+            iptables = get_service(ns, 'iptables')
             if iptables and iptables.Status == 'OK':
                 fw = 'on (iptables)'
         if not fw:
             fw = 'off'
-    except LMIClassNotFound:
+    except Exception:
         fw = 'N/A'
+
     # Logging
     try:
         logging = ''
-        journald = get_service(ns, 'systemd-journald.service')
+        journald = get_service(ns, 'systemd-journald')
         if journald and journald.Status == 'OK':
             logging = 'on (journald)'
         else:
-            rsyslog = get_service(ns, 'rsyslog.service')
+            rsyslog = get_service(ns, 'rsyslog')
             if rsyslog and rsyslog.Status == 'OK':
                 logging = 'on (rsyslog)'
         if not logging:
             logging = 'off'
-    except LMIClassNotFound:
+    except Exception:
         logging = 'N/A'
+
     # Result
     result = [
         ('Firewall:', fw),
@@ -238,12 +269,14 @@ def get_networkinfo(ns):
     :returns: Tabular data of networking status.
     :rtype: List of tuples
     """
-    result = [('', ''), ('Networking', '')]
+    result = [('', ''), ('Networking:', '')]
     try:
         lan_endpoints = get_all_instances(ns, 'LMI_LANEndpoint')
-    except LMIClassNotFound:
-        result.append(('  N/A', ''))
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_LANEndpoint. Is openlmi-networking package installed on the server?')]
         return result
+
     nic = 1
     for lan_endpoint in lan_endpoints:
         if lan_endpoint.Name == 'lo':
@@ -257,7 +290,7 @@ def get_networkinfo(ns):
             result.append(('    Status:',
                 ns.LMI_IPNetworkConnection.OperatingStatusValues.value_name(
                 ip_net_con.OperatingStatus)))
-        except LMIClassNotFound:
+        except Exception:
             pass
         try:
             for ip_protocol_endpoint in lan_endpoint.associators(
@@ -270,7 +303,7 @@ def get_networkinfo(ns):
                         ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv6:
                     result.append(('    IPv6 Address:',
                         ip_protocol_endpoint.IPv6Address))
-        except LMIClassNotFound:
+        except Exception:
             pass
         result += [
             ('    MAC Address:', lan_endpoint.MACAddress)]
