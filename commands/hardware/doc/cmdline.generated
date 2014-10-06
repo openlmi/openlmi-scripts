@@ -21,6 +21,8 @@ Display hardware information.
 
     **lmi** **hwinfo** memory
 
+    **lmi** **hwinfo** disks
+
 
 
 **Commands:**
@@ -40,4 +42,7 @@ Display hardware information.
 
     **memory**
         Display memory information.
+
+    **disks**
+        Display disks information.
 
