@@ -9,7 +9,6 @@ Contents:
     :maxdepth: 2
 
     cmdline
-    python
 
 
 Indices and tables
