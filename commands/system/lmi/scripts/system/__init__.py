@@ -118,6 +118,9 @@ def get_colored_string(msg, color):
     :returns: Colored message.
     :rtype: String
     """
+    if not stdout.isatty():
+        return msg
+
     colors = {
         GREEN_COLOR: '\033[92m',
         YELLOW_COLOR: '\033[93m',
