@@ -169,13 +169,9 @@ def get_all_info(ns):
     tf.print_host(get_hostname(ns))
 
     get_system_info(ns)
-    tf.produce_output([EMPTY_LINE])
     get_motherboard_info(ns)
-    tf.produce_output([EMPTY_LINE])
     get_cpu_info(ns)
-    tf.produce_output([EMPTY_LINE])
     get_memory_info(ns)
-    tf.produce_output([EMPTY_LINE])
     get_disks_info(ns)
 
     STANDALONE = True
@@ -224,6 +220,9 @@ def get_system_info(ns):
           ('Asset Tag:', i.Tag),
           ('Virtual Machine:', virt)]
 
+    if not STANDALONE:
+        result += [EMPTY_LINE]
+
     tf.produce_output(result)
     return []
 
@@ -247,6 +246,8 @@ def get_motherboard_info(ns):
         return []
 
     if not i:
+        if not STANDALONE:
+            return []
         result += [(get_colored_string('warning:', YELLOW_COLOR),
                     'LMI_Baseboard instance is missing. This usually means that the server is virtual machine.')]
         tf.produce_output(result)
@@ -262,6 +263,9 @@ def get_motherboard_info(ns):
     result += [
           ('Motherboard:', model),
           ('Manufacturer:', manufacturer)]
+
+    if not STANDALONE:
+        result += [EMPTY_LINE]
 
     tf.produce_output(result)
     return []
@@ -298,6 +302,9 @@ def get_cpu_info(ns):
                 (len(cpus), cores, threads)),
           ('Max Freq:', '%d MHz' % cpus[0].MaxClockSpeed),
           ('Arch:', cpus[0].Architecture)]
+
+    if not STANDALONE:
+        result += [EMPTY_LINE]
 
     tf.produce_output(result)
     return []
@@ -361,9 +368,12 @@ def get_memory_info(ns):
     if not modules:
         modules.append(('Modules:', 'N/A'))
 
-    result.append(('Memory:', size))
+    result += [('Memory:', size)]
     result += modules
-    result.append(('Slots:', slots))
+    result += [('Slots:', slots)]
+
+    if not STANDALONE:
+        result += [EMPTY_LINE]
 
     tf.produce_output(result)
     return []
@@ -388,7 +398,7 @@ def get_disks_info(ns):
         return []
 
     if not hdds:
-        result.append((' N/A', 'No disk was detected on the system.'))
+        result += [(' N/A', 'No disk was detected on the system.')]
         tf.produce_output(result)
         return []
 
@@ -470,9 +480,9 @@ def get_disks_info(ns):
         temp_str += u' °C'
 
         if hdd.Name != hdd.DeviceID and hdd.Name != model:
-            result.append(('  %s' % hdd.DeviceID, hdd.Name))
+            result += [('  %s' % hdd.DeviceID, hdd.Name)]
         else:
-            result.append(('  %s' % hdd.DeviceID, ''))
+            result += [('  %s' % hdd.DeviceID, '')]
 
         result += [('    Manufacturer:', manufacturer),
             ('    Model:', model),
@@ -489,4 +499,5 @@ def get_disks_info(ns):
         tf.produce_output(result)
         result = [EMPTY_LINE]
 
+    tf.produce_output(result)
     return []
