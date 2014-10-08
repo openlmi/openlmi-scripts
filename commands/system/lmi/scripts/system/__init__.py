@@ -305,9 +305,9 @@ def get_networkinfo(ns):
         try:
             ip_net_con = lan_endpoint.associators(
                 ResultClass='LMI_IPNetworkConnection')[0]
-            result.append(('    Status:',
+            result += [('    Status:',
                 ns.LMI_IPNetworkConnection.OperatingStatusValues.value_name(
-                ip_net_con.OperatingStatus)))
+                ip_net_con.OperatingStatus))]
         except Exception:
             pass
         try:
@@ -315,12 +315,12 @@ def get_networkinfo(ns):
                     ResultClass='LMI_IPProtocolEndpoint'):
                 if ip_protocol_endpoint.ProtocolIFType == \
                         ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv4:
-                    result.append(('    IPv4 Address:',
-                        ip_protocol_endpoint.IPv4Address))
+                    result += [('    IPv4 Address:',
+                        ip_protocol_endpoint.IPv4Address)]
                 elif ip_protocol_endpoint.ProtocolIFType == \
                         ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv6:
-                    result.append(('    IPv6 Address:',
-                        ip_protocol_endpoint.IPv6Address))
+                    result += [('    IPv6 Address:',
+                        ip_protocol_endpoint.IPv6Address)]
         except Exception:
             pass
         result += [
