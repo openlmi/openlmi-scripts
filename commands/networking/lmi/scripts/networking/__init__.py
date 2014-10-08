@@ -361,8 +361,12 @@ def _provider_check_required_device(ns):
     Check if provider requires device to be used in ApplySettingToIPNetworkConnection
     '''
     # Do a full fetch to obtain qualifiers
-    if not ns.LMI_IPConfigurationService.is_fetched(True):
-        ns.LMI_IPConfigurationService.fetch(True)
+    if hasattr(ns.LMI_IPConfigurationService, "is_fetched"):
+        if not ns.LMI_IPConfigurationService.is_fetched(True):
+            ns.LMI_IPConfigurationService.fetch(True)
+    else:
+        ns.LMI_IPConfigurationService.fetch()
+
     version = versioncheck.get_class_version(ns.connection, 'LMI_IPConfigurationService', ns.name)
     return versioncheck.parser.cmp_version(version, '0.2.3')
 
