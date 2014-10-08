@@ -41,6 +41,8 @@ GREEN_COLOR = 1
 YELLOW_COLOR = 2
 RED_COLOR = 3
 
+FIRST_COLUMN_MIN_SIZE = 17
+
 def _cache_replies(ns, class_name, method):
     """
     Get the reply from cimom and cache it. Cache is cleared
@@ -156,7 +158,7 @@ def get_hwinfo(ns):
     :returns: Tabular data of system hw info.
     :rtype: List of tuples
     """
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
     # Chassis
     try:
@@ -208,7 +210,7 @@ def get_osinfo(ns):
     :returns: Tabular data of system OS info.
     :rtype: List of tuples
     """
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
     # OS
     try:
@@ -241,7 +243,7 @@ def get_servicesinfo(ns):
     :returns: Tabular data of some system services.
     :rtype: List of tuples
     """
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
     # Firewall
     try:
@@ -282,7 +284,7 @@ def get_networkinfo(ns):
     :returns: Tabular data of networking status.
     :rtype: List of tuples
     """
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
     result = [('', ''), ('Networking:', '')]
     try:
@@ -303,9 +305,9 @@ def get_networkinfo(ns):
         try:
             ip_net_con = lan_endpoint.associators(
                 ResultClass='LMI_IPNetworkConnection')[0]
-            result.append(('    Status:',
+            result += [('    Status:',
                 ns.LMI_IPNetworkConnection.OperatingStatusValues.value_name(
-                ip_net_con.OperatingStatus)))
+                ip_net_con.OperatingStatus))]
         except Exception:
             pass
         try:
@@ -313,12 +315,12 @@ def get_networkinfo(ns):
                     ResultClass='LMI_IPProtocolEndpoint'):
                 if ip_protocol_endpoint.ProtocolIFType == \
                         ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv4:
-                    result.append(('    IPv4 Address:',
-                        ip_protocol_endpoint.IPv4Address))
+                    result += [('    IPv4 Address:',
+                        ip_protocol_endpoint.IPv4Address)]
                 elif ip_protocol_endpoint.ProtocolIFType == \
                         ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv6:
-                    result.append(('    IPv6 Address:',
-                        ip_protocol_endpoint.IPv6Address))
+                    result += [('    IPv6 Address:',
+                        ip_protocol_endpoint.IPv6Address)]
         except Exception:
             pass
         result += [
