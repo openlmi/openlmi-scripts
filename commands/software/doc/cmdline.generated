@@ -11,7 +11,9 @@ System software management.
 
 **Usage:**
 
-    **lmi** **sw** **search** [(\ **--repoid**\  \ *<repository>*\ )] [\ **--allow-duplicates**\ ] \ *<package>*\ ...
+    **lmi** **sw** **search** [(\ **--repoid**\  \ *<repository>*\ )] [\ **--allow-duplicates**\ ]
+
+        [(\ **--installed**\  | \ **--available**\ )] \ *<package>*\ ...
 
     **lmi** **sw** **list** (\ **--help**\  | \ *<what>*\  [\ *<args>*\ ...])
 
@@ -35,6 +37,12 @@ System software management.
 
 **Commands:**
 
+
+    **search**
+        Search packages. Produces a list of packages matching given
+        package specifications (see below). All packages with name with
+        given pattern as a substring will match. Allows filtering by
+        repository. By default only newest packages will be printed.
 
     **list**
         List various information about packages, repositories or
@@ -94,7 +102,10 @@ System software management.
         through http or ftp service.
 
     **--installed**
-        Limit the query only on installed packages.
+        Limit the query to installed packages only.
+
+    **--available**
+        Limit the query just to not installed packages.
 
     **--help**
         Get a detailed help for subcommand.
@@ -123,7 +134,7 @@ List packages, repositories or files.
 
 **Usage:**
 
-    **lmi** **sw** **list** [all] [\ **--allow-duplicates**\ ]
+    **lmi** **sw** **list** **all** [\ **--allow-duplicates**\ ]
 
     **lmi** **sw** **list** installed
 
@@ -139,7 +150,8 @@ List packages, repositories or files.
 
 
     **all**
-        - List installed and available packages.
+        - List installed and available packages. Only nevra strings
+        will be shown which greatly speeds up the operation.
 
     **installed**
         - List installed packages.

@@ -93,6 +93,7 @@ from lmi.shell import LMIExceptions
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_computer_system
 from lmi.scripts.common import get_logger
+from lmi.scripts.common import versioncheck
 
 MAX_CONNECTION_PROBLEM_COUNT = 3
 INITIAL_SLEEP_TIME = 0.5
@@ -119,6 +120,8 @@ FILE_TYPES = (
     'Character Device',
     'Block Device'
 )
+
+BACKEND_YUM, BACKEND_PACKAGEKIT = range(2)
 
 LOG = get_logger(__name__)
 
@@ -173,6 +176,53 @@ def get_package_nevra(package):
     return (    package.ElementName if isinstance(package, LMIInstance)
            else package.InstanceID[len('LMI:LMI_SoftwareIdentity:'):])
 
+def is_package_installed(package, installed_nevras=None):
+    """
+    :param set installed_nevras: An optional set of nevra strings of installed
+        packages. This speeds up processing it PackageKit backend is used..
+    :returns: ``True`` if the package is installed
+    :rtype: boolean
+    """
+    if not isinstance(package, (LMIInstanceName, LMIInstance)):
+        raise TypeError("package must be an instance or instance name")
+    if get_backend(package.namespace) == BACKEND_YUM and not installed_nevras:
+        if isinstance(package, LMIInstanceName):
+            package = package.to_instance()
+        return package.InstallDate is not None
+
+    if installed_nevras:
+        return get_package_nevra(package) in installed_nevras
+
+    # with PackageKit backend the InstallDate is unset
+    return len(package.associator_names(
+            Role="InstalledSoftware",
+            ResultRole="System",
+            AssocClass='LMI_InstalledSoftwareIdentity',
+            ResultClass='CIM_ComputerSystem')) > 0
+
+def get_installation_service(ns):
+    """
+    Get and cache installation service instance.
+
+    :returns: An instance of ``LMI_SoftwareInstallationService``.
+    """
+    if not hasattr(get_installation_service, '_service'):
+        get_installation_service._service = \
+                ns.LMI_SoftwareInstallationService.first_instance()
+    return get_installation_service._service
+
+def get_backend(ns):
+    """
+    Get provider's backend code.
+
+    :returns: One of ``BACKEND_YUM``, ``BACKEND_PACKAGEKIT``
+    :rtype: int
+    """
+    service = get_installation_service(ns)
+    if "packagekit" in service.Description.lower():
+        return BACKEND_PACKAGEKIT
+    return BACKEND_YUM
+
 def list_installed_packages(ns):
     """
     Yields instances of ``LMI_SoftwareIdentity`` representing installed packages.
@@ -189,7 +239,8 @@ def list_installed_packages(ns):
 def list_available_packages(ns,
         allow_installed=False,
         allow_duplicates=False,
-        repoid=None):
+        repoid=None,
+        installed_nevras=None):
     """
     Yields instances of ``LMI_SoftwareIdentity`` representing available packages.
 
@@ -200,7 +251,9 @@ def list_available_packages(ns,
         packages available for each (name, architecture) pair will be contained
         in result.
     :param string repoid: Repository identification string. This will filter
-        available packages just for those provided by this repository.
+        available packages just to those provided by this repository.
+    :param installed_nevras: Set of nevra strings of installed packages. This
+        speeds up execution for PackageKit backend.
     :rtype: generator
     """
     if repoid is not None:
@@ -211,6 +264,14 @@ def list_available_packages(ns,
         repos = [inst]
     else:
         repos = ns.LMI_SoftwareIdentityResource.instances()
+
+    # Using is_package_installed() may be time consuming espeacially especially
+    # when calling it sequentially for x thousands of packages. Therefore let's
+    # cache installed nevra strings.
+    if not allow_installed and get_backend(ns) == BACKEND_PACKAGEKIT and \
+            not installed_nevras:
+        installed_nevras = set(get_package_nevra(p)
+            for p in list_installed_packages(ns))
 
     pkg_names = []
     data = defaultdict(list)    # (pkg_name, [instance, ...])
@@ -223,7 +284,8 @@ def list_available_packages(ns,
                 ResultRole="ManagedElement",
                 AssocClass="LMI_ResourceForSoftwareIdentity",
                 ResultClass="LMI_SoftwareIdentity"):
-            if not allow_installed and identity.InstallDate:
+            if not allow_installed and \
+                    is_package_installed(identity, installed_nevras):
                 continue
             if not identity.Name in data:
                 heapq.heappush(pkg_names, identity.Name)
@@ -269,7 +331,7 @@ def pkg_spec_to_filter(pkg_spec):
     result['name'] = pkg_spec
     return result
 
-def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
+def find_package(ns, allow_duplicates=False, exact_match=True, installed=None, **kwargs):
     """
     Yields just a limited set of packages matching particular filter.
     Keyword arguments are used to specify this filter, which can contain
@@ -307,6 +369,9 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
         ``<name>.<architecture>``.
     :param boolean exact_match: Whether the ``name`` key shall be tested for
         exact match. If ``False`` it will be tested for inclusion.
+    :param boolean installed: Limit the search to installed or not installed
+        packages. Unless set to boolean value, all packages will be searched
+        for matching one.
     :returns: Instance names of ``LMI_SoftwareIdentity``.
     :rtype: generator over :py:class:`lmi.shell.LmiInstanceName`
     """
@@ -330,15 +395,23 @@ def find_package(ns, allow_duplicates=False, exact_match=True, **kwargs):
     if 'pkg_spec' in kwargs:
         pkg_spec = kwargs.pop('pkg_spec')
         opts.update(pkg_spec_to_filter(pkg_spec))
-    if not opts:
-        raise LmiFailed("No supported package query key given.")
     if 'arch' in opts:
         opts['architecture'] = opts.pop('arch')
-    ret = ns.LMI_SoftwareInstallationService.first_instance() \
-            .FindIdentity(
+    if installed is not None and versioncheck.eval_respl(
+                'class LMI_SoftwareInstallationService >= 0.6.0',
+                ns.connection):
+        opts['Installed'] = bool(installed)
+    ret = get_installation_service(ns).FindIdentity(
                     AllowDuplicates=allow_duplicates,
                     ExactMatch=exact_match, **opts)
-    for identity in ret.rparams['Matches']:
+    matches = ret.rparams['Matches']
+    if installed is not None and 'Installed' not in opts:
+        installed_nevras = set(get_package_nevra(p)
+            for p in list_installed_packages(ns))
+        matches = [iname for iname in matches
+                    if is_package_installed(iname, installed_nevras) ==
+                        bool(installed)]
+    for identity in matches:
         yield identity
 
 def list_repositories(ns, enabled=True):
@@ -396,14 +469,15 @@ def list_package_files(ns, package, file_type=None):
                 file_type = file_types.index(file_type.lower()) + 1
     if isinstance(package, LMIInstanceName):
         package = package.to_instance()
-    if package.InstallDate is None:
+    if not is_package_installed(package):
         raise LmiFailed('Can not list files of not installed package "%s".' %
                 package.ElementName)
-    for file_inst in package.associators(
+    files = package.associators(
             Role="Element",
             ResultRole="Check",
             AssocClass="LMI_SoftwareIdentityChecks",
-            ResultClass="LMI_SoftwareIdentityFileCheck"):
+            ResultClass="LMI_SoftwareIdentityFileCheck")
+    for file_inst in sorted(files, key=lambda i: i.Name):
         if file_type is not None and file_inst.FileType != file_type:
             continue
         yield file_inst
@@ -476,13 +550,12 @@ def install_package(ns, package, force=False, update=False):
     """
     if not isinstance(package, (LMIInstance, LMIInstanceName)):
         raise TypeError("package must be an LMIInstance or LMIInstanceName")
-    service = ns.LMI_SoftwareInstallationService.first_instance()
     options = [4 if not update else 5]  # Install (4) or Update (5)
     if force:
         options.append(3) # Force Installation
     # we can not use synchronous invocation because the reference to a job is
     # needed
-    results = service.InstallFromSoftwareIdentity(
+    results = get_installation_service(ns).InstallFromSoftwareIdentity(
             Source=package.path
                 if isinstance(package, LMIInstance) else package,
             Collection=ns.LMI_SystemSoftwareCollection.first_instance_name(),
@@ -504,16 +577,19 @@ def install_package(ns, package, force=False, update=False):
                     package = package.to_instance()
                 except wbem.CIMError:
                     pass
-            if getattr(package, 'InstallDate', None) is not None:
+            if is_package_installed(package):
                 LOG().info('Package "%s" is already installed.' % nevra)
                 return
         msg = 'Failed to %s package "%s".' % (
                 'update' if update else 'install', nevra)
-        if job.ErrorDescription:
+        rval, oparms, _ = job.GetError()
+        if oparms:
+            msg += ': ' + oparms['Error'].Message
+        elif job.ErrorDescription:
             msg += ': ' + job.ErrorDescription
         raise LmiFailed(msg)
     else:
-        LOG().info('Installed package "%s".',
+        LOG().info('Installed package "%s" on %s.',
                 nevra, ns.connection.uri)
 
     installed = job.associators(
@@ -543,11 +619,10 @@ def install_from_uri(ns, uri, force=False, update=False):
     """
     if not isinstance(uri, basestring):
         raise TypeError("uri must be a string")
-    service = ns.LMI_SoftwareInstallationService.first_instance()
     options = [4 if not update else 5]  # Install (4) or Update (5)
     if force:
         options.append(3) # Force Installation
-    results = service.SyncInstallFromURI(
+    results = get_installation_service(ns).SyncInstallFromURI(
             URI=uri,
             Target=get_computer_system(ns).path,
             InstallOptions=options)
@@ -639,8 +714,7 @@ def verify_package(ns, package):
         raise TypeError("package must be an LMIInstance or LMIInstanceName")
     # we can not use synchronous invocation because the reference to a job is
     # needed - for enumerating of affected software identities
-    service = ns.LMI_SoftwareInstallationService.first_instance()
-    results = service.VerifyInstalledIdentity(
+    results = get_installation_service(ns).VerifyInstalledIdentity(
             Source=package.path
                 if isinstance(package, LMIInstance) else package,
             Target=get_computer_system(ns).path)
@@ -655,7 +729,10 @@ def verify_package(ns, package):
     _wait_for_job_finished(job)
     if not LMIJob.lmi_is_job_completed(job):
         msg = 'Failed to verify package "%s".' % nevra
-        if job.ErrorDescription:
+        rval, oparms, _ = job.GetError()
+        if oparms:
+            msg += ': ' + oparms['Error'].Message
+        elif job.ErrorDescription:
             msg += ': ' + job.ErrorDescription
         raise LmiFailed(msg)
 

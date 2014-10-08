@@ -31,14 +31,15 @@
 List packages, repositories or files.
 
 Usage:
-    %(cmd)s [all] [--allow-duplicates]
+    %(cmd)s all [--allow-duplicates]
     %(cmd)s installed
     %(cmd)s available [--repoid <repository>] [--allow-duplicates]
     %(cmd)s repos [--disabled | --all]
     %(cmd)s files [-t <file_type>] <package>
 
 Commands:
-    all        - List installed and available packages.
+    all        - List installed and available packages. Only nevra strings
+                 will be shown which greatly speeds up the operation.
     installed  - List installed packages.
     available  - List available packages.
     repos      - List repositories. Only enabled ones are listed by default.
@@ -60,24 +61,29 @@ from lmi.scripts.common import get_logger
 
 LOG = get_logger(__name__)
 
-class AllLister(command.LmiInstanceLister):
-    PROPERTIES = ( ('NEVRA', 'ElementName')
-                 , ('Installed', lambda i: i.InstallDate is not None)
-                 , ('Summary', 'Caption'))
+class AllLister(command.LmiLister):
+    CONNECTION_TIMEOUT = 15*60  # timeout after 15 minutes
+    COLUMNS = []
 
     def execute(self, ns, _allow_duplicates=False):
-        for pkg in software.list_available_packages(ns,
-                allow_installed=True,
+        installed_nevras = None
+        if software.get_backend(ns) == software.BACKEND_PACKAGEKIT:
+            installed_nevras = set(software.get_package_nevra(p)
+                for p in software.list_installed_packages(ns))
+
+        for pkg in software.find_package(ns,
                 allow_duplicates=_allow_duplicates):
-            yield pkg
+            yield (software.get_package_nevra(pkg), )
 
 class InstalledLister(command.LmiInstanceLister):
+    CONNECTION_TIMEOUT = 4*60  # timeout after 4 minutes
     PROPERTIES = ( ('NEVRA', 'ElementName')
                  , ('Summary', 'Caption'))
     CALLABLE = software.list_installed_packages
 
 
 class AvailableLister(command.LmiInstanceLister):
+    CONNECTION_TIMEOUT = 15*60  # timeout after 15 minutes
     PROPERTIES = ( ('NEVRA', 'ElementName')
                  , ('Summary', 'Caption'))
 
@@ -87,6 +93,7 @@ class AvailableLister(command.LmiInstanceLister):
             yield pkg
 
 class RepoLister(command.LmiInstanceLister):
+    CONNECTION_TIMEOUT = 4*60  # timeout after 4 minutes
     DYNAMIC_PROPERTIES = True
 
     def execute(self, ns, _all, _disabled):
@@ -105,6 +112,7 @@ class RepoLister(command.LmiInstanceLister):
         return (properties, software.list_repositories(ns, enabled))
 
 class FileLister(command.LmiInstanceLister):
+    CONNECTION_TIMEOUT = 10*60  # timeout after 10 minutes
     DYNAMIC_PROPERTIES = True
 
     def verify_options(self, options):
@@ -128,7 +136,7 @@ class FileLister(command.LmiInstanceLister):
 
         pkgs = list(p.to_instance() for p in software.find_package(
                 ns, pkg_spec=package))
-        pkgs = [p for p in pkgs if p.InstallDate is not None]
+        pkgs = [p for p in pkgs if software.is_package_installed(p)]
         if len(pkgs) < 1:
             raise errors.LmiFailed(
                     'No package matching "%s" found.' % package)

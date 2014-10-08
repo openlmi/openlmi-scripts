@@ -31,7 +31,8 @@
 System software management.
 
 Usage:
-    %(cmd)s search [(--repoid <repository>)] [--allow-duplicates] <package>...
+    %(cmd)s search [(--repoid <repository>)] [--allow-duplicates]
+        [(--installed | --available)] <package>...
     %(cmd)s list (--help | <what> [<args>...])
     %(cmd)s show (--help | <what> [<args>...])
     %(cmd)s install [--force] [--repoid <repository>] <package> ...
@@ -44,7 +45,8 @@ Usage:
 
 Commands:
     search      Search packages. Produces a list of packages matching given
-                package specifications (see below). Allows filtering by
+                package specifications (see below). All packages with name with
+                given pattern as a substring will match. Allows filtering by
                 repository. By default only newest packages will be printed.
     list        List various information about packages, repositories or
                 files.
@@ -80,7 +82,8 @@ Options:
                    searched for.
     --uri <uri>    Operate upon an rpm package available on remote system
                    through http or ftp service.
-    --installed    Limit the query only on installed packages.
+    --installed    Limit the query to installed packages only.
+    --available    Limit the query just to not installed packages.
     --help         Get a detailed help for subcommand.
 
 Specifying <package>:
@@ -104,40 +107,69 @@ from lmi.scripts.software.cmd_list import Lister
 
 LOG = get_logger(__name__)
 
-class Search(command.LmiInstanceLister):
+class Search(command.LmiLister):
+    CONNECTION_TIMEOUT = 10*60   # timeout after 10 minutes
     ARG_ARRAY_SUFFIX = '_array'
-    PROPERTIES = (
-            ('NEVRA', 'ElementName'),
-            ('Installed', lambda i: i.InstallDate is not None),
-            ('Summary', 'Caption'))
 
     def execute(self, ns, package_array,
-            _allow_duplicates=False):
+            _allow_duplicates=False,
+            _installed=False,
+            _available=False,
+            _repoid=None):
+        if _installed or _available:
+            _installed = not _available
+        else:
+            _installed = None
+        if _installed is None:
+            yield ('NEVRA', 'Installed', 'Summary')
+        else:
+            yield ('NEVRA', 'Summary')
         for pkg_spec in package_array:
             for pkg in software.find_package(ns,
                     allow_duplicates=_allow_duplicates,
                     exact_match=False,
-                    pkg_spec=pkg_spec):
-                yield pkg.to_instance()
+                    installed=_installed,
+                    pkg_spec=pkg_spec,
+                    repoid=_repoid):
+                inst = pkg.to_instance()
+                nevra = software.get_package_nevra(inst)
+                if _installed is None:
+                    yield (nevra,
+                        'Yes' if software.is_package_installed(inst) else 'No',
+                        inst.Caption)
+                else:
+                    yield (nevra, inst.Caption)
 
 class PkgInfo(command.LmiShowInstance):
+    CONNECTION_TIMEOUT = 4*60   # timeout after 4 minutes
     DYNAMIC_PROPERTIES = True
 
     def execute(self, ns, package, _repoid=None, _installed=False):
+        def _render_installed(package):
+            result = "No"
+            if software.get_backend(ns) == software.BACKEND_YUM and \
+                    package.InstallDate is not None:
+                result = package.InstallDate.datetime.strftime(
+                        '%a %b %d/%Y  %H:%M')
+            elif software.get_backend(ns) == software.BACKEND_PACKAGEKIT and \
+                    software.is_package_installed(package):
+                result = "Yes"
+            return result
+
         properties = [
                 'Name',
                 ('Arch', 'Architecture'),
                 'Version',
                 'Release',
                 ('Summary', 'Caption'),
-                ('Installed', lambda i: 'no' if i.InstallDate is None
-                    else i.InstallDate.datetime.strftime('%a %b %d/%Y  %H:%M')),
+                ('Installed', _render_installed),
                 'Description']
         pkgs = [   p.to_instance()
                for p in software.find_package(ns,
                         pkg_spec=package,
                         repoid=_repoid)]
-        pkgs = [p for p in pkgs if not _installed or bool(p.InstallDate)]
+        pkgs = [p for p in pkgs if not _installed or \
+                software.is_package_installed(p)]
         if len(pkgs) < 1:
             raise errors.LmiFailed('No such package "%s" found.' % package)
         if len(pkgs) > 1:
@@ -147,6 +179,7 @@ class PkgInfo(command.LmiShowInstance):
         return (properties, pkgs[-1])
 
 class RepoInfo(command.LmiShowInstance):
+    CONNECTION_TIMEOUT = 4*60   # timeout after 4 minutes
     CALLABLE = software.get_repository
     PROPERTIES = (
             ('Repository Id', 'Name'),
@@ -202,7 +235,8 @@ def for_each_package_specs(ns, pkg_specs, info, func,
                     for i in software.find_package(ns,
                         pkg_spec=pkg_spec, repoid=repoid)]
 
-            identities = [p for p in identities if p.InstallDate is not None]
+            identities = [p for p in identities
+                            if software.is_package_installed(p)]
         else:
             identities = list(software.find_package(ns,
                 pkg_spec=pkg_spec, repoid=repoid))
@@ -223,11 +257,11 @@ def for_each_package_specs(ns, pkg_specs, info, func,
             func(identities[-1])
             done_on.append(pkg_spec)
         except errors.LmiFailed as err:
-            LOG().warn('Failed to %s "%s": %s', info, pkg_spec, err)
             failed.append(err)
     return done_on, failed
 
 class Install(command.LmiCheckResult):
+    CONNECTION_TIMEOUT = 4*60   # timeout after 4 minutes
     ARG_ARRAY_SUFFIX = '_array'
 
     def check_result(self, options, result):
@@ -269,6 +303,7 @@ class Install(command.LmiCheckResult):
                     just_on_installed=False)
 
 class Update(command.LmiCheckResult):
+    CONNECTION_TIMEOUT = 4*60   # timeout after 4 minutes
     ARG_ARRAY_SUFFIX = '_array'
 
     def check_result(self, options, result):
@@ -326,6 +361,7 @@ class Remove(command.LmiCheckResult):
                 lambda identity: software.remove_package(ns, identity))
 
 class Verify(command.LmiLister):
+    CONNECTION_TIMEOUT = 4*60   # timeout after 4 minutes
     ARG_ARRAY_SUFFIX = '_array'
     COLUMNS = []
 
@@ -354,6 +390,7 @@ class ChangeEnabledState(command.LmiCheckResult):
     to enable repositories. To make a disable command out of it, it needs
     to be overrided with ``enable`` property returning ``False``.
     """
+    CONNECTION_TIMEOUT = 4*60   # timeout after 4 minutes
     ARG_ARRAY_SUFFIX = '_array'
 
     @property
