@@ -48,6 +48,7 @@ YELLOW_COLOR = 2
 RED_COLOR = 3
 
 EMPTY_LINE = ('', '')
+FIRST_COLUMN_MIN_SIZE = 17
 # GLOBAL variable - modified in get_all_info(), accessed in init_result()
 STANDALONE = True
 
@@ -187,7 +188,7 @@ def get_system_info(ns):
     """
     result = []
 
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
     if STANDALONE:
         tf.print_host(get_hostname(ns))
 
@@ -233,7 +234,7 @@ def get_motherboard_info(ns):
     """
     result = []
 
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
     if STANDALONE:
         tf.print_host(get_hostname(ns))
 
@@ -272,7 +273,7 @@ def get_cpu_info(ns):
     """
     result = []
 
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
     if STANDALONE:
         tf.print_host(get_hostname(ns))
 
@@ -308,7 +309,7 @@ def get_memory_info(ns):
     """
     result = []
 
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
     if STANDALONE:
         tf.print_host(get_hostname(ns))
 
@@ -374,7 +375,7 @@ def get_disks_info(ns):
     """
     result = [('Disks:', '')]
 
-    tf = TableFormatter(stdout, 0, True)
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
     if STANDALONE:
         tf.print_host(get_hostname(ns))
 
