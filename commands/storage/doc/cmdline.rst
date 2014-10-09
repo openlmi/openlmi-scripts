@@ -11,13 +11,14 @@ which allows listing and manipulation of storage on a remote host with installed
 Available commands:
 
 lmi `storage`_
-    Generic information about storage devices.
+    Generic information about storage devices, like listing devices and
+    their dependencies.
 
 lmi `storage fs`_
     Filesystem and other data format management.
 
 lmi `storage luks`_
-    LUKS management.
+    LUKS management (i.e. device encryption).
 
 lmi `storage lv`_
     Logical Volume management.
