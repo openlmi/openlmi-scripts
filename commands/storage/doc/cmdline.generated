@@ -11,6 +11,16 @@ Basic storage device information.
 
 **Usage:**
 
+    **lmi** **storage** **list** [ \ *<device>*\  ...]
+
+    **lmi** **storage** **show** [ \ *<device>*\  ...]
+
+    **lmi** **storage** **tree** [ \ *<device>*\  ]
+
+    **lmi** **storage** **depends** [ \ **--deep**\  ] [ \ *<device>*\  ...]
+
+    **lmi** **storage** **provides** [ \ **--deep**\  ] [ \ *<device>*\  ...]
+
     **lmi** **storage** **fs** \ *<cmd>*\  [\ *<args>*\  ...]
 
     **lmi** **storage** **luks** \ *<cmd>*\  [\ *<args>*\  ...]
@@ -31,19 +41,51 @@ Basic storage device information.
 
     **lmi** **storage** **thinlv** \ *<cmd>*\  [\ *<args>*\  ...]
 
-    **lmi** **storage** **depends** [ \ **--deep**\  ] [ \ *<device>*\  ...]
 
-    **lmi** **storage** **list** [ \ *<device>*\  ...]
 
-    **lmi** **storage** **provides** [ \ **--deep**\  ] [ \ *<device>*\  ...]
-
-    **lmi** **storage** **show** [ \ *<device>*\  ...]
-
-    **lmi** **storage** **tree** [ \ *<device>*\  ]
+**Commands that just display information about devices:**
 
 
 
-**Commands:**
+    **list**
+        List short information about given device. If no devices
+        are given, all devices are listed.
+
+
+    **show**
+        Show detailed information about given devices. If no devices
+        are provided, all of them are displayed.
+
+
+    **tree**
+        Show tree of devices, similar to lsblk.
+
+        If no device is provided, all devices are shown, starting
+        with physical disks.
+
+
+    **depends**
+        Show devices, which are required by given devices to operate
+        correctly (= show parents of the devices).
+
+        For example, if a Logical Volume is provided, its Volume Group
+        is returned. If 'deep' is used, also all Physical Volumes and
+        appropriate disk(s) are returned.
+
+        If a device is provided, tree starts with the device
+        and all dependent devices are shown.
+
+
+    **provides**
+        Show devices, which are created from given devices
+        (= show children of the devices).
+
+        For example, if a disk is provided, all partitions on it are
+        returned. If 'deep' is used, all RAIDs, Volume Groups and
+        Logical Volumes indirectly allocated from it are returned too.
+
+**Commands that manipulate with devices:**
+
 
 
     **fs**
@@ -51,7 +93,7 @@ Basic storage device information.
 
 
     **luks**
-        LUKS management.
+        LUKS management (i.e. device encryption).
 
 
     **lv**
@@ -84,45 +126,6 @@ Basic storage device information.
 
     **thinlv**
         Thin Logical Volume management.
-
-
-    **list**
-        List short information about given device. If no devices
-        are given, all devices are listed.
-
-
-    **show**
-        Show detailed information about given devices. If no devices
-        are provided, all of them are displayed.
-
-
-    **provides**
-        Show devices, which are created from given devices
-        (= show children of the devices).
-
-        For example, if a disk is provided, all partitions on it are
-        returned. If 'deep' is used, all RAIDs, Volume Groups and
-        Logical Volumes indirectly allocated from it are returned too.
-
-
-    **depends**
-        Show devices, which are required by given devices to operate
-        correctly (= show parents of the devices).
-
-        For example, if a Logical Volume is provided, its Volume Group
-        is returned. If 'deep' is used, also all Physical Volumes and
-        appropriate disk(s) are returned.
-
-
-    **tree**
-        Show tree of devices, similar to lsblk.
-
-        If no device is provided, all devices are shown, starting
-        with physical disks.
-
-        If a device is provided, tree starts with the device
-        and all dependent devices are shown.
-
 
 **Options:**
 
@@ -202,7 +205,7 @@ Filesystem and other data format management.
 storage luks
 ------------
 
-LUKS management
+LUKS management (i.e. device encryption).
 
 
 **Usage:**
@@ -672,6 +675,7 @@ Volume Group management.
 
     **modify**
         Add or remove Physical Volumes to/from given Volume Group.
+        This command requires OpenLMI-Storage 0.8 or newer.
 
 **Options:**
 
