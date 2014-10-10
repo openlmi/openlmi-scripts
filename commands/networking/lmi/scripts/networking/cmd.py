@@ -376,6 +376,29 @@ class Setting(command.LmiCommandMultiplexer):
 
 # ADDRESS
 
+def cmd_list_address(ns, caption=None):
+    for setting in list_settings(ns, caption):
+        for subsetting in get_sub_setting(ns, setting):
+            if subsetting.classname == 'LMI_ExtendedStaticIPAssignmentSettingData':
+                for i, address in enumerate(subsetting.IPAddresses):
+                    if subsetting.ProtocolIFType == ns.LMI_ExtendedStaticIPAssignmentSettingData.ProtocolIFTypeValues.IPv4:
+                        yield (
+                            "IPv4",
+                            address,
+                            subsetting.SubnetMasks[i],
+                            subsetting.GatewayAddresses[i])
+                    else:
+                        yield (
+                            "IPv6",
+                            address,
+                            subsetting.IPv6SubnetPrefixLengths[i],
+                            subsetting.GatewayAddresses[i])
+
+
+class ListAddress(command.LmiLister):
+    CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_address'
+    COLUMNS = ('Type', 'IP Address', 'Netmask/Prefix', 'Default Gateway')
+
 class AddAddress(command.LmiCheckResult):
     EXPECT = 0
     def execute(self, ns, caption, address, prefix, gateway):
@@ -405,20 +428,49 @@ class Address(command.LmiCommandMultiplexer):
     Manage the list of IP addresses.
 
     Usage:
+        %(cmd)s list <caption>
         %(cmd)s add <caption> <address> <prefix> [<gateway>]
         %(cmd)s remove <caption> <address>
         %(cmd)s replace <caption> <address> <prefix> [<gateway>]
 
     Commands:
+        list     List static IP addresses for given setting
         add      Add IP address to the existing list of addresses.
         remove   Remove given IP address from the list of addresses.
         replace  Replace all IP address with new address.
     """
-    COMMANDS = { 'add' : AddAddress, 'remove' : RemoveAddress, 'replace': ReplaceAddress }
+    COMMANDS = {
+        'list': ListAddress,
+        'add': AddAddress,
+        'remove': RemoveAddress,
+        'replace': ReplaceAddress
+    }
     OWN_USAGE = True
 
 
 ## ROUTE
+
+def cmd_list_route(ns, caption=None):
+    for setting in list_settings(ns, caption):
+        for route in get_static_routes(ns, setting):
+            if route.AddressType == ns.LMI_IPRouteSettingData.AddressTypeValues.IPv4:
+                yield (
+                    "IPv4",
+                    route.DestinationAddress,
+                    route.DestinationMask,
+                    route.RouteMetric,
+                    route.NextHop)
+            else:
+                yield (
+                    "IPv6",
+                    route.DestinationAddress,
+                    route.PrefixLength,
+                    route.RouteMetric,
+                    route.NextHop)
+
+class ListRoute(command.LmiLister):
+    CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_route'
+    COLUMNS = ('Type', 'IP Address', 'Netmask/Prefix', 'Metric', 'Next Hop')
 
 class AddRoute(command.LmiCheckResult):
     EXPECT = 0
@@ -449,19 +501,40 @@ class Route(command.LmiCommandMultiplexer):
     Manage the list of static routes.
 
     Usage:
+        %(cmd)s list <caption>
         %(cmd)s add <caption> <address> <prefix> [<metric>] [<next_hop>]
         %(cmd)s remove <caption> <address>
         %(cmd)s replace <caption> <address> <prefix> [<metric>] [<next_hop>]
 
     Commands:
+        list     List static routes for given setting.
         add      Add static route to the existing list of static routes.
         remove   Remove given static route from the list of static route.
         replace  Replace all static routes with new route.
     """
-    COMMANDS = { 'add' : AddRoute, 'remove' : RemoveRoute, 'replace': ReplaceRoute }
+    COMMANDS = {
+        'list': ListRoute,
+        'add': AddRoute,
+        'remove': RemoveRoute,
+        'replace': ReplaceRoute
+    }
     OWN_USAGE = True
 
 ## DNS
+
+def cmd_list_dns(ns, caption=None):
+    for setting in list_settings(ns, caption):
+        for subsetting in get_sub_setting(ns, setting):
+            if subsetting.classname == 'LMI_DNSSettingData':
+                for dns in subsetting.DNSServerAddresses:
+                    if subsetting.ProtocolIFType == ns.LMI_DNSSettingData.ProtocolIFTypeValues.IPv4:
+                        yield ("IPv4", dns)
+                    else:
+                        yield ("IPv6", dns)
+
+class ListDns(command.LmiLister):
+    CALLABLE = 'lmi.scripts.networking.cmd:cmd_list_dns'
+    COLUMNS = ('Type', 'IP Address')
 
 class AddDns(command.LmiCheckResult):
     EXPECT = 0
@@ -492,16 +565,23 @@ class Dns(command.LmiCommandMultiplexer):
     Manage the list of DNS servers.
 
     Usage:
+        %(cmd)s list <caption>
         %(cmd)s add <caption> <address>
         %(cmd)s remove <caption> <address>
         %(cmd)s replace <caption> <address>
 
     Commands:
+        list     List DNS servers of given setting.
         add      Add DNS server to the existing list of DNS servers for given setting.
         remove   Remove given DNS server from the list of DNS servers for given setting.
         replace  Replace all DNS servers with given DNS server for given setting.
     """
-    COMMANDS = { 'add': AddDns, 'remove': RemoveDns, 'replace': ReplaceDns }
+    COMMANDS = {
+        'list': ListDns,
+        'add': AddDns,
+        'remove': RemoveDns,
+        'replace': ReplaceDns
+    }
     OWN_USAGE = True
 
 class Enslave(command.LmiCheckResult):

@@ -87,6 +87,11 @@ rlPhaseStartTest "Test static settings"
     rlAssertGrep "IPv4 Address +192.168.1.1/255.255.255.0" $rlRun_LOG -E
     rlAssertGrep "IPv4 Address +192.168.1.2/255.255.255.0 192.168.1.100" $rlRun_LOG -E
 
+    rlLogInfo "List static IPv4 addresses"
+    rlRun -s "$LMI net address list 'XXX Test Static'"
+    rlAssertGrep "IPv4 +192.168.1.1 +255.255.255.0" $rlRun_LOG -E
+    rlAssertGrep "IPv4 +192.168.1.2 +255.255.255.0 +192.168.1.100" $rlRun_LOG -E
+
     rlLogInfo "Remove static IPv4 address"
     rlRun "$LMI net address remove 'XXX Test Static' 192.168.1.2"
     rlRun -s "$LMI net setting show 'XXX Test Static'"
@@ -114,6 +119,11 @@ rlPhaseStartTest "Test static settings"
     rlAssertGrep "IPv6 Address +2001:DB8::1/32" $rlRun_LOG '-E -i'
     rlAssertGrep "IPv6 Address +2001:DB8::2/32" $rlRun_LOG '-E -i'
 
+    rlLogInfo "List static IPv6 addresses"
+    rlRun -s "$LMI net address list 'XXX Test Static'"
+    rlAssertGrep "IPv6 +2001:db8::1 +32 +::" $rlRun_LOG '-E -i'
+    rlAssertGrep "IPv6 +2001:db8::2 +32 +::" $rlRun_LOG '-E -i'
+
     rlLogInfo "Remove static IPv6 address"
     rlRun "$LMI net address remove 'XXX Test Static' 2001:DB8::2"
     rlRun -s "$LMI net setting show 'XXX Test Static'"
@@ -130,7 +140,7 @@ rlPhaseStartTest "Test static settings"
     rlRun -s "$LMI net setting list"
     rlAssertGrep "XXX Test Static +Ethernet" $rlRun_LOG -E
 
-    rlLogInfo "Delete static IPv6 setting"
+    rlLogInfo "Delete static IPv4 and IPv6 setting"
     rlRun "$LMI net setting delete 'XXX Test Static'"
     rlRun -s "$LMI net setting list"
     rlAssertNotGrep "XXX Test Static" $rlRun_LOG
@@ -299,6 +309,11 @@ rlPhaseStartTest "Test static routes"
     rlAssertGrep "IPv4 Static Route +192.168.100.1/255.255.255.0 0 0.0.0.0" $rlRun_LOG -E
     rlAssertGrep "IPv4 Static Route +192.168.100.2/255.255.255.0 100 0.0.0.0" $rlRun_LOG -E
 
+    rlLogInfo "List static IPv4 routes"
+    rlRun -s "$LMI net route list 'XXX Test'"
+    rlAssertGrep "IPv4 +192.168.100.1 +255.255.255.0 +0 +0.0.0.0" $rlRun_LOG -E
+    rlAssertGrep "IPv4 +192.168.100.2 +255.255.255.0 +100 +0.0.0.0" $rlRun_LOG -E
+
     rlLogInfo "Replace static IPv4 route"
     rlRun "$LMI net route replace 'XXX Test' 192.168.100.3 24 100 192.168.100.30"
     rlRun -s "$LMI net setting show 'XXX Test'"
@@ -321,6 +336,11 @@ rlPhaseStartTest "Test static routes"
     rlRun -s "$LMI net setting show 'XXX Test'"
     rlAssertGrep "IPv6 Static Route +2001:DB8::1/32 0 ::" $rlRun_LOG "-E -i"
     rlAssertGrep "IPv6 Static Route +2001:DB8::2/32 100" $rlRun_LOG "-E -i"
+
+    rlLogInfo "List static IPv6 routes"
+    rlRun -s "$LMI net route list 'XXX Test'"
+    rlAssertGrep "IPv6 +2001:DB8::1 +32 +0 +::" $rlRun_LOG '-E -i'
+    rlAssertGrep "IPv6 +2001:DB8::2 +32 +100 +::" $rlRun_LOG '-E -i'
 
     rlLogInfo "Replace static IPv6 route"
     rlRun "$LMI net route replace 'XXX Test' 2001:DB8::3 32 100 2001:DB8::30"
@@ -355,6 +375,11 @@ rlPhaseStartTest "Test setup DNS servers"
     rlAssertGrep "DNS Server +192.168.100.1" $rlRun_LOG -E
     rlAssertGrep "DNS Server +192.168.100.2" $rlRun_LOG -E
 
+    rlLogInfo "List IPv4 DNS servers"
+    rlRun -s "$LMI net dns list 'XXX Test'"
+    rlAssertGrep "IPv4 +192.168.100.1" $rlRun_LOG -E
+    rlAssertGrep "IPv4 +192.168.100.2" $rlRun_LOG -E
+
     rlLogInfo "Remove IPv4 DNS server"
     rlRun "$LMI net dns remove 'XXX Test' 192.168.100.1"
     rlRun -s "$LMI net setting show 'XXX Test'"
@@ -378,6 +403,11 @@ rlPhaseStartTest "Test setup DNS servers"
     rlRun -s "$LMI net setting show 'XXX Test'"
     rlAssertGrep "DNS Server +2001:DB8::1" $rlRun_LOG "-E -i"
     rlAssertGrep "DNS Server +2001:DB8::2" $rlRun_LOG "-E -i"
+
+    rlLogInfo "List IPv6 DNS servers"
+    rlRun -s "$LMI net dns list 'XXX Test'"
+    rlAssertGrep "IPv6 +2001:DB8::1" $rlRun_LOG "-E -i"
+    rlAssertGrep "IPv6 +2001:DB8::2" $rlRun_LOG "-E -i"
 
     rlLogInfo "Remove IPv6 DNS server"
     rlRun "$LMI net dns remove 'XXX Test' 2001:DB8::1"
