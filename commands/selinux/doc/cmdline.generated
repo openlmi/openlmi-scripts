@@ -1,0 +1,67 @@
+..
+    !!!!!!!!!
+    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
+    !!!!!!!!!
+
+selinux
+-------
+
+SELinux management.
+
+
+**Usage:**
+
+    **lmi** **selinux** show
+
+    **lmi** **selinux** **list** (booleans | ports)
+
+    **lmi** **selinux** **set-state** [\ **--default**\ ] \ *<new_state>*\ 
+
+    **lmi** **selinux** **set-boolean** [\ **--default**\ ] \ *<target>*\  \ *<value>*\ 
+
+    **lmi** **selinux** **set-port** \ *<target>*\  \ *<protocol>*\  \ *<port_range>*\ 
+
+    **lmi** **selinux** **get-label** \ *<target>*\ 
+
+    **lmi** **selinux** **set-label** \ *<target>*\  \ *<label>*\ 
+
+    **lmi** **selinux** **restore** [\ **--recursively**\ ] \ *<target>*\  \ *<action>*\ 
+
+
+
+**Commands:**
+
+
+    **show**
+        Show detailed information about SELinux settings on the managed system.
+
+    **list**
+        List SELinux policy booleans or SELinux ports.
+
+    **set-state**
+        Set SELinux state.
+
+    **set-bool**
+        Set a new value of an SELinux boolean.
+
+    **set-port**
+        Set label on an SELinux port.
+
+    **get-label**
+        Get label on an SELinux file.
+
+    **set-label**
+        Set label on an SELinux file.
+
+    **restore**
+        Restore default SELinux security contexts on files.
+
+**Options:**
+
+
+    **--default**
+        If set, makes the new state persistent.
+
+    **--recursively**
+        If set, restores labels recursively in case target is a directory.
+
