@@ -35,6 +35,11 @@
 Basic storage device information.
 
 Usage:
+    %(cmd)s list [ <device> ...]
+    %(cmd)s show [ <device> ...]
+    %(cmd)s tree [ <device> ]
+    %(cmd)s depends [ --deep ] [ <device> ...]
+    %(cmd)s provides [ --deep ] [ <device> ...]
     %(cmd)s fs <cmd> [<args> ...]
     %(cmd)s luks <cmd> [<args> ...]
     %(cmd)s lv <cmd> [<args> ...]
@@ -45,16 +50,42 @@ Usage:
     %(cmd)s vg <cmd> [<args> ...]
     %(cmd)s thinpool <cmd> [<args> ...]
     %(cmd)s thinlv <cmd> [<args> ...]
-    %(cmd)s depends [ --deep ] [ <device> ...]
-    %(cmd)s list [ <device> ...]
-    %(cmd)s provides [ --deep ] [ <device> ...]
-    %(cmd)s show [ <device> ...]
-    %(cmd)s tree [ <device> ]
 
-Commands:
+Commands that just display information about devices:
+
+    list        List short information about given device. If no devices
+                are given, all devices are listed.
+
+    show        Show detailed information about given devices. If no devices
+                are provided, all of them are displayed.
+
+    tree        Show tree of devices, similar to lsblk.
+
+                If no device is provided, all devices are shown, starting
+                with physical disks.
+
+    depends     Show devices, which are required by given devices to operate
+                correctly (= show parents of the devices).
+
+                For example, if a Logical Volume is provided, its Volume Group
+                is returned. If 'deep' is used, also all Physical Volumes and
+                appropriate disk(s) are returned.
+
+                If a device is provided, tree starts with the device
+                and all dependent devices are shown.
+
+    provides    Show devices, which are created from given devices
+                (= show children of the devices).
+
+                For example, if a disk is provided, all partitions on it are
+                returned. If 'deep' is used, all RAIDs, Volume Groups and
+                Logical Volumes indirectly allocated from it are returned too.
+
+Commands that manipulate with devices:
+
     fs          Filesystem and other data format management.
 
-    luks        LUKS management.
+    luks        LUKS management (i.e. device encryption).
 
     lv          Logical Volume management.
 
@@ -71,35 +102,6 @@ Commands:
     thinpool    Thin Pool management.
 
     thinlv      Thin Logical Volume management.
-
-    list        List short information about given device. If no devices
-                are given, all devices are listed.
-
-    show        Show detailed information about given devices. If no devices
-                are provided, all of them are displayed.
-
-    provides    Show devices, which are created from given devices
-                (= show children of the devices).
-
-                For example, if a disk is provided, all partitions on it are
-                returned. If 'deep' is used, all RAIDs, Volume Groups and
-                Logical Volumes indirectly allocated from it are returned too.
-
-    depends     Show devices, which are required by given devices to operate
-                correctly (= show parents of the devices).
-
-                For example, if a Logical Volume is provided, its Volume Group
-                is returned. If 'deep' is used, also all Physical Volumes and
-                appropriate disk(s) are returned.
-
-    tree        Show tree of devices, similar to lsblk.
-
-                If no device is provided, all devices are shown, starting
-                with physical disks.
-
-                If a device is provided, tree starts with the device
-                and all dependent devices are shown.
-
 
 Options:
 

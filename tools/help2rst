@@ -96,9 +96,9 @@ def process_usage_line(line):
     Parsing usage strings after 'Usage:' and before 'Commands:'.
     Just add formatting to usage strings.
     """
-    if line.startswith("Commands:") or line.startswith('Options:'):
+    if line.startswith("Commands") or line.startswith('Options'):
         print
-        print "**Commands:**" if line.startswith("Commands") else "**Options:**"
+        print "**%s**" % (line)
         print
         return process_commands_line
 

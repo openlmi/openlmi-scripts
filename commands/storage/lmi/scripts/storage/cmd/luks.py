@@ -31,7 +31,7 @@
 # Authors: Jan Safranek <jsafrane@redhat.com>
 #
 """
-LUKS management
+LUKS management (i.e. device encryption).
 
 Usage:
     %(cmd)s list
