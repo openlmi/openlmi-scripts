@@ -86,6 +86,14 @@ def get_all_instances(ns, class_name):
     """
     return _cache_replies(ns, class_name, 'instances')
 
+def get_hostname(ns):
+    """
+    :returns: System hostname.
+    :rtype: String
+    """
+    i = get_computer_system(ns)
+    return i.Name
+
 def format_memory_size(size):
     """
     Returns formatted memory size.
@@ -132,8 +140,7 @@ def get_colored_string(msg, color):
 
 def get_system_info(ns):
     """
-    :returns: Tabular data of all general system information.
-    :rtype: List of tuples
+    Prints tabular data of all general system information.
     """
     tf = TableFormatter(stdout, 0, True)
     tf.print_host(get_hostname(ns))
@@ -147,18 +154,9 @@ def get_system_info(ns):
 
     return []
 
-def get_hostname(ns):
-    """
-    :returns: Tabular data of system hostname.
-    :rtype: List of tuples
-    """
-    i = get_computer_system(ns)
-    return i.Name
-
 def get_hwinfo(ns):
     """
-    :returns: Tabular data of system hw info.
-    :rtype: List of tuples
+    Prints tabular data of system hw info.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -223,8 +221,7 @@ def get_hwinfo(ns):
 
 def get_storageinfo(ns):
     """
-    :returns: Tabular data of storage info.
-    :rtype: List of tuples
+    Prints tabular data of storage info.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -249,8 +246,7 @@ def get_storageinfo(ns):
 
 def get_osinfo(ns):
     """
-    :returns: Tabular data of system OS info.
-    :rtype: List of tuples
+    Prints tabular data of system OS info.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -282,8 +278,7 @@ def get_osinfo(ns):
 
 def get_selinuxinfo(ns):
     """
-    :returns: Tabular data of SELinux info.
-    :rtype: List of tuples
+    Prints tabular data of SELinux info.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -308,8 +303,7 @@ def get_selinuxinfo(ns):
 
 def get_servicesinfo(ns):
     """
-    :returns: Tabular data of some system services.
-    :rtype: List of tuples
+    Prints tabular data of some system services.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -349,8 +343,7 @@ def get_servicesinfo(ns):
 
 def get_networkinfo(ns):
     """
-    :returns: Tabular data of networking status.
-    :rtype: List of tuples
+    Prints tabular data of networking status.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
