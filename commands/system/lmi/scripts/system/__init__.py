@@ -179,7 +179,11 @@ def get_hwinfo(ns):
     virt = getattr(chassis, 'VirtualMachine', None)
     if virt and virt != 'No':
         hwinfo += ' (%s virtual machine)' % virt
-    tf.produce_output([('Hardware:', hwinfo)])
+    chassis_res = [
+       ('Hardware:', hwinfo),
+       ('Serial Number:', chassis.SerialNumber),
+       ('Asset Tag:', chassis.Tag)]
+    tf.produce_output(chassis_res)
 
     # CPUs
     try:
@@ -194,13 +198,13 @@ def get_hwinfo(ns):
         for i in cpu_caps:
             cores += i.NumberOfProcessorCores
             threads += i.NumberOfHardwareThreads
-        cpus = [
+        cpus_res = [
             ('CPU:', '%s, %s arch' % (cpus[0].Name, cpus[0].Architecture)),
             ('CPU Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
                 (len(cpus), cores, threads))]
     else:
-        cpus = [('CPU:', 'N/A')]
-    tf.produce_output(cpus)
+        cpus_res = [('CPU:', 'N/A')]
+    tf.produce_output(cpus_res)
 
     # Memory
     try:
