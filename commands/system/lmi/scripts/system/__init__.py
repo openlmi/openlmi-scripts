@@ -140,6 +140,7 @@ def get_system_info(ns):
 
     get_hwinfo(ns)
     get_osinfo(ns)
+    get_selinuxinfo(ns)
     get_servicesinfo(ns)
     get_networkinfo(ns)
 
@@ -250,6 +251,32 @@ def get_osinfo(ns):
         ('OS:', os_str),
         ('Kernel:', kernel_str)]
     tf.produce_output(result)
+    return []
+
+def get_selinuxinfo(ns):
+    """
+    :returns: Tabular data of SELinux info.
+    :rtype: List of tuples
+    """
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
+
+    # SELinux
+    try:
+        selinux = get_single_instance(ns, 'LMI_SELinuxService')
+    except Exception:
+        result = [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_SELinuxService. Is openlmi-selinux package installed on the server?')]
+        tf.produce_output(result)
+        return []
+
+    if selinux.SELinuxState == 0:
+        selinux_str = 'off'
+    else:
+        selinux_str = 'on (%s)' % \
+            ns.LMI_SELinuxService.SELinuxStateValues.value_name(selinux.SELinuxState)
+
+    # Result
+    tf.produce_output([('SELinux:', selinux_str)])
     return []
 
 def get_servicesinfo(ns):
