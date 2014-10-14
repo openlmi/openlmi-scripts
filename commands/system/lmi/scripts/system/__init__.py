@@ -184,13 +184,23 @@ def get_hwinfo(ns):
     # CPUs
     try:
         cpus = get_all_instances(ns, 'LMI_Processor')
+        cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
     except Exception:
         cpus = None
-    if cpus:
-        cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
+        cpu_caps = None
+    if cpus and cpu_caps:
+        cores = 0
+        threads = 0
+        for i in cpu_caps:
+            cores += i.NumberOfProcessorCores
+            threads += i.NumberOfHardwareThreads
+        cpus = [
+            ('CPU:', '%s, %s arch' % (cpus[0].Name, cpus[0].Architecture)),
+            ('CPU Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
+                (len(cpus), cores, threads))]
     else:
-        cpus_str = 'N/A'
-    tf.produce_output([('Processors:', cpus_str)])
+        cpus = [('CPU:', 'N/A')]
+    tf.produce_output(cpus)
 
     # Memory
     try:
