@@ -139,6 +139,7 @@ def get_system_info(ns):
     tf.print_host(get_hostname(ns))
 
     get_hwinfo(ns)
+    get_storageinfo(ns)
     get_osinfo(ns)
     get_selinuxinfo(ns)
     get_servicesinfo(ns)
@@ -218,6 +219,32 @@ def get_hwinfo(ns):
         memory_size = 'N/A GB'
     tf.produce_output([('Memory:', memory_size)])
 
+    return []
+
+def get_storageinfo(ns):
+    """
+    :returns: Tabular data of storage info.
+    :rtype: List of tuples
+    """
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
+
+    try:
+        localfss = get_all_instances(ns, 'LMI_LocalFileSystem')
+    except Exception:
+        result = [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_LocalFileSystem. Is openlmi-storage package installed on the server?')]
+        tf.produce_output(result)
+        return []
+
+    total = 0
+    free = 0
+    for fs in localfss:
+        total += fs.FileSystemSize
+        free += fs.AvailableSpace
+
+    result = [('Disk Space:', '%s total, %s free' % (format_memory_size(total),
+         format_memory_size(free)))]
+    tf.produce_output(result)
     return []
 
 def get_osinfo(ns):
