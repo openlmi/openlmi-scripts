@@ -86,6 +86,14 @@ def get_all_instances(ns, class_name):
     """
     return _cache_replies(ns, class_name, 'instances')
 
+def get_hostname(ns):
+    """
+    :returns: System hostname.
+    :rtype: String
+    """
+    i = get_computer_system(ns)
+    return i.Name
+
 def format_memory_size(size):
     """
     Returns formatted memory size.
@@ -132,31 +140,23 @@ def get_colored_string(msg, color):
 
 def get_system_info(ns):
     """
-    :returns: Tabular data of all general system information.
-    :rtype: List of tuples
+    Prints tabular data of all general system information.
     """
     tf = TableFormatter(stdout, 0, True)
     tf.print_host(get_hostname(ns))
 
     get_hwinfo(ns)
+    get_storageinfo(ns)
     get_osinfo(ns)
+    get_selinuxinfo(ns)
     get_servicesinfo(ns)
     get_networkinfo(ns)
 
     return []
 
-def get_hostname(ns):
-    """
-    :returns: Tabular data of system hostname.
-    :rtype: List of tuples
-    """
-    i = get_computer_system(ns)
-    return i.Name
-
 def get_hwinfo(ns):
     """
-    :returns: Tabular data of system hw info.
-    :rtype: List of tuples
+    Prints tabular data of system hw info.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -179,18 +179,32 @@ def get_hwinfo(ns):
     virt = getattr(chassis, 'VirtualMachine', None)
     if virt and virt != 'No':
         hwinfo += ' (%s virtual machine)' % virt
-    tf.produce_output([('Hardware:', hwinfo)])
+    chassis_res = [
+       ('Hardware:', hwinfo),
+       ('Serial Number:', chassis.SerialNumber),
+       ('Asset Tag:', chassis.Tag)]
+    tf.produce_output(chassis_res)
 
     # CPUs
     try:
         cpus = get_all_instances(ns, 'LMI_Processor')
+        cpu_caps = get_all_instances(ns, 'LMI_ProcessorCapabilities')
     except Exception:
         cpus = None
-    if cpus:
-        cpus_str = '%dx %s' % (len(cpus), cpus[0].Name)
+        cpu_caps = None
+    if cpus and cpu_caps:
+        cores = 0
+        threads = 0
+        for i in cpu_caps:
+            cores += i.NumberOfProcessorCores
+            threads += i.NumberOfHardwareThreads
+        cpus_res = [
+            ('CPU:', '%s, %s arch' % (cpus[0].Name, cpus[0].Architecture)),
+            ('CPU Topology:', '%d cpu(s), %d core(s), %d thread(s)' % \
+                (len(cpus), cores, threads))]
     else:
-        cpus_str = 'N/A'
-    tf.produce_output([('Processors:', cpus_str)])
+        cpus_res = [('CPU:', 'N/A')]
+    tf.produce_output(cpus_res)
 
     # Memory
     try:
@@ -205,10 +219,34 @@ def get_hwinfo(ns):
 
     return []
 
+def get_storageinfo(ns):
+    """
+    Prints tabular data of storage info.
+    """
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
+
+    try:
+        localfss = get_all_instances(ns, 'LMI_LocalFileSystem')
+    except Exception:
+        result = [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_LocalFileSystem. Is openlmi-storage package installed on the server?')]
+        tf.produce_output(result)
+        return []
+
+    total = 0
+    free = 0
+    for fs in localfss:
+        total += fs.FileSystemSize
+        free += fs.AvailableSpace
+
+    result = [('Disk Space:', '%s total, %s free' % (format_memory_size(total),
+         format_memory_size(free)))]
+    tf.produce_output(result)
+    return []
+
 def get_osinfo(ns):
     """
-    :returns: Tabular data of system OS info.
-    :rtype: List of tuples
+    Prints tabular data of system OS info.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -238,10 +276,34 @@ def get_osinfo(ns):
     tf.produce_output(result)
     return []
 
+def get_selinuxinfo(ns):
+    """
+    Prints tabular data of SELinux info.
+    """
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
+
+    # SELinux
+    try:
+        selinux = get_single_instance(ns, 'LMI_SELinuxService')
+    except Exception:
+        result = [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_SELinuxService. Is openlmi-selinux package installed on the server?')]
+        tf.produce_output(result)
+        return []
+
+    if selinux.SELinuxState == 0:
+        selinux_str = 'off'
+    else:
+        selinux_str = 'on (%s)' % \
+            ns.LMI_SELinuxService.SELinuxStateValues.value_name(selinux.SELinuxState)
+
+    # Result
+    tf.produce_output([('SELinux:', selinux_str)])
+    return []
+
 def get_servicesinfo(ns):
     """
-    :returns: Tabular data of some system services.
-    :rtype: List of tuples
+    Prints tabular data of some system services.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -281,8 +343,7 @@ def get_servicesinfo(ns):
 
 def get_networkinfo(ns):
     """
-    :returns: Tabular data of networking status.
-    :rtype: List of tuples
+    Prints tabular data of networking status.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 

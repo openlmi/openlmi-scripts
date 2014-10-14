@@ -107,8 +107,8 @@ def get_all_instances(ns, class_name):
 
 def get_hostname(ns):
     """
-    :returns: Tabular data of system hostname.
-    :rtype: List of tuples
+    :returns: System hostname.
+    :rtype: String
     """
     i = get_computer_system(ns)
     return i.Name
@@ -159,8 +159,7 @@ def get_colored_string(msg, color):
 
 def get_all_info(ns):
     """
-    :returns: Tabular data of all available info.
-    :rtype: List of tuples
+    Prints tabular data of all available info.
     """
     global STANDALONE
     STANDALONE = False
@@ -179,8 +178,7 @@ def get_all_info(ns):
 
 def get_system_info(ns):
     """
-    :returns: Tabular data of system info, from the ``LMI_Chassis`` instance.
-    :rtype: List of tuples
+    Prints tabular data of system info, from the ``LMI_Chassis`` instance.
     """
     result = []
 
@@ -228,8 +226,7 @@ def get_system_info(ns):
 
 def get_motherboard_info(ns):
     """
-    :returns: Tabular data of motherboard info.
-    :rtype: List of tuples
+    Prints tabular data of motherboard info.
     """
     result = []
 
@@ -272,8 +269,7 @@ def get_motherboard_info(ns):
 
 def get_cpu_info(ns):
     """
-    :returns: Tabular data of processor info.
-    :rtype: List of tuples
+    Prints tabular data of processor info.
     """
     result = []
 
@@ -311,8 +307,7 @@ def get_cpu_info(ns):
 
 def get_memory_info(ns):
     """
-    :returns: Tabular data of memory info.
-    :rtype: List of tuples
+    Prints tabular data of memory info.
     """
     result = []
 
@@ -380,8 +375,7 @@ def get_memory_info(ns):
 
 def get_disks_info(ns):
     """
-    :returns: Tabular data of disk info.
-    :rtype: List of tuples
+    Prints tabular data of disk info.
     """
     result = [('Disks:', '')]
 
