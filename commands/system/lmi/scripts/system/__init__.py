@@ -148,6 +148,7 @@ def get_system_info(ns):
     get_hwinfo(ns)
     get_storageinfo(ns)
     get_osinfo(ns)
+    get_langinfo(ns)
     get_selinuxinfo(ns)
     get_servicesinfo(ns)
     get_networkinfo(ns)
@@ -250,7 +251,6 @@ def get_osinfo(ns):
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
-    # OS
     try:
         os = get_single_instance(ns, 'PG_OperatingSystem')
     except Exception:
@@ -269,11 +269,27 @@ def get_osinfo(ns):
     if not kernel_str:
         kernel_str = 'N/A'
 
-    # Result
     result = [
         ('OS:', os_str),
         ('Kernel:', kernel_str)]
     tf.produce_output(result)
+    return []
+
+def get_langinfo(ns):
+    """
+    Prints tabular data of language info.
+    """
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
+
+    try:
+        locale = get_single_instance(ns, 'LMI_Locale')
+    except Exception:
+        result = [(get_colored_string('error:', RED_COLOR),
+                    'Missing class LMI_Locale. Is openlmi-locale package installed on the server?')]
+        tf.produce_output(result)
+        return []
+
+    tf.produce_output([('Language:', locale.Lang)])
     return []
 
 def get_selinuxinfo(ns):
@@ -282,7 +298,6 @@ def get_selinuxinfo(ns):
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
-    # SELinux
     try:
         selinux = get_single_instance(ns, 'LMI_SELinuxService')
     except Exception:
@@ -297,7 +312,6 @@ def get_selinuxinfo(ns):
         selinux_str = 'on (%s)' % \
             ns.LMI_SELinuxService.SELinuxStateValues.value_name(selinux.SELinuxState)
 
-    # Result
     tf.produce_output([('SELinux:', selinux_str)])
     return []
 
