@@ -145,13 +145,40 @@ def get_system_info(ns):
     tf = TableFormatter(stdout, 0, True)
     tf.print_host(get_hostname(ns))
 
-    get_hwinfo(ns)
-    get_storageinfo(ns)
-    get_osinfo(ns)
-    get_langinfo(ns)
-    get_selinuxinfo(ns)
-    get_servicesinfo(ns)
-    get_networkinfo(ns)
+    try:
+        get_hwinfo(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_storageinfo(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_osinfo(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_langinfo(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_selinuxinfo(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_servicesinfo(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_networkinfo(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
 
     return []
 
