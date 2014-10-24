@@ -237,8 +237,10 @@ def get_storageinfo(ns):
     total = 0
     free = 0
     for fs in localfss:
-        total += fs.FileSystemSize
-        free += fs.AvailableSpace
+        if fs.FileSystemSize:
+            total += fs.FileSystemSize
+        if fs.AvailableSpace:
+            free += fs.AvailableSpace
 
     result = [('Disk Space:', '%s total, %s free' % (format_memory_size(total),
          format_memory_size(free)))]
