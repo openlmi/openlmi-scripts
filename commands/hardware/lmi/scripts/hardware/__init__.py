@@ -167,11 +167,30 @@ def get_all_info(ns):
     tf = TableFormatter(stdout, 0, True)
     tf.print_host(get_hostname(ns))
 
-    get_system_info(ns)
-    get_motherboard_info(ns)
-    get_cpu_info(ns)
-    get_memory_info(ns)
-    get_disks_info(ns)
+    try:
+        get_system_info(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_motherboard_info(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_cpu_info(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_memory_info(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
+        get_disks_info(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
 
     STANDALONE = True
     return []
