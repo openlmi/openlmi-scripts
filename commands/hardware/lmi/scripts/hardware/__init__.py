@@ -227,6 +227,9 @@ def get_system_info(ns):
     else:
         model = 'N/A'
 
+    if i.Manufacturer:
+        model = '%s %s' % (i.Manufacturer, model)
+
     virt = getattr(i, 'VirtualMachine', None)
     if virt is None:
         virt = 'N/A. You are probably using old openlmi-hardware package on the server.'
@@ -236,7 +239,6 @@ def get_system_info(ns):
     result += [
           ('Chassis Type:', ns.LMI_Chassis.ChassisPackageTypeValues.value_name(
                i.ChassisPackageType)),
-          ('Manufacturer:', i.Manufacturer),
           ('Model:', model),
           ('Serial Number:', i.SerialNumber),
           ('Asset Tag:', i.Tag),
@@ -262,15 +264,14 @@ def get_motherboard_info(ns):
         i = get_single_instance(ns, 'LMI_Baseboard')
 
         if i:
-            model = i.Model
-            manufacturer = i.Manufacturer
-            if not model:
-                model = 'N/A'
-            if not manufacturer:
-                manufacturer = 'N/A'
-            result += [
-                  ('Motherboard:', model),
-                  ('Manufacturer:', manufacturer)]
+            model = ''
+            if i.Manufacturer:
+                model += i.Manufacturer
+            if i.Model:
+                if model:
+                    model += ' '
+                model += i.Model
+            result += [('Motherboard:', model)]
         else:
             if STANDALONE:
                 result += [(get_colored_string('warning:', YELLOW_COLOR),
@@ -514,15 +515,13 @@ def get_disks_info(ns):
 
     for hdd in hdds:
         phys_hdds = hdd.associators(ResultClass='LMI_DiskPhysicalPackage')
-        manufacturer = ''
         model = ''
         if phys_hdds:
-            manufacturer = phys_hdds[0].Manufacturer
             model = phys_hdds[0].Model
-        if not manufacturer:
-            manufacturer = 'N/A'
         if not model:
             model = 'N/A'
+        if phys_hdds[0].Manufacturer:
+            man_model = '%s %s' % (phys_hdds[0].Manufacturer, model)
 
         form_factor_dict = {
             3: '5.25"',
@@ -594,8 +593,7 @@ def get_disks_info(ns):
         else:
             result += [('  %s' % hdd.DeviceID, '')]
 
-        result += [('    Manufacturer:', manufacturer),
-            ('    Model:', model),
+        result += [('    Model:', man_model),
             ('    Capacity:', format_memory_size(hdd.Capacity)),
             ('    Form Factor:', form_factor),
             ('    HDD/SSD:', disk_type),
