@@ -188,6 +188,11 @@ def get_all_info(ns):
         tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
 
     try:
+        get_pci_info(ns)
+    except Exception as e:
+        tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
+
+    try:
         get_disks_info(ns)
     except Exception as e:
         tf.produce_output([(get_colored_string('error:', RED_COLOR), str(e))])
@@ -385,6 +390,90 @@ def get_memory_info(ns):
     result += [('Memory:', size)]
     result += modules
     result += [('Slots:', slots)]
+
+    if not STANDALONE:
+        result += [EMPTY_LINE]
+
+    tf.produce_output(result)
+    return []
+
+def get_pci_list(ns, pcis, bus=0, level=0):
+    """
+    Recursive function, returns list of PCI devices ready for TableFormatter.
+
+    :param ns: LMI Namespace.
+    :type ns: :py:class:`lmi.shell.LMINamespace.LMINamespace`
+    :param pcis: Sorted list of PCI devices and bridges.
+    :type pcis: List
+    :param bus: ID of PCI bus for this level.
+    :type bus: Integer
+    :param level: Level of recursion.
+    :type level: Integer
+    :returns: Formatted list of tuples of PCI devices.
+    :rtype: List of tuples
+    """
+    if level > 99:
+        return []
+    result = []
+    # For deeper levels, count items on the bus
+    count = 0
+    if level > 0:
+        for p in pcis:
+            if p.BusNumber == bus:
+                count += 1
+    # Print PCI devices
+    i = 1
+    for p in pcis:
+        if p.BusNumber == bus:
+            if level > 0:
+                if i == count:
+                    sign = u'└─ '
+                else:
+                    sign = u'├─ '
+                i += 1
+            else:
+                sign = ''
+            dsc_line = '  ' + ' ' * level + sign + p.DeviceID
+            if p.CreationClassName == 'LMI_PCIBridge':
+                dsc_line += ' %s bridge: ' % \
+                    ns.LMI_PCIBridge.BridgeTypeValues.value_name(p.BridgeType)
+            else:
+                dsc_line += ' %s: ' % \
+                    ns.LMI_PCIDevice.ClassCodeValues.value_name(p.ClassCode)
+            dsc_line += p.Name
+            result += [(dsc_line, '')]
+            if p.CreationClassName == 'LMI_PCIBridge' and p.SecondayBusNumber:
+                result += get_pci_list(ns, pcis, p.SecondayBusNumber, level + 1)
+    return result
+
+def get_pci_info(ns):
+    """
+    Prints tabular data of PCI devices info.
+    """
+    result = [('PCI Devices:', '')]
+
+    tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
+    if STANDALONE:
+        tf.print_host(get_hostname(ns))
+
+    try:
+        pci_dev = get_all_instances(ns, 'LMI_PCIDevice')
+        pci_br = get_all_instances(ns, 'LMI_PCIBridge')
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing PCI related classes. Is openlmi-hardware package installed on the server?')]
+        tf.produce_output(result)
+        return []
+
+    pci = pci_dev + pci_br
+    pci.sort(key=lambda x: x.DeviceID)
+
+    if not pci:
+        result += [(' N/A', 'No PCI Device was detected on the system.')]
+        tf.produce_output(result)
+        return []
+
+    result += get_pci_list(ns, pci)
 
     if not STANDALONE:
         result += [EMPTY_LINE]

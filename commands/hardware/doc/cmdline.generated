@@ -21,6 +21,8 @@ Display hardware information.
 
     **lmi** **hwinfo** memory
 
+    **lmi** **hwinfo** pci
+
     **lmi** **hwinfo** disks
 
 
@@ -42,6 +44,9 @@ Display hardware information.
 
     **memory**
         Display memory information.
+
+    **pci**
+        Display PCI devices information.
 
     **disks**
         Display disks information.
