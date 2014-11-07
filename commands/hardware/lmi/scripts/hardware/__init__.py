@@ -520,8 +520,11 @@ def get_disks_info(ns):
             model = phys_hdds[0].Model
         if not model:
             model = 'N/A'
-        if phys_hdds[0].Manufacturer:
+        if phys_hdds[0].Manufacturer \
+                and not model.startswith(phys_hdds[0].Manufacturer):
             man_model = '%s %s' % (phys_hdds[0].Manufacturer, model)
+        else:
+            man_model = model
 
         form_factor_dict = {
             3: '5.25"',
@@ -544,31 +547,6 @@ def get_disks_info(ns):
             disk_type = 'SSD'
         else:
             disk_type = 'N/A'
-
-        port_type = ''
-        port_speed_current = ''
-        port_speed_max = ''
-        hdd_endpoints = hdd.associators(
-            ResultClass='LMI_DiskDriveATAProtocolEndpoint')
-        if hdd_endpoints:
-            hdd_ports = hdd_endpoints[0].associators(
-                ResultClass='LMI_DiskDriveATAPort')
-            if hdd_ports:
-                if hdd_ports[0].PortType:
-                    port_type = ns.LMI_DiskDriveATAPort.PortTypeValues.value_name(
-                        hdd_ports[0].PortType)
-                if hdd_ports[0].Speed:
-                    port_speed_current = '%.1f Gb/s' % \
-                        (float(hdd_ports[0].Speed) / 1000000000.0)
-                if hdd_ports[0].MaxSpeed:
-                    port_speed_max = '%.1f Gb/s' % \
-                        (float(hdd_ports[0].MaxSpeed) / 1000000000.0)
-        if not port_type:
-            port_type = 'N/A'
-        if not port_speed_current:
-            port_speed_current = 'N/A Gb/s'
-        if not port_speed_max:
-            port_speed_max = 'N/A Gb/s'
 
         status_to_color = {
             'OK': GREEN_COLOR,
@@ -598,9 +576,6 @@ def get_disks_info(ns):
             ('    Form Factor:', form_factor),
             ('    HDD/SSD:', disk_type),
             ('    RPM:', rpm),
-            ('    Port Type:', port_type),
-            ('    Port Speed:', '%s current, %s max' % \
-                (port_speed_current, port_speed_max)),
             ('    SMART Status:', smart),
             ('    Temperature:', temp_str)]
 
