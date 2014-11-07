@@ -260,30 +260,38 @@ def get_motherboard_info(ns):
 
     try:
         i = get_single_instance(ns, 'LMI_Baseboard')
+
+        if i:
+            model = i.Model
+            manufacturer = i.Manufacturer
+            if not model:
+                model = 'N/A'
+            if not manufacturer:
+                manufacturer = 'N/A'
+            result += [
+                  ('Motherboard:', model),
+                  ('Manufacturer:', manufacturer)]
+        else:
+            if STANDALONE:
+                result += [(get_colored_string('warning:', YELLOW_COLOR),
+                            'LMI_Baseboard instance is missing. This usually means that the server is virtual machine.')]
     except Exception:
         result += [(get_colored_string('error:', RED_COLOR),
                     'Missing class LMI_Baseboard. Is openlmi-hardware package installed on the server?')]
-        tf.produce_output(result)
-        return []
 
-    if not i:
-        if not STANDALONE:
-            return []
-        result += [(get_colored_string('warning:', YELLOW_COLOR),
-                    'LMI_Baseboard instance is missing. This usually means that the server is virtual machine.')]
-        tf.produce_output(result)
-        return []
+    tf.produce_output(result)
+    result = []
 
-    model = i.Model
-    manufacturer = i.Manufacturer
-    if not model:
-        model = 'N/A'
-    if not manufacturer:
-        manufacturer = 'N/A'
+    try:
+        i = get_single_instance(ns, 'LMI_BIOSElement')
 
-    result += [
-          ('Motherboard:', model),
-          ('Manufacturer:', manufacturer)]
+        if i and i.Name:
+            result += [('BIOS:', i.Name)]
+        else:
+            result += [('BIOS:', 'N/A')]
+    except Exception:
+        result += [(get_colored_string('error:', RED_COLOR),
+                    'Missing LMI_BIOSElement class. Openlmi-hardware package is probably out-dated.')]
 
     if not STANDALONE:
         result += [EMPTY_LINE]
