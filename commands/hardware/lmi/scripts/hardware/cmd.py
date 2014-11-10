@@ -36,6 +36,7 @@ Usage:
     %(cmd)s motherboard
     %(cmd)s cpu
     %(cmd)s memory
+    %(cmd)s pci
     %(cmd)s disks
 
 Commands:
@@ -44,6 +45,7 @@ Commands:
     motherboard  Display motherboard information.
     cpu          Display processor information.
     memory       Display memory information.
+    pci          Display PCI devices information.
     disks        Display disks information.
 """
 
@@ -67,6 +69,9 @@ class Cpu(HwBase):
 class Memory(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_memory_info'
 
+class PCI(HwBase):
+    CALLABLE = 'lmi.scripts.hardware:get_pci_info'
+
 class Disks(HwBase):
     CALLABLE = 'lmi.scripts.hardware:get_disks_info'
 
@@ -77,6 +82,7 @@ Hardware = command.register_subcommands(
         , 'motherboard'  : Motherboard
         , 'cpu'          : Cpu
         , 'memory'       : Memory
+        , 'pci'          : PCI
         , 'disks'        : Disks
         },
         fallback_command=All

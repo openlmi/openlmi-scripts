@@ -306,7 +306,7 @@ def get_osinfo(ns):
 
 def get_langinfo(ns):
     """
-    Prints tabular data of language info.
+    Prints tabular data of language and time zone info.
     """
     tf = TableFormatter(stdout, 0, True, {0: FIRST_COLUMN_MIN_SIZE})
 
@@ -319,6 +319,12 @@ def get_langinfo(ns):
         return []
 
     tf.produce_output([('Language:', locale.Lang)])
+    try:
+        tf.produce_output([('Time Zone:',
+            "%s (NTP is %s)" % (locale.Timezone, 'on' if locale.NTP else 'off'))])
+    except Exception:
+        # Time Zone info was added later to the LMI_Locale class
+        pass
     return []
 
 def get_selinuxinfo(ns):
