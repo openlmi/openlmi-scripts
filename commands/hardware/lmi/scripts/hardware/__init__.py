@@ -515,16 +515,22 @@ def get_disks_info(ns):
 
     for hdd in hdds:
         phys_hdds = hdd.associators(ResultClass='LMI_DiskPhysicalPackage')
-        model = ''
-        if phys_hdds:
+        fws = hdd.associators(ResultClass='LMI_DiskDriveSoftwareIdentity')
+
+        if phys_hdds and phys_hdds[0].Model:
             model = phys_hdds[0].Model
-        if not model:
+        else:
             model = 'N/A'
         if phys_hdds[0].Manufacturer \
                 and not model.startswith(phys_hdds[0].Manufacturer):
             man_model = '%s %s' % (phys_hdds[0].Manufacturer, model)
         else:
             man_model = model
+
+        if fws[0].VersionString:
+            fw = fws[0].VersionString
+        else:
+            fw = 'N/A'
 
         form_factor_dict = {
             3: '5.25"',
@@ -572,6 +578,7 @@ def get_disks_info(ns):
             result += [('  %s' % hdd.DeviceID, '')]
 
         result += [('    Model:', man_model),
+            ('    Firmware:', fw),
             ('    Capacity:', format_memory_size(hdd.Capacity)),
             ('    Form Factor:', form_factor),
             ('    HDD/SSD:', disk_type),
