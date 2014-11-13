@@ -485,6 +485,53 @@ def deactivate(ns, setting, device=None):
     LOG().info("Setting %s deactivated", setting.Caption)
     return 0
 
+def set_autoconnect(ns, setting, device=None, state=True):
+    '''
+    Enable/disable automatical activation of the setting.
+
+    :param LMI_IPAssignmentSettingData setting: Setting that will be affected
+    :param bool state: `True` for autoconnection activation, `False` for deactivation
+    '''
+    if device is None:
+        LOG().info("%s autoconnect on setting %s",
+                   "Enabling" if state else "Disabling",
+                   setting.Caption)
+    else:
+        LOG().info("%s autoconnect on setting %s on device %s",
+                   "Enabling" if state else "Disabling",
+                   setting.Caption,
+                   device.ElementName)
+
+    service = ns.LMI_IPConfigurationService.first_instance()
+    if state:
+        # Set IsNext = 1 (Is Next), don't change IsCurrent
+        mode = service.ApplySettingToIPNetworkConnection.ModeValues.Mode2
+    else:
+        # Set IsNext = 2 (Is Not Next), don't change IsCurrent
+        mode = service.ApplySettingToIPNetworkConnection.ModeValues.Mode5
+
+    if device is not None:
+        result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting, Mode=mode)
+    else:
+        result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting, IPNetworkConnection=device, Mode=mode)
+    if result.errorstr:
+        raise LmiFailed("Unable to change setting autoconnect: %s" % result.errorstr)
+    return result.rval
+
+def get_autoconnect(ns, setting, device=None):
+    '''
+    Return True if device is activated automatically.
+
+    :param LMI_IPAssignmentSettingData setting: Setting whose autoconnection status will be read
+    '''
+    for esd in setting.references(ResultClass="LMI_IPElementSettingData"):
+        if device is None or esd.ManagedElement.to_instance() == device:
+            break
+    else:
+        raise LmiFailed("No such setting %s with device %s" % (setting.Caption, device.ElementName))
+
+    return esd.IsNext == ns.LMI_IPElementSettingData.IsNextValues.IsNext
+
 def enslave(ns, master_setting, device):
     '''
     Create slave setting of the master_setting with given device.

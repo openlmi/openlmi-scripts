@@ -202,6 +202,42 @@ rlPhaseStartTest "Test setting activation"
     rlAssertNotGrep "XXX Test DHCP" $rlRun_LOG
 rlPhaseEnd
 
+rlPhaseStartTest "Test setting autoconnection"
+    rlLogInfo "Create setting with DHCP IPv4 and Stateless IPv6"
+    rlRun "$LMI net setting create 'XXX Test DHCP' $PORT1 --ipv4 dhcp --ipv6 stateless"
+
+    rlLogInfo "Test if autoconnection is disabled by default"
+    rlRun -s "$LMI net setting show 'XXX Test DHCP'"
+    rlAssertGrep "Autoconnect +Disabled" $rlRun_LOG -E
+
+    rlLogInfo "Show status of autoconnect"
+    rlRun -s "$LMI net autoconnect show 'XXX Test DHCP'"
+    rlAssertGrep "is not automatically activated" $rlRun_LOG -E
+
+    rlLogInfo "Enable autoconnect on the setting"
+    rlRun -s "$LMI net autoconnect enable 'XXX Test DHCP'"
+    rlRun -s "$LMI net autoconnect show 'XXX Test DHCP'"
+    rlAssertGrep "is automatically activated" $rlRun_LOG -E
+
+    rlLogInfo "Show status of autoconnect"
+    rlRun -s "$LMI net autoconnect show 'XXX Test DHCP'"
+    rlAssertGrep "is automatically activated" $rlRun_LOG -E
+
+    rlLogInfo "Disable autoconnect on the setting"
+    rlRun -s "$LMI net autoconnect disable 'XXX Test DHCP'"
+    rlRun -s "$LMI net autoconnect show 'XXX Test DHCP'"
+    rlAssertGrep "is not automatically activated" $rlRun_LOG -E
+
+    rlLogInfo "Show status of autoconnect"
+    rlRun -s "$LMI net autoconnect show 'XXX Test DHCP'"
+    rlAssertGrep "is not automatically activated" $rlRun_LOG -E
+
+    rlLogInfo "Delete setting"
+    rlRun "$LMI net setting delete 'XXX Test DHCP'"
+    rlRun -s "$LMI net setting list"
+    rlAssertNotGrep "XXX Test DHCP" $rlRun_LOG
+rlPhaseEnd
+
 rlPhaseStartTest "Test bridging"
     rlLogInfo "Create bridge setting"
     rlRun "$LMI net setting create 'XXX Test Bridge' $PORT1 --bridging"

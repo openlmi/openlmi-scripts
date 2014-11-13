@@ -26,6 +26,7 @@ Usage:
     %(cmd)s setting (--help | <operation> [<args>...])
     %(cmd)s activate <caption> [<device_name>]
     %(cmd)s deactivate <caption> [<device_name>]
+    %(cmd)s autoconnect (--help | <operation> [<args>...])
     %(cmd)s enslave <master_caption> <device_name>
     %(cmd)s address (--help | <operation> [<args>...])
     %(cmd)s route (--help | <operation> [<args>...])
@@ -36,6 +37,7 @@ Commands:
     setting          Manage the network settings.
     activate         Activate setting on given network device.
     deactivate       Deactivate the setting.
+    autoconnect      Enable/disable automatic setting activation.
     enslave          Create new slave setting.
     address          Manipulate the list of IP addresses on given setting.
     route            Manipulate the list of static routes on given setting.
@@ -216,6 +218,10 @@ def cmd_show_settings(ns, captions=None):
             yield ("Status", "Active")
         else:
             yield ("Status", "Inactive")
+        if get_autoconnect(ns, setting):
+            yield ("Autoconnect", "Enabled")
+        else:
+            yield ("Autoconnect", "Disabled")
 
         for route in get_static_routes(ns, setting):
             if route.AddressType == ns.LMI_IPRouteSettingData.AddressTypeValues.IPv4:
@@ -274,6 +280,65 @@ class Deactivate(command.LmiCheckResult):
         """
         if '<device_name>' in options and len(options['<device_name>']) > 0:
             options['<device_name>'] = options['<device_name>'][0]
+
+## Autoconnecting
+
+def cmd_set_autoconnect(ns, caption, device_name, enable):
+    setting = get_setting_by_caption(ns, caption)
+    if setting is None:
+        raise errors.LmiFailed("No such setting: %s" % caption)
+
+    device = None
+    if device_name is not None:
+        device = get_device_by_name(ns, device_name)
+        if device is None:
+            raise errors.LmiFailed("No such device: %s" % device_name)
+
+    return set_autoconnect(ns, setting, device, enable)
+
+class EnableAutoconnect(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, device_name):
+        return cmd_set_autoconnect(ns, caption, device_name, True)
+
+class DisableAutoconnect(command.LmiCheckResult):
+    EXPECT = 0
+    def execute(self, ns, caption, device_name):
+        return cmd_set_autoconnect(ns, caption, device_name, False)
+
+class ShowAutoconnect(command.LmiLister):
+    def execute(self, ns, caption, device_name):
+        setting = get_setting_by_caption(ns, caption)
+        if setting is None:
+            raise errors.LmiFailed("No such setting: %s" % caption)
+
+        device = None
+        if device_name is not None:
+            device = get_device_by_name(ns, device_name)
+            if device is None:
+                raise errors.LmiFailed("No such device: %s" % device_name)
+
+        if get_autoconnect(ns, setting, device):
+            yield ("Setting %s is automatically activated" % caption,)
+        else:
+            yield ("Setting %s is not automatically activated" % caption,)
+
+class Autoconnect(command.LmiCommandMultiplexer):
+    """
+     Manage the automatic setting activation.
+
+    Usage:
+        %(cmd)s show <caption> [<device_name>]
+        %(cmd)s enable <caption> [<device_name>]
+        %(cmd)s disable <caption> [<device_name>]
+
+    Commands:
+        show     Show currect status of automatic setting activation
+        enable   Activate setting automatically when network resources are available
+        disable  Setting will be only activated manually
+    """
+    COMMANDS = { 'show': ShowAutoconnect, 'enable' : EnableAutoconnect, 'disable': DisableAutoconnect }
+    OWN_USAGE = True
 
 ## SETTING
 
@@ -606,6 +671,7 @@ Networking = command.register_subcommands(
         'setting':    Setting,
         'activate':   Activate,
         'deactivate': Deactivate,
+        'autoconnect': Autoconnect,
         'enslave':    Enslave,
         'address':    Address,
         'route':      Route,
