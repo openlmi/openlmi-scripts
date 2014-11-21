@@ -3,6 +3,8 @@
 Locale command line reference
 =============================
 
-This command allows to display and set system locale.
+``lmi locale`` is a command for LMI metacommand, which allows to display and set
+system locale on a remote host with installed
+:ref:`OpenLMI locale provider <openlmi-locale-provider>`.
 
 .. include:: cmdline.generated

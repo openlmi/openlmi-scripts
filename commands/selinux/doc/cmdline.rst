@@ -1,8 +1,10 @@
 .. _openlmi-scripts-selinux-cmd:
 
-Selinux command line reference
+SELinux command line reference
 ==============================
-..
-    Write some description here.
+
+``lmi selinux`` is a command for LMI metacommand, which allows to display
+and adjust current SELinux policy on a remote host with installed
+:ref:`OpenLMI SELinux provider <openlmi-selinux-provider>`.
 
 .. include:: cmdline.generated

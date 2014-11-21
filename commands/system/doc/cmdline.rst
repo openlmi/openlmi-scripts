@@ -3,6 +3,7 @@
 System command line reference
 =============================
 
-This command can display general system information.
+``lmi system`` is a command for LMI metacommand, which displays general
+information about a remote host with installed OpenLMI providers.
 
 .. include:: cmdline.generated
