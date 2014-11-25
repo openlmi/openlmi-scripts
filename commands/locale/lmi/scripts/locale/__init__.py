@@ -33,6 +33,9 @@ LMI Locale Provider client library.
 
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
+from datetime import datetime
+from calendar import timegm
+import time
 
 LOG = get_logger(__name__)
 
@@ -132,3 +135,118 @@ def set_x11_keymap(ns, layouts, model, variant, options, convert):
         LOG().info("Virtual console keyboard setting may have also changed, "
             "'convert' flag was used.")
 
+def set_time(ns, timeval, add, subtract):
+    """
+    Set the system clock.
+
+    :param string timeval: New system time or difference in seconds
+        from current system time (if relative is True)
+    :param bool add: If True, passed time value is expected to be
+        in seconds and will be added to the current system time.
+    :param bool subtract: If True, passed time value is expected to be
+        in seconds and will be subtracted from the current system time.
+    """
+
+    inst = get_locale(ns)
+
+    relative = True
+    if add:
+        usec = int(timeval) * 1000000
+    elif subtract:
+        usec = int(timeval) * -1000000
+    else:
+        # time should be specified in the format "2012-10-30 18:17:16"
+        try:
+            dt = datetime.strptime(timeval, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            raise LmiFailed("Passed time is not in the correct format "
+                "(e. g. '2012-10-30 18:17:16').")
+        usec = (timegm(dt.timetuple()) + time.timezone) * 1000000
+        relative = False
+
+    (rval, _, errorstr) = inst.SetTime(
+        UsecUTC=usec,
+        Relative=relative,
+    )
+
+    if rval != 0:
+        if errorstr:
+            raise LmiFailed("Cannot set new system time: %s.", errorstr)
+        raise LmiFailed("Cannot set new system time.")
+
+    dt = datetime.now()
+    format = dt.strftime("%Y-%m-%d %H:%M:%S")
+    LOG().info("System time set to '%s'.", format)
+
+def set_timezone(ns, timezone):
+    """
+    Set the system timezone.
+
+    :param string timezone: New system timezone.
+    """
+
+    inst = get_locale(ns)
+
+    (rval, _, errorstr) = inst.SetTimezone(
+        Timezone=timezone)
+
+    if rval != 0:
+        if errorstr:
+            raise LmiFailed("Cannot set timezone: %s.", errorstr)
+        raise LmiFailed("Cannot set timezone.")
+
+    LOG().info("System timezone set to '%s'.", timezone)
+
+def set_local_rtc(ns, value, fix_system):
+    """
+    Set whether the RTC is maintained in local time/UTC.
+
+    :param bool value: True/False for RTC maintained in localtime/UTC.
+    :param bool fix_system: If set, the time is read again from the RTC
+        and the system clock adjusted according to the new setting.
+    """
+
+    inst = get_locale(ns)
+
+    (rval, _, errorstr) = inst.SetLocalRTC(
+        LocalRTC=value,
+        FixSystem=fix_system,
+    )
+
+    if rval != 0:
+        if errorstr:
+            raise LmiFailed("Cannot enable/disable NTP: %s.", errorstr)
+        raise LmiFailed("Cannot enable/disable NTP.")
+
+    if value:
+        LOG().info("RTC is maintained in local time.")
+    else:
+        LOG().info("RTC is maintained in UTC.")
+
+    if fix_system:
+        LOG().info("The time was read again from the RTC and the system "
+            "clock adjusted according to the new setting.")
+
+def set_ntp(ns, value):
+    """
+    Enable/disable synchronization of the system clock
+    with the network using systemd-timesyncd.
+
+    :param bool value: True/False for NTP enabled/disabled.
+    """
+
+    inst = get_locale(ns)
+
+    (rval, _, errorstr) = inst.SetNTP(
+        UseNTP=value,
+    )
+
+    if rval != 0:
+        if errorstr:
+            raise LmiFailed("Cannot enable/disable NTP: %s.", errorstr)
+        raise LmiFailed("Cannot enable/disable NTP.")
+
+    if value:
+        LOG().info("NTP enabled.")
+    else:
+        LOG().info("NTP disabled.")

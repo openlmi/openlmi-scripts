@@ -28,19 +28,23 @@
 # Authors: Vitezslav Crhonek <vcrhonek@redhat.com>
 #
 """
-System locale management.
+System locale and time management.
 
 Usage:
-    %(cmd)s show [(--locale | --vc-keyboard | --x11-keymap)]
+    %(cmd)s show [(--locale | --vc-keyboard | --x11-keymap | --timedate)]
     %(cmd)s set-locale (<locale> <value>) ...
     %(cmd)s set-vc-keyboard [--convert] <keymap> [<keymap-toggle>]
     %(cmd)s set-x11-keymap [--convert] <layouts> [<model> <variant> <options>]
+    %(cmd)s set-time [(--add| --subtract)] <time>
+    %(cmd)s set-timezone <timezone>
+    %(cmd)s set-local-rtc [--fix-system] (on | off)
+    %(cmd)s set-ntp (on | off)
 
 Commands:
     show              Show detailed information about system locale
                       cathegory (locale variables, key mapping on the
                       virtual console, default key mapping of
-                      the X11 server).
+                      the X11 server, timedate settings).
                       If no cathegory is provided via option, all
                       locale information is displayed.
 
@@ -50,15 +54,40 @@ Commands:
 
     set-x11-keymap    Set the default key mapping of the X11 server.
 
+    set-time          Set the system clock to the specified time. This will
+                      also update the RTC time accordingly. The time may be
+                      specified in the format "2012-10-30 18:17:16" or as
+                      a difference in second from current time
+                      (see --add/--subtract options).
+
+    set-timezone      Set the system timezone. If the RTC is configured to be
+                      maintained in local time it will be updated accordingly.
+
+    set-local-rtc     Set that the RTC is maintained in local time/UTC.
+
+    set-ntp           Enable/disable synchronization of the system clock
+                      with the network using systemd-timesyncd.
+
 Show options:
     --locale          Display locale variables.
     --vc-keyboard     Display key mapping on the virtual console.
     --x11-keymap      Display default key mapping of the X11 server.
+    --timedate        Display timedate settings (system timezone, whether
+                      RTC is in local time and whether the system clock is
+                      synchronized with the network using systemd-timesyncd).
 
 Set options:
     --convert         Try to set the nearest console keyboard/X11 keyboard
                       setting for the chosen X11 keyboard/console keyboard
                       setting.
+    --add             The passed time value is expected to be in seconds and
+                      will be added to the current system time.
+    --subtract        The passed time value is expected to be in seconds and
+                      will be subtracted from the current system time.
+    --fix-system      The time from the RTC is read again and the system clock
+                      adjusted according to the new setting. (This is useful
+                      in cases where the RTC is probably more reliable than the
+                      system time.)
 """
 
 from lmi.scripts import locale as loc
@@ -71,7 +100,8 @@ class Show(command.LmiShowInstance):
                 'LCMonetary', 'LCMessages', 'LCPaper', 'LCName', 'LCAddress',
                 'LCTelephone', 'LCMeasurement', 'LCIdentification',
                 'VConsoleKeymap', 'VConsoleKeymapToggle',
-                'X11Layouts', 'X11Model', 'X11Variant', 'X11Options'
+                'X11Layouts', 'X11Model', 'X11Variant', 'X11Options',
+                'Timezone', 'NTP', 'LocalRTC'
         ),
         'locale': ('Lang', 'LCCType', 'LCNumeric', 'LCTime', 'LCCollate',
                    'LCMonetary', 'LCMessages', 'LCPaper', 'LCName', 'LCAddress',
@@ -79,9 +109,10 @@ class Show(command.LmiShowInstance):
         ),
         'vc_keyboard': ('VConsoleKeymap', 'VConsoleKeymapToggle'),
         'x11_keymap': ('X11Layouts', 'X11Model', 'X11Variant', 'X11Options'),
+        'timedate': ('Timezone', 'NTP', 'LocalRTC'),
     }
 
-    def execute(self, ns, _locale, _vc_keyboard, _x11_keymap):
+    def execute(self, ns, _locale, _vc_keyboard, _x11_keymap, _timedate):
          cathegory = 'all'
          if _locale:
              cathegory = 'locale'
@@ -89,6 +120,8 @@ class Show(command.LmiShowInstance):
              cathegory = 'vc_keyboard'
          elif _x11_keymap:
              cathegory = 'x11_keymap'
+         elif _timedate:
+             cathegory = 'timedate'
          return self.columns[cathegory], loc.get_locale(ns)
 
 class SetLocale(command.LmiCheckResult):
@@ -96,7 +129,7 @@ class SetLocale(command.LmiCheckResult):
 
     def transform_options(self, options):
         """
-        Rename 'locale' and 'value' options to 'locales' and 'values'  parameter
+        Rename 'locale' and 'value' options to 'locales' and 'values' parameter
         name for better readability.
         """
         options['<locales>'] = options.pop('<locale>')
@@ -125,11 +158,45 @@ class SetVCKeyboard(command.LmiCheckResult):
             keymap_toggle = ''
         loc.set_vc_keyboard(ns, keymap, keymap_toggle, _convert)
 
+class SetTime(command.LmiCheckResult):
+    EXPECT = None
+
+    def execute(self, ns, time, _add=False, _subtract=False):
+        loc.set_time(ns, time, _add, _subtract)
+
+class SetTimezone(command.LmiCheckResult):
+    EXPECT = None
+
+    def execute(self, ns, timezone):
+        loc.set_timezone(ns, timezone)
+
+class SetLocalRTC(command.LmiCheckResult):
+    EXPECT = None
+
+    def execute(self, ns, on, off, _fix_system=False):
+        value=False
+        if on:
+            value=True
+        loc.set_local_rtc(ns, value, _fix_system)
+
+class SetNTP(command.LmiCheckResult):
+    EXPECT = None
+
+    def execute(self, ns, on, off):
+        value=False
+        if on:
+            value=True
+        loc.set_ntp(ns, value)
+
 Locale = command.register_subcommands(
         'Locale', __doc__,
         { 'show' : Show,
           'set-locale' : SetLocale,
           'set-x11-keymap' : SetX11Keymap,
           'set-vc-keyboard' : SetVCKeyboard,
+          'set-time' : SetTime,
+          'set-timezone' : SetTimezone,
+          'set-local-rtc' : SetLocalRTC,
+          'set-ntp' : SetNTP,
         },
     )
