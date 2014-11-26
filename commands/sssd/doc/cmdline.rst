@@ -3,6 +3,8 @@
 SSSD command line reference
 ===========================
 
-This command allows to manage SSSD service.
+``lmi sssd`` is a command for LMI metacommand, which allows to manage SSSD
+service on a remote host with installed
+:ref:`OpenLMI SSSD provider <openlmi-sssd-provider>`.
 
 .. include:: cmdline.generated

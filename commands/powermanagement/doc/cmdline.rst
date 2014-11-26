@@ -3,6 +3,8 @@
 Power Management command line reference
 =======================================
 
-This command allows to display and control system power states.
+``lmi power`` is a command for LMI metacommand, which allows to display and
+control system power states on a remote host with installed
+:ref:`OpenLMI power provider <openlmi-power-provider>`.
 
 .. include:: cmdline.generated
