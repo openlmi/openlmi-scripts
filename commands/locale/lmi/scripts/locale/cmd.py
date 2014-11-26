@@ -57,7 +57,7 @@ Commands:
     set-time          Set the system clock to the specified time. This will
                       also update the RTC time accordingly. The time may be
                       specified in the format "2012-10-30 18:17:16" or as
-                      a difference in second from current time
+                      a difference in seconds from current time
                       (see --add/--subtract options).
 
     set-timezone      Set the system timezone. If the RTC is configured to be
@@ -66,7 +66,7 @@ Commands:
     set-local-rtc     Set that the RTC is maintained in local time/UTC.
 
     set-ntp           Enable/disable synchronization of the system clock
-                      with the network using systemd-timesyncd.
+                      with a remote NTP server using systemd-timesyncd.
 
 Show options:
     --locale          Display locale variables.
@@ -74,7 +74,8 @@ Show options:
     --x11-keymap      Display default key mapping of the X11 server.
     --timedate        Display timedate settings (system timezone, whether
                       RTC is in local time and whether the system clock is
-                      synchronized with the network using systemd-timesyncd).
+                      synchronized with with a remote NTP server using
+                      systemd-timesyncd).
 
 Set options:
     --convert         Try to set the nearest console keyboard/X11 keyboard

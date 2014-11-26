@@ -6,18 +6,26 @@
 locale
 ------
 
-System locale management.
+System locale and time management.
 
 
 **Usage:**
 
-    **lmi** **locale** **show** [(\ **--locale**\  | \ **--vc-keyboard**\  | \ **--x11-keymap**\ )]
+    **lmi** **locale** **show** [(\ **--locale**\  | \ **--vc-keyboard**\  | \ **--x11-keymap**\  | \ **--timedate**\ )]
 
     **lmi** **locale** **set-locale** (\ *<locale>*\  \ *<value>*\ ) ...
 
     **lmi** **locale** **set-vc-keyboard** [\ **--convert**\ ] \ *<keymap>*\  [\ *<keymap-toggle>*\ ]
 
     **lmi** **locale** **set-x11-keymap** [\ **--convert**\ ] \ *<layouts>*\  [\ *<model>*\  \ *<variant>*\  \ *<options>*\ ]
+
+    **lmi** **locale** **set-time** [(\ **--add**\ | \ **--subtract**\ )] \ *<time>*\ 
+
+    **lmi** **locale** **set-timezone** \ *<timezone>*\ 
+
+    **lmi** **locale** **set-local-rtc** [\ **--fix-system**\ ] (on | off)
+
+    **lmi** **locale** **set-ntp** (on | off)
 
 
 
@@ -28,7 +36,7 @@ System locale management.
         Show detailed information about system locale
         cathegory (locale variables, key mapping on the
         virtual console, default key mapping of
-        the X11 server).
+        the X11 server, timedate settings).
         If no cathegory is provided via option, all
         locale information is displayed.
 
@@ -44,6 +52,28 @@ System locale management.
     **set-x11-keymap**
         Set the default key mapping of the X11 server.
 
+
+    **set-time**
+        Set the system clock to the specified time. This will
+        also update the RTC time accordingly. The time may be
+        specified in the format "2012-10-30 18:17:16" or as
+        a difference in seconds from current time
+        (see --add/--subtract options).
+
+
+    **set-timezone**
+        Set the system timezone. If the RTC is configured to be
+        maintained in local time it will be updated accordingly.
+
+
+    **set-local-rtc**
+        Set that the RTC is maintained in local time/UTC.
+
+
+    **set-ntp**
+        Enable/disable synchronization of the system clock
+        with a remote NTP server using systemd-timesyncd.
+
 **Show options:**
 
 
@@ -56,6 +86,12 @@ System locale management.
     **--x11-keymap**
         Display default key mapping of the X11 server.
 
+    **--timedate**
+        Display timedate settings (system timezone, whether
+        RTC is in local time and whether the system clock is
+        synchronized with with a remote NTP server using
+        systemd-timesyncd).
+
 **Set options:**
 
 
@@ -63,4 +99,18 @@ System locale management.
         Try to set the nearest console keyboard/X11 keyboard
         setting for the chosen X11 keyboard/console keyboard
         setting.
+
+    **--add**
+        The passed time value is expected to be in seconds and
+        will be added to the current system time.
+
+    **--subtract**
+        The passed time value is expected to be in seconds and
+        will be subtracted from the current system time.
+
+    **--fix-system**
+        The time from the RTC is read again and the system clock
+        adjusted according to the new setting. (This is useful
+        in cases where the RTC is probably more reliable than the
+        system time.)
 

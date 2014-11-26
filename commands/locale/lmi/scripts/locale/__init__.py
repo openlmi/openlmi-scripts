@@ -140,7 +140,7 @@ def set_time(ns, timeval, add, subtract):
     Set the system clock.
 
     :param string timeval: New system time or difference in seconds
-        from current system time (if relative is True)
+        from current system time (if relative is True).
     :param bool add: If True, passed time value is expected to be
         in seconds and will be added to the current system time.
     :param bool subtract: If True, passed time value is expected to be
@@ -230,7 +230,7 @@ def set_local_rtc(ns, value, fix_system):
 def set_ntp(ns, value):
     """
     Enable/disable synchronization of the system clock
-    with the network using systemd-timesyncd.
+    with a remote NTP server using systemd-timesyncd.
 
     :param bool value: True/False for NTP enabled/disabled.
     """
