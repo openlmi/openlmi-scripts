@@ -1,7 +1,7 @@
 ..
-    !!!!!!!!!
-    This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help <CMD_NAME>'
-    !!!!!!!!!
+
+.. !!! This is generated file. Use 'make cmdregen' to regenerate it from installed 'lmi help XXX'
+
 
 sssd
 ----
@@ -17,9 +17,9 @@ SSSD system service management.
 
     **lmi** **sssd** **set-debug-level** \ *<level>*\  [\ **--until-restart**\ ] [options]
 
-    **lmi** **sssd** service
+    **lmi** **sssd** **domain** (\ **--help**\  | \ *<cmd>*\  [\ *<args>*\  ...])
 
-    **lmi** **sssd** domain
+    **lmi** **sssd** **service** (\ **--help**\  | \ *<cmd>*\  [\ *<args>*\  ...])
 
 
 
@@ -36,6 +36,8 @@ SSSD system service management.
 
     **set-debug-level**
         Set debug level of selected (all by default) components.
+        You can find a list of supported debug levels in SSSD
+        documentation.
 
     **service**
         Manage supported services.
@@ -71,4 +73,96 @@ SSSD system service management.
     **--domains=dom,...**
         
         Comma separated list of SSSD domains.
+
+sssd domain
+-----------
+
+SSSD service management.
+
+
+**Usage:**
+
+    **lmi** **sssd** **domain** **list** [(\ **--enabled**\  | \ **--disabled**\ )]
+
+    **lmi** **sssd** **domain** **show** \ *<domain>*\ 
+
+    **lmi** **sssd** **domain** **enable** \ *<domain>*\ 
+
+    **lmi** **sssd** **domain** **disable** \ *<domain>*\ 
+
+
+
+
+
+**Commands:**
+
+
+    **list**
+        Prints all domains managed by SSSD.
+
+    **show**
+        Prints information about provided domain.
+
+    **enable**
+        Enable domain in SSSD. SSSD needs to be restarted in order for
+        this command to take effect.
+
+    **disable**
+        Disable domain in SSSD.  SSSD needs to be restarted in order for
+        this command to take effect.
+
+**List options:**
+
+
+    **--enabled**
+        List only enabled domains.
+
+    **--disabled**
+        List only disabled domains.
+
+sssd service
+------------
+
+SSSD service management.
+
+
+**Usage:**
+
+    **lmi** **sssd** **service** **list** [(\ **--enabled**\  | \ **--disabled**\ )]
+
+    **lmi** **sssd** **service** **show** \ *<service>*\ 
+
+    **lmi** **sssd** **service** **enable** \ *<service>*\ 
+
+    **lmi** **sssd** **service** **disable** \ *<service>*\ 
+
+
+
+
+
+**Commands:**
+
+
+    **list**
+        Prints all services supported by SSSD.
+
+    **show**
+        Prints information about provided service.
+
+    **enable**
+        Enable service in SSSD. SSSD needs to be restarted in order for
+        this command to take effect.
+
+    **disable**
+        Disable service in SSSD. SSSD needs to be restarted in order for
+        this command to take effect.
+
+**List options:**
+
+
+    **--enabled**
+        List only enabled services.
+
+    **--disabled**
+        List only disabled services.
 
