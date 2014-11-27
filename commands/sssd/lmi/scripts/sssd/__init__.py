@@ -62,6 +62,22 @@ def debug_level(level):
 #
 
 def set_debug_level(ns, level, all, until_restart, components):
+    """
+    Configure log level of given components.
+
+    :type level: int
+    :param level: Log level.
+    :type all: boolean
+    :param all: Whether the log level should be set to all components or not.
+    :type until_restart: boolean
+    :param until_restart: Whether the log level should be set permanently
+        (False) or just until next SSSD restart (True).
+    :type components: list
+    :param components: List of strings with name of components, which should be
+        configured.
+    :rtype: int
+    :rvalue: 0 on success
+    """
     rval = 0
     for component in ns.LMI_SSSDComponent.instances():
         found = False
@@ -91,14 +107,29 @@ def set_debug_level(ns, level, all, until_restart, components):
 #
 
 def list_services(ns, kind='all'):
+    """
+    Generates LMIInstances of LMI_SSSDResponder. Optionally, only the enabled
+    or disabled are listed.
+
+    :type kind: string
+    :param kind: Either 'all', 'disabled' or 'enabled'.
+    :rtype: (list of) LMIInstances
+    """
     for svc in ns.LMI_SSSDResponder.instances():
         if kind == 'disabled' and svc.IsEnabled == True:
             continue
         if kind == 'enabled' and svc.IsEnabled == False:
             continue
         yield svc
-        
+
 def get_service(ns, service):
+    """
+    Return LMIInstance of LMI_SSSDResponder.
+
+    :type service: string
+    :param service: Name of the service to return.
+    :rtype: LMIInstance
+    """
     keys = {'Name': service}
     try:
         inst = ns.LMI_SSSDResponder.new_instance_name(keys).to_instance()
@@ -109,6 +140,14 @@ def get_service(ns, service):
     return inst
 
 def enable_service(ns, service):
+    """
+    Enable given SSSD service.
+
+    :type service: string
+    :param service: Name of the service to enable.
+    :rtype: int
+    :rvalue: 0 on success.
+    """
     instance = get_service(ns, service)
     (rval, _, msg) = instance.Enable()
     if rval == 0:
@@ -118,6 +157,14 @@ def enable_service(ns, service):
     return rval
 
 def disable_service(ns, service):
+    """
+    Disable given SSSD service.
+
+    :type service: string
+    :param service: Name of the service to disable.
+    :rtype: int
+    :rvalue: 0 on success.
+    """
     instance = get_service(ns, service)
     (rval, _, msg) = instance.Disable()
     if rval == 0:
@@ -131,20 +178,45 @@ def disable_service(ns, service):
 #
 
 def list_backends(ns, kind='all'):
+    """
+    Generate list of SSSD backends.
+
+    :type kind: string
+    :param kind: Either 'all', 'disabled' or 'enabled'.
+    :rtype: (list of) LMIInstances
+    """
     for backend in ns.LMI_SSSDBackend.instances():
         if kind == 'disabled' and backend.IsEnabled == True:
             continue
         if kind == 'enabled' and backend.IsEnabled == False:
             continue
         yield backend
-        
+
 def get_provider(ns, type, backend):
+    """
+    Returns SSSD provider for given backend.
+
+    :type type: string
+    :param type: Type of the provider (= value of its LMI_SSSDProvider.Type
+        property).
+    :type backend: LMIInstance of LMI_SSSDBackend
+    :param backed: SSSD backend to inspect.
+    :rtype: string
+    :rvalue: The provider module (= value of LMI_SSSDProvider.Module property).
+    """
     for provider in backend.associators(AssocClass="LMI_SSSDBackendProvider"):
         if provider.Type == type:
             return provider.Module
     return 'ldap'
 
 def get_domain(ns, domain):
+    """
+    Return LMIInstance of given LMI_SSSDDomain.
+
+    :type domain: string
+    :param domain: Name of the domain to find.
+    :rtype: LMIInstance of LMI_SSSDDomain
+    """
     keys = {'Name': domain}
     try:
         inst = ns.LMI_SSSDDomain.new_instance_name(keys).to_instance()
@@ -155,6 +227,13 @@ def get_domain(ns, domain):
     return inst
 
 def get_backend(ns, domain):
+    """
+    Return LMIInstance of LMI_SSSDBackend for given domain.
+
+    :type domain: string
+    :param domain: Name of domain to inspect.
+    :rtype: LMIInstance of LMI_SSSDBackend
+    """
     keys = {'Name': domain}
     try:
         inst = ns.LMI_SSSDBackend.new_instance_name(keys).to_instance()
@@ -165,6 +244,14 @@ def get_backend(ns, domain):
     return inst
 
 def enable_backend(ns, domain):
+    """
+    Enables backend of given domain.
+
+    :type domain: string
+    :param domain: Name of the domain to enable.
+    :rtype: int
+    :rvalue: 0 on success
+    """
     instance = get_backend(ns, domain)
     (rval, _, msg) = instance.Enable()
     if rval == 0:
@@ -174,6 +261,14 @@ def enable_backend(ns, domain):
     return rval
 
 def disable_backend(ns, domain):
+    """
+    Disables backend of given domain.
+
+    :type domain: string
+    :param domain: Name of the domain to disable.
+    :rtype: int
+    :rvalue: 0 on success
+    """
     instance = get_backend(ns, domain)
     (rval, _, msg) = instance.Disable()
     if rval == 0:
@@ -187,11 +282,26 @@ def disable_backend(ns, domain):
 #
 
 def list_subdomains_names(ns, domain):
+    """
+    List subdomains of given domain.
+
+    :type domain: LMIInstance of LMI_SSSDDomain
+    :param domain: Domain to inspect.
+    :rtype: list of LMIInstances of LMI_SSSDDomain.
+    """
     subdomains = domain.associators(AssocClass="LMI_SSSDDomainSubdomain",
                                     ResultRole="Subdomain")
-    
+
     for subdomain in subdomains:
         yield subdomain.Name
-        
+
 def list_subdomains_comma_separated(ns, domain):
+    """
+    List subdomains of given domain.
+
+    :type domain: LMIInstance of LMI_SSSDDomain
+    :param domain: Domain to inspect.
+    :rtype: string
+    :rvalue: Comma-separated list of subdomains.
+    """
     return ', '.join(list_subdomains_names(ns, domain))
