@@ -88,22 +88,6 @@ function list_dir() {
 
 rlJournalStart
 
-rlPhaseStartSetup
-    rlLogInfo "Creating temporary python sandbox"
-    sandbox=`mktemp -d`
-    export PYTHONPATH="$sandbox"
-    pushd ../../..
-    rlLogInfo "Installing lmi meta-command"
-    rlRun "python setup.py develop --install-dir=$sandbox" 0
-    popd
-    pushd ..
-    rlLogInfo "Installing file subcommand"
-    rlRun "python setup.py develop --install-dir=$sandbox" 0
-    popd
-    export PATH="$sandbox:$PATH"
-rlPhaseEnd
-
-
 rlPhaseStartTest
     rlLogInfo "Test list directory"
 
@@ -151,11 +135,6 @@ rlPhaseStartTest
 
     rm -rf $list_dir_tmp_out $temp_dir $rlRun_LOG
 
-rlPhaseEnd
-
-rlPhaseStartCleanup
-    rlLogInfo "Removing temporary python sandbox"
-    rm -rf "$sandbox"
 rlPhaseEnd
 
 rlJournalPrintText
