@@ -36,6 +36,8 @@ rlPhaseStartSetup
     # configure sssd
     cp etc/sssd.conf /etc/sssd/sssd.conf
     chmod 600 /etc/sssd/sssd.conf
+    cp etc/krb5.keytab /etc/krb5.keytab
+    chmod 600 /etc/krb5.keytab
     cp var/* /var/lib/sss/db/
     service sssd stop
 rlPhaseEnd
