@@ -72,15 +72,15 @@ function list_dir() {
         file_mode=${line:1:3}
         [ ${column_sizes[1]:-0} -lt ${#file_mode} ] && column_sizes[1]=${#file_mode}
 
-        selinux=`echo $line | cut -d \  -f 4`
+        selinux=`echo $line | cut -d \  -f 5`
         [ ${column_sizes[2]:-0} -lt ${#selinux} ] && column_sizes[2]=${#selinux}
 
-        file_name="$path$(echo $line | cut -d \  -f 5)"
+        file_name="$path$(echo $line | cut -d \  -f 10)"
         [ ${column_sizes[3]:-0} -lt ${#file_name} ] && column_sizes[3]=${#file_name}
 
         data[$((line_no++))]="$file_type@$file_mode@$selinux@$file_name"
 
-    done < <(ls -la -Z "$1" | tail -n +3; echo EOF)
+    done < <(ls -lA -Z "$1" | grep -v "^total" ; echo EOF)
 
     unset column_sizes data path file_type file_mode selinux file_name \
         line_no col_index
@@ -88,30 +88,16 @@ function list_dir() {
 
 rlJournalStart
 
-rlPhaseStartSetup
-    rlLogInfo "Creating temporary python sandbox"
-    sandbox=`mktemp -d`
-    export PYTHONPATH="$sandbox"
-    pushd ../../..
-    rlLogInfo "Installing lmi meta-command"
-    rlRun "python setup.py develop --install-dir=$sandbox" 0
-    popd
-    pushd ..
-    rlLogInfo "Installing file subcommand"
-    rlRun "python setup.py develop --install-dir=$sandbox" 0
-    popd
-    export PATH="$sandbox:$PATH"
-rlPhaseEnd
-
-
 rlPhaseStartTest
     rlLogInfo "Test list directory"
 
     for directory in / /usr /usr/lib; do
         list_dir_tmp_out=`mktemp list_dirXXXX`
-        rlRun -s "$LMI file list $directory" 0
-        list_dir "$directory" > $list_dir_tmp_out
+        rlRun -s "$LMI file list $directory | sort" 0
+        list_dir "$directory" | sort > $list_dir_tmp_out
         rlAssertNotDiffer $list_dir_tmp_out $rlRun_LOG
+        rlLogInfo "Differencies (if case of error, otherwise empty):"
+        diff -u $list_dir_tmp_out $rlRun_LOG
         rm $rlRun_LOG $list_dir_tmp_out
     done
 
@@ -149,11 +135,6 @@ rlPhaseStartTest
 
     rm -rf $list_dir_tmp_out $temp_dir $rlRun_LOG
 
-rlPhaseEnd
-
-rlPhaseStartCleanup
-    rlLogInfo "Removing temporary python sandbox"
-    rm -rf "$sandbox"
 rlPhaseEnd
 
 rlJournalPrintText
