@@ -603,15 +603,17 @@ def add_ip_address(ns, setting, address, prefix, gateway=None):
                 int(settingData.ProtocolIFType) == protocol and
                 hasattr(settingData, "IPAddresses")):
 
-            settingData.IPAddresses.append(address)
+            # lmishell doesn't handle in-place editing of array parameters properly,
+            # we need to create new arrays and then copy them back
+            settingData.IPAddresses = settingData.IPAddresses + [address]
             if version == 4:
-                settingData.SubnetMasks.append(util.netmask_from_prefix(prefix))
+                settingData.SubnetMasks = settingData.SubnetMasks + [util.netmask_from_prefix(prefix)]
             else:
-                settingData.IPv6SubnetPrefixLengths.append(str(prefix))
+                settingData.IPv6SubnetPrefixLengths = settingData.IPv6SubnetPrefixLengths + [str(prefix)]
             if gateway:
-                settingData.GatewayAddresses.append(gateway)
+                settingData.GatewayAddresses = settingData.GatewayAddresses + [gateway]
             else:
-                settingData.GatewayAddresses.append("")
+                settingData.GatewayAddresses = settingData.GatewayAddresses + [""]
             found = True
             settingData.push()
     if not found:
@@ -636,16 +638,27 @@ def remove_ip_address(ns, setting, address):
                 hasattr(settingData, "IPAddresses")):
 
             i = 0
+            # lmishell doesn't handle in-place editing of array parameters properly,
+            # we need to create new arrays and then copy them back
+            addresses = []
+            masks = []
+            gateways = []
             while i < len(settingData.IPAddresses):
-                if util.compare_address(settingData.IPAddresses[i], address):
-                    del settingData.IPAddresses[i]
+                if not util.compare_address(settingData.IPAddresses[i], address):
+                    addresses.append(settingData.IPAddresses[i])
                     if version == 4:
-                        del settingData.SubnetMasks[i]
+                        masks.append(settingData.SubnetMasks[i])
                     else:
-                        del settingData.IPv6SubnetPrefixLengths[i]
-                    del settingData.GatewayAddresses[i]
+                        masks.append(settingData.IPv6SubnetPrefixLengths[i])
+                    gateways.append(settingData.GatewayAddresses[i])
                     found = True
                 i += 1
+            settingData.IPAddresses = addresses
+            if version == 4:
+                settingData.SubnetMasks = masks
+            else:
+                settingData.IPv6SubnetPrefixLengths = masks
+            settingData.GatewayAddresses = gateways
             settingData.push()
     if not found:
         raise LmiInvalidOptions("Can't remove IP address from setting: invalid setting type or address doesn't exist.")
@@ -788,7 +801,7 @@ def add_dns_server(ns, setting, address):
     protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
         if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
-            settingData.DNSServerAddresses.append(address)
+            settingData.DNSServerAddresses = settingData.DNSServerAddresses + [address]
             settingData.push()
             break
     else:
