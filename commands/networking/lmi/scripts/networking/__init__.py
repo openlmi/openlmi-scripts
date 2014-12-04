@@ -528,7 +528,10 @@ def get_autoconnect(ns, setting, device=None):
         if device is None or esd.ManagedElement.to_instance() == device:
             break
     else:
-        raise LmiFailed("No such setting %s with device %s" % (setting.Caption, device.ElementName))
+        if device is not None:
+            raise LmiFailed("No such setting %s with device %s" % (setting.Caption, device.ElementName))
+        else:
+            return False
 
     return esd.IsNext == ns.LMI_IPElementSettingData.IsNextValues.IsNext
 
