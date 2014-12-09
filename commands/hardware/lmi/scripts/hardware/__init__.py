@@ -514,8 +514,12 @@ def get_disks_info(ns):
         return []
 
     for hdd in hdds:
-        phys_hdds = hdd.associators(ResultClass='LMI_DiskPhysicalPackage')
-        fws = hdd.associators(ResultClass='LMI_DiskDriveSoftwareIdentity')
+        phys_hdds = hdd.associators(
+                AssocClass='LMI_DiskDriveRealizes',
+                ResultClass='LMI_DiskPhysicalPackage')
+        fws = hdd.associators(
+                AssocClass='LMI_DiskDriveElementSoftwareIdentity',
+                ResultClass='LMI_DiskDriveSoftwareIdentity')
 
         if phys_hdds and phys_hdds[0].Model:
             model = phys_hdds[0].Model
