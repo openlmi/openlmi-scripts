@@ -414,6 +414,7 @@ def get_networkinfo(ns):
             ('    Name:', lan_endpoint.Name)]
         try:
             ip_net_con = lan_endpoint.associators(
+                AssocClass='LMI_EndpointForIPNetworkConnection',
                 ResultClass='LMI_IPNetworkConnection')[0]
             result += [('    Status:',
                 ns.LMI_IPNetworkConnection.OperatingStatusValues.value_name(
@@ -422,6 +423,7 @@ def get_networkinfo(ns):
             pass
         try:
             for ip_protocol_endpoint in lan_endpoint.associators(
+                    AssocClass='LMI_BindsToLANEndpoint',
                     ResultClass='LMI_IPProtocolEndpoint'):
                 if ip_protocol_endpoint.ProtocolIFType == \
                         ns.LMI_IPProtocolEndpoint.ProtocolIFTypeValues.IPv4:
