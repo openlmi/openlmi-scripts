@@ -112,9 +112,7 @@ def watch(ns):
     indication_port = random.randint(12000, 13000)
     listener = LMIIndicationListener("0.0.0.0", indication_port)
     uniquename = listener.add_handler("lmiscript_journald_watch-XXXXXXXX", ind_handler)
-    ret = listener.start()
-    if not ret:
-        raise LmiFailed("Cannot initialize indication listener on port %d" % indication_port)
+    listener.start()
 
     ret = ns.connection.subscribe_indication(
         Name=uniquename,
