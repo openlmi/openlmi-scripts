@@ -510,7 +510,7 @@ def set_autoconnect(ns, setting, device=None, state=True):
         # Set IsNext = 2 (Is Not Next), don't change IsCurrent
         mode = service.ApplySettingToIPNetworkConnection.ModeValues.Mode5
 
-    if device is not None:
+    if device is None:
         result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting, Mode=mode)
     else:
         result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting, IPNetworkConnection=device, Mode=mode)
