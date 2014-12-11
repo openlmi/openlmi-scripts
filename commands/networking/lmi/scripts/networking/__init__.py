@@ -510,7 +510,7 @@ def set_autoconnect(ns, setting, device=None, state=True):
         # Set IsNext = 2 (Is Not Next), don't change IsCurrent
         mode = service.ApplySettingToIPNetworkConnection.ModeValues.Mode5
 
-    if device is not None:
+    if device is None:
         result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting, Mode=mode)
     else:
         result = service.SyncApplySettingToIPNetworkConnection(SettingData=setting, IPNetworkConnection=device, Mode=mode)
@@ -654,6 +654,7 @@ def remove_ip_address(ns, setting, address):
                     else:
                         masks.append(settingData.IPv6SubnetPrefixLengths[i])
                     gateways.append(settingData.GatewayAddresses[i])
+                else:
                     found = True
                 i += 1
             settingData.IPAddresses = addresses
@@ -809,7 +810,7 @@ def add_dns_server(ns, setting, address):
             break
     else:
         raise LmiInvalidOptions("Can't assign DNS address to setting %s, invalid setting type" % setting.Caption)
-    LOG().info("DNS server %s/%d added to setting %s", address, setting.Caption)
+    LOG().info("DNS server %s added to setting %s", address, setting.Caption)
     return 0
 
 def remove_dns_server(ns, setting, address):
@@ -825,13 +826,15 @@ def remove_dns_server(ns, setting, address):
     protocolIFType = ns.LMI_IPAssignmentSettingData.ProtocolIFTypeValues.value("IPv%d" % version)
     for settingData in setting.associators(AssocClass="LMI_OrderedIPAssignmentComponent"):
         if (settingData.classname == "LMI_DNSSettingData" and settingData.ProtocolIFType == protocolIFType):
-            for i in range(len(settingData.DNSServerAddresses)):
-                if util.compare_address(settingData.DNSServerAddresses[i], address):
-                    del settingData.DNSServerAddresses[i]
-                    settingData.push()
-                    return 0
-            else:
+            dns = []
+            for addr in settingData.DNSServerAddresses:
+                if not util.compare_address(addr, address):
+                    dns.append(addr)
+            if len(dns) == len(settingData.DNSServerAddresses):
                 raise LmiInvalidOptions("No DNS with address %s found for setting %s" % (address, setting.Caption))
+            settingData.DNSServerAddresses = dns
+            settingData.push()
+            return 0
     else:
         raise LmiInvalidOptions("Can't remove DNS address to setting %s, invalid setting type" % setting.Caption)
     LOG().info("DNS server %s removed from setting %s", address, setting.Caption)
