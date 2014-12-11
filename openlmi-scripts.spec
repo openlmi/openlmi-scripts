@@ -1,12 +1,13 @@
-%global         commit e29c72de5a461b208e06ef34d4e1143a717c9703
+%global         commit e7ada516f51b2e0c19290a6bbb5c6dd9d9d50903
 %global         shortcommit %(c=%{commit}; echo ${c:0:7})
-%global         commands account hardware journald logicalfile networking
-%global         commands %{commands} powermanagement service software storage
+%global         commands account hardware journald locale logicalfile networking
+%global         commands %{commands} powermanagement realmd selinux service
+%global         commands %{commands} software sssd storage
 %global         commands %{commands} system
-%global         tools_version 0.9.1
+%global         tools_version 0.10.4
 
 Name:           openlmi-scripts
-Version:        0.2.8
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        Client-side python modules and command line utilities
 
@@ -26,11 +27,15 @@ BuildRequires:  python-IPy
 Requires:       %{name}-account         = %{version}-%{release}
 Requires:       %{name}-hardware        = %{version}-%{release}
 Requires:       %{name}-journald        = %{version}-%{release}
+Requires:       %{name}-locale          = %{version}-%{release}
 Requires:       %{name}-logicalfile     = %{version}-%{release}
 Requires:       %{name}-networking      = %{version}-%{release}
 Requires:       %{name}-powermanagement = %{version}-%{release}
+Requires:       %{name}-realmd          = %{version}-%{release}
+Requires:       %{name}-selinux         = %{version}-%{release}
 Requires:       %{name}-service         = %{version}-%{release}
 Requires:       %{name}-software        = %{version}-%{release}
+Requires:       %{name}-sssd            = %{version}-%{release}
 Requires:       %{name}-storage         = %{version}-%{release}
 Requires:       %{name}-system          = %{version}-%{release}
 
@@ -42,7 +47,7 @@ Summary:        Client scripts for OpenLMI Account provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    account
-This packages contains client side python library for OpenLMI Account
+This package contains client side python library for OpenLMI Account
 provider and command line wrapper.
 
 %package        hardware
@@ -50,7 +55,7 @@ Summary:        Client scripts for OpenLMI Hardware provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    hardware
-This packages contains client side python library for OpenLMI Hardware
+This package contains client side python library for OpenLMI Hardware
 provider and command line wrapper.
 
 %package        journald
@@ -58,7 +63,15 @@ Summary:        Client scripts for OpenLMI Journald provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    journald
-This packages contains client side python library for OpenLMI Journald
+This package contains client side python library for OpenLMI Journald
+provider and command line wrapper.
+
+%package        locale
+Summary:        Client scripts for OpenLMI Locale provider
+Requires:       openlmi-tools >= %{tools_version}
+
+%description    locale
+This package contains client side python library for OpenLMI Locale
 provider and command line wrapper.
 
 %package        logicalfile
@@ -66,7 +79,7 @@ Summary:        Client scripts for OpenLMI Logical File provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    logicalfile
-This packages contains client side python library for OpenLMI Logical File
+This package contains client side python library for OpenLMI Logical File
 provider and command line wrapper.
 
 %package        networking
@@ -75,7 +88,7 @@ Requires:       openlmi-tools >= %{tools_version}
 Requires:       python-IPy
 
 %description    networking
-This packages contains client side python library for OpenLMI Networking
+This package contains client side python library for OpenLMI Networking
 provider and command line wrapper.
 
 %package        powermanagement
@@ -83,15 +96,32 @@ Summary:        Client scripts for OpenLMI Power provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    powermanagement
-This packages contains client side python library for OpenLMI PowerManagement
+This package contains client side python library for OpenLMI PowerManagement
 provider and command line wrapper.
+
+%package        realmd
+Summary:        Client scripts for OpenLMI Realmd provider
+Requires:       openlmi-tools >= %{tools_version}
+
+%description    realmd
+This package contains client side python library for OpenLMI Realmd
+provider and command line wrapper.
+
+%package        selinux
+Summary:        Client scripts for OpenLMI SELinux provider
+Requires:       %{name} = %{version}-%{release}
+
+%description    selinux
+This package contains client side python library for OpenLMI SELinux provider
+and command line wrapper.
+
 
 %package        service
 Summary:        Client scripts for OpenLMI Service provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    service
-This packages contains client side python library for OpenLMI Service
+This package contains client side python library for OpenLMI Service
 provider and command line wrapper.
 
 %package        software
@@ -99,19 +129,27 @@ Summary:        Client scripts for OpenLMI Software provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    software
-This packages contains client side python library for OpenLMI Software
+This package contains client side python library for OpenLMI Software
 provider and command line wrapper.
+
+%package        sssd
+Summary:        Client scripts for OpenLMI SSSD provider
+Requires:       openlmi-tools = %{version}-%{release}
+
+%description    sssd
+This package contains client side python library for OpenLMI SSSD provider and
+command line wrapper.
 
 %package        storage
 Summary:        Client scripts for OpenLMI Storage provider
 Requires:       openlmi-tools >= %{tools_version}
 
 %description    storage
-This packages contains client side python library for OpenLMI Storage
+This package contains client side python library for OpenLMI Storage
 provider and command line wrapper.
 
 %package        system
-Summary:        Client scripts providing general system informations
+Summary:        Client scripts providing general system information
 Requires:       openlmi-tools >= %{tools_version}
 Requires:       %{name}-service >= %{version}
 
@@ -125,30 +163,32 @@ system.
 %setup -qn %{name}-%{commit}
 
 %build
+# build scripts and their documentation
 COMMANDS="%{commands}" make setup-all
 for cmd in %{commands}; do
     pushd commands/$cmd
-    %{__python} setup.py build
-    cd doc
-    make html
-    [ -e _build/html/.buildinfo ] && rm _build/html/.buildinfo
-    popd
+        %{__python2} setup.py build
+        cd doc
+        make html
+        [ -e _build/html/.buildinfo ] && rm _build/html/.buildinfo
+    popd # commands/$cmd
 done
 
 %install
+# install scripts and their documentation
 for cmd in %{commands}; do
     pushd commands/$cmd
-    %{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
-    install -m 0755 -d $RPM_BUILD_ROOT/%{_docdir}/%{name}-$cmd
-    cp -rp doc/_build/html $RPM_BUILD_ROOT/%{_docdir}/%{name}-$cmd
-    install -m 0644 README.md ../../COPYING \
-            $RPM_BUILD_ROOT/%{_docdir}/%{name}-$cmd
-    popd
+        %{__python2} setup.py install -O1 --skip-build --root %{buildroot}
+        install -m 0755 -d %{buildroot}%{_docdir}/%{name}-$cmd
+        cp -rp doc/_build/html %{buildroot}%{_docdir}/%{name}-$cmd
+        install -m 0644 README.md ../../COPYING \
+                %{buildroot}%{_docdir}/%{name}-$cmd
+    popd # commands/$cmd
 done
 
 # install documentation
-install -m 755 -d $RPM_BUILD_ROOT%{_docdir}/%{name}
-install -m 644 README.md COPYING $RPM_BUILD_ROOT/%{_docdir}/%{name}
+install -m 0755 -d %{buildroot}%{_docdir}/%{name}
+install -m 0644 README.md COPYING %{buildroot}%{_docdir}/%{name}
 
 %files
 %doc %{_docdir}/%{name}/README.md
@@ -156,55 +196,83 @@ install -m 644 README.md COPYING $RPM_BUILD_ROOT/%{_docdir}/%{name}
 
 %files account
 %doc %{_docdir}/%{name}-account/
-%{python_sitelib}/lmi/scripts/account/
-%{python_sitelib}/openlmi_scripts_account-*
+%{python2_sitelib}/lmi/scripts/account/
+%{python2_sitelib}/openlmi_scripts_account-*
 
 %files hardware
 %doc %{_docdir}/%{name}-hardware/
-%{python_sitelib}/lmi/scripts/hardware/
-%{python_sitelib}/openlmi_scripts_hardware-*
+%{python2_sitelib}/lmi/scripts/hardware/
+%{python2_sitelib}/openlmi_scripts_hardware-*
 
 %files journald
 %doc %{_docdir}/%{name}-journald/
-%{python_sitelib}/lmi/scripts/journald/
-%{python_sitelib}/openlmi_scripts_journald-*
+%{python2_sitelib}/lmi/scripts/journald/
+%{python2_sitelib}/openlmi_scripts_journald-*
+
+%files locale
+%doc %{_docdir}/%{name}-locale/
+%{python2_sitelib}/lmi/scripts/locale/
+%{python2_sitelib}/openlmi_scripts_locale-*
 
 %files logicalfile
 %doc %{_docdir}/%{name}-logicalfile/
-%{python_sitelib}/lmi/scripts/logicalfile/
-%{python_sitelib}/openlmi_scripts_logicalfile-*
+%{python2_sitelib}/lmi/scripts/logicalfile/
+%{python2_sitelib}/openlmi_scripts_logicalfile-*
 
 %files networking
 %doc %{_docdir}/%{name}-networking/
-%{python_sitelib}/lmi/scripts/networking/
-%{python_sitelib}/openlmi_scripts_networking-*
+%{python2_sitelib}/lmi/scripts/networking/
+%{python2_sitelib}/openlmi_scripts_networking-*
 
 %files powermanagement
 %doc %{_docdir}/%{name}-powermanagement/
-%{python_sitelib}/lmi/scripts/powermanagement/
-%{python_sitelib}/openlmi_scripts_powermanagement-*
+%{python2_sitelib}/lmi/scripts/powermanagement/
+%{python2_sitelib}/openlmi_scripts_powermanagement-*
+
+%files realmd
+%doc %{_docdir}/%{name}-realmd/
+%{python2_sitelib}/lmi/scripts/realmd/
+%{python2_sitelib}/openlmi_scripts_realmd-*
+
+%files selinux
+%doc %{_docdir}/%{name}-selinux/
+%{python2_sitelib}/lmi/scripts/selinux/
+%{python2_sitelib}/openlmi_scripts_selinux-*
 
 %files service
 %doc %{_docdir}/%{name}-service/
-%{python_sitelib}/lmi/scripts/service/
-%{python_sitelib}/openlmi_scripts_service-*
+%{python2_sitelib}/lmi/scripts/service/
+%{python2_sitelib}/openlmi_scripts_service-*
 
 %files software
 %doc %{_docdir}/%{name}-software/
-%{python_sitelib}/lmi/scripts/software/
-%{python_sitelib}/openlmi_scripts_software-*
+%{python2_sitelib}/lmi/scripts/software/
+%{python2_sitelib}/openlmi_scripts_software-*
+
+%files sssd
+%doc %{_docdir}/%{name}-sssd/
+%{python2_sitelib}/lmi/scripts/sssd/
+%{python2_sitelib}/openlmi_scripts_sssd-*
 
 %files storage
 %doc %{_docdir}/%{name}-storage/
-%{python_sitelib}/lmi/scripts/storage/
-%{python_sitelib}/openlmi_scripts_storage-*
+%{python2_sitelib}/lmi/scripts/storage/
+%{python2_sitelib}/openlmi_scripts_storage-*
 
 %files system
 %doc %{_docdir}/%{name}-system/
-%{python_sitelib}/lmi/scripts/system/
-%{python_sitelib}/openlmi_scripts_system-*
+%{python2_sitelib}/lmi/scripts/system/
+%{python2_sitelib}/openlmi_scripts_system-*
 
 %changelog
+* Thu Dec 11 2014 Michal Minar <miminar@redhat.com> 0.4.0-1
+- New upstream release.
+- New subpackages: locale, realmd, sssd, selinux.
+
+* Tue Apr 29 2014 Michal Minar <miminar@redhat.com> 0.3.0-1
+- Requirement fixes.
+- Small bugfixes and logging improvements.
+
 * Thu Apr 24 2014 Michal Minar <miminar@redhat.com> 0.2.8-1
 - Meta-command is not shipped any more (moved to openlmi-tools).
 - Base package now just groups script subpackages.
