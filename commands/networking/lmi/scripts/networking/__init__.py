@@ -654,6 +654,7 @@ def remove_ip_address(ns, setting, address):
                     else:
                         masks.append(settingData.IPv6SubnetPrefixLengths[i])
                     gateways.append(settingData.GatewayAddresses[i])
+                else:
                     found = True
                 i += 1
             settingData.IPAddresses = addresses
