@@ -31,7 +31,10 @@
 LMI realmd provider client library.
 """
 
-import pywbem
+try:
+    import lmiwbem as wbem
+except ImportError:
+    import pywbem as wbem
 from getpass import getpass
 
 from lmi.scripts.common.errors import LmiFailed
@@ -57,9 +60,9 @@ def join(ns, domain, user, _password = None):
             _password = read_password();
         r.JoinDomain(Domain = domain, User = user, Password = _password)
         LOG.info("Joined domain: " + domain)
-    except (LMIClassNotFound, pywbem.CIMError) as e:
-        if (isinstance(e, pywbem.CIMError)
-                and e.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
+    except (LMIClassNotFound, wbem.CIMError) as e:
+        if (isinstance(e, wbem.CIMError)
+                and e.args[0] != wbem.CIM_ERR_NOT_SUPPORTED):
             raise
         LOG().error('The realmd provider not found or incorrect version installed,'
                 ' class LMI_RealmdService not available.')
@@ -80,9 +83,9 @@ def leave(ns, domain, user, _password = None):
             _password = read_password();
         r.LeaveDomain(Domain = domain, User = user, Password = _password)
         LOG.info("Left domain: " + domain)
-    except (LMIClassNotFound, pywbem.CIMError) as e:
-        if (isinstance(e, pywbem.CIMError)
-                and e.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
+    except (LMIClassNotFound, wbem.CIMError) as e:
+        if (isinstance(e, wbem.CIMError)
+                and e.args[0] != wbem.CIM_ERR_NOT_SUPPORTED):
             raise
         LOG().error('The realmd provider not found or incorrect version installed,'
                 ' class LMI_RealmdService not available.')
@@ -100,9 +103,9 @@ def show(ns):
             print r.Domain
         else:
             print "No domain joined"
-    except (LMIClassNotFound, pywbem.CIMError) as e:
-        if (isinstance(e, pywbem.CIMError)
-                and e.args[0] != pywbem.CIM_ERR_NOT_SUPPORTED):
+    except (LMIClassNotFound, wbem.CIMError) as e:
+        if (isinstance(e, wbem.CIMError)
+                and e.args[0] != wbem.CIM_ERR_NOT_SUPPORTED):
             raise
         LOG().error('The realmd provider not found or incorrect version installed,'
                 ' class LMI_RealmdService not available.')
