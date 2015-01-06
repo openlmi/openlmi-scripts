@@ -342,10 +342,10 @@ def get_selinuxinfo(ns):
         return []
 
     if selinux.SELinuxState == 0:
-        selinux_str = 'off'
+        selinux_str = 'disabled'
     else:
-        selinux_str = 'on (%s)' % \
-            ns.LMI_SELinuxService.SELinuxStateValues.value_name(selinux.SELinuxState)
+        selinux_str = 'enabled (%s)' % \
+            ns.LMI_SELinuxService.SELinuxStateValues.value_name(selinux.SELinuxState).lower()
 
     tf.produce_output([('SELinux:', selinux_str)])
     return []
