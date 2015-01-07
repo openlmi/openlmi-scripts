@@ -39,7 +39,8 @@ from getpass import getpass
 
 from lmi.scripts.common.errors import LmiFailed
 from lmi.scripts.common import get_logger
-from lmi.shell import LMIClassNotFound
+from lmi.shell.LMIExceptions import CIMError
+from lmi.shell.compat import wbem
 
 LOG = get_logger(__name__)
 
@@ -60,12 +61,13 @@ def join(ns, domain, user, _password = None):
             _password = read_password();
         r.JoinDomain(Domain = domain, User = user, Password = _password)
         LOG.info("Joined domain: " + domain)
-    except (LMIClassNotFound, wbem.CIMError) as e:
-        if (isinstance(e, wbem.CIMError)
-                and e.args[0] != wbem.CIM_ERR_NOT_SUPPORTED):
+    except CIMError as e:
+        if (e.args[0] == wbem.CIM_ERR_INVALID_CLASS
+                or e.args[0] == wbem.CIM_ERR_NOT_SUPPORTED):
+            LOG().error('The realmd provider not found or incorrect version installed,'
+                    ' class LMI_RealmdService not available.')
+        else:
             raise
-        LOG().error('The realmd provider not found or incorrect version installed,'
-                ' class LMI_RealmdService not available.')
     except Exception as e:
         raise LmiFailed(e)
 
@@ -83,12 +85,13 @@ def leave(ns, domain, user, _password = None):
             _password = read_password();
         r.LeaveDomain(Domain = domain, User = user, Password = _password)
         LOG.info("Left domain: " + domain)
-    except (LMIClassNotFound, wbem.CIMError) as e:
-        if (isinstance(e, wbem.CIMError)
-                and e.args[0] != wbem.CIM_ERR_NOT_SUPPORTED):
+    except CIMError as e:
+        if (e.args[0] == wbem.CIM_ERR_INVALID_CLASS
+                or e.args[0] == wbem.CIM_ERR_NOT_SUPPORTED):
+            LOG().error('The realmd provider not found or incorrect version installed,'
+                    ' class LMI_RealmdService not available.')
+        else:
             raise
-        LOG().error('The realmd provider not found or incorrect version installed,'
-                ' class LMI_RealmdService not available.')
     except Exception as e:
         raise LmiFailed(e)
 
@@ -103,11 +106,12 @@ def show(ns):
             print r.Domain
         else:
             print "No domain joined"
-    except (LMIClassNotFound, wbem.CIMError) as e:
-        if (isinstance(e, wbem.CIMError)
-                and e.args[0] != wbem.CIM_ERR_NOT_SUPPORTED):
+    except CIMError as e:
+        if (e.args[0] == wbem.CIM_ERR_INVALID_CLASS
+                or e.args[0] == wbem.CIM_ERR_NOT_SUPPORTED):
+            LOG().error('The realmd provider not found or incorrect version installed,'
+                    ' class LMI_RealmdService not available.')
+        else:
             raise
-        LOG().error('The realmd provider not found or incorrect version installed,'
-                ' class LMI_RealmdService not available.')
     except Exception as e:
         raise LmiFailed(e)
